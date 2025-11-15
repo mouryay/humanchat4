@@ -1,0 +1,352 @@
+openapi: 3.1.0
+info:
+  title: HumanChat API
+  version: 0.1.0
+  description: REST + WebSocket surface for the HumanChat platform.
+servers:
+  - url: https://api.humanchat.com
+    description: Production
+  - url: http://localhost:4000
+    description: Local development
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        conversation_type:
+          type: string
+          enum: [free, paid, charity]
+        instant_rate_per_minute:
+          type: number
+        scheduled_rates:
+          type: object
+          additionalProperties:
+            type: number
+        is_online:
+          type: boolean
+        has_active_session:
+          type: boolean
+        managed:
+          type: boolean
+        manager_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        host_user_id:
+          type: string
+        guest_user_id:
+          type: string
+        conversation_id:
+          type: string
+        type:
+          type: string
+          enum: [instant, scheduled]
+        status:
+          type: string
+          enum: [pending, in_progress, complete]
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+        duration_minutes:
+          type: number
+        agreed_price:
+          type: number
+        payment_mode:
+          type: string
+          enum: [free, paid, charity]
+paths:
+  /api/auth/register:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /api/auth/login:
+    post:
+      summary: Login and receive JWT
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Auth token
+  /api/auth/logout:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logged out
+  /api/auth/me:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Auth]
+      responses:
+        '200':
+          description: Current user
+  /api/users/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data
+    patch:
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Updated user
+  /api/users/search:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: online
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of users
+  /api/users/{id}/availability:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slots
+  /api/users/{id}/status:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status
+  /api/sessions:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Session'
+      responses:
+        '201':
+          description: Session created
+  /api/sessions/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Sessions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session detail
+  /api/conversations:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Conversations]
+      responses:
+        '200':
+          description: Conversation list
+  /api/conversations/{id}/messages:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Conversations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Messages
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Conversations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [senderId, content, type]
+              properties:
+                senderId:
+                  type: string
+                content:
+                  type: string
+                type:
+                  type: string
+      responses:
+        '201':
+          description: Message created
+  /api/calendar/connect:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Calendar]
+      responses:
+        '201':
+          description: Connected
+  /api/calendar/availability:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Calendar]
+      responses:
+        '200':
+          description: Slots
+  /api/calendar/sync:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Calendar]
+      responses:
+        '200':
+          description: Triggered
+  /api/payments/intent:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      responses:
+        '201':
+          description: PaymentIntent created
+  /api/payments/capture:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      responses:
+        '200':
+          description: Captured
+  /api/payments/refund:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      responses:
+        '200':
+          description: Refunded
+  /api/requests:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Requests]
+      responses:
+        '201':
+          description: Request created
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Requests]
+      responses:
+        '200':
+          description: Request list
+  /api/requests/{id}/status:
+    patch:
+      security: [{ bearerAuth: [] }]
+      tags: [Requests]
+      responses:
+        '200':
+          description: Updated
+  /api/sam/chat:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Sam]
+      responses:
+        '200':
+          description: AI response
