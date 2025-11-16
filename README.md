@@ -63,6 +63,7 @@ README.md                # This file
 - **messages**: timestamped chat history with optional Sam actions
 - **sessions**: voice/video sessions with pricing and lifecycle status
 - **settings**: arbitrary key/value store for client preferences
+- **requests**: managed account booking requests keyed by requestId with manager/requester filters
 
 Each helper function includes defensive error handling and enforces the 15-minute minimum session duration required by the business rules. Future schema updates can be added by appending to the `schemaMigrations` array in `src/lib/db.ts` and providing an `upgrade` handler when data transforms are necessary.
 
@@ -81,6 +82,13 @@ Each helper function includes defensive error handling and enforces the 15-minut
 - **Tips & donations:** When `donationPreference === 'on'`, the session end flow surfaces a "Send thanks" CTA that launches an in-app tip modal with suggested amounts ($5, $10, $20, custom). The modal calls `/api/payments/donation`, which spins up a Stripe Checkout session tied to the same payout target (host or charity).
 - **Session receipts:** `stripeService.generateReceipt` now returns payment mode, charity name, donation allowance, and donation totals so clients can render impact summaries like "Your $40 supports Girls Who Code".
 - **Automatic routing:** After a session PaymentIntent is captured the backend immediately kicks off a Connect transfer via Stripe's Transfer API. Charity sessions waive platform fees (configurable via `STRIPE_PLATFORM_FEE_BPS`) and land in the charity's Connect account, while paid sessions send the post-fee share to the host.
+
+## Managed & Confidential Profiles
+
+- **Profile tiles:** When Sam surfaces a managed profile (`managed: true` + `confidentialRate: true`) the rate stack swaps to a purple "Available by Request" badge, hides the instant "Connect Now" control, and replaces "Book Time" with "Send Request".
+- **Request form:** Clicking "Send Request" launches `RequestForm`, which captures intent, optional timing, and (when allowed) a budget range before calling `/api/requests`. Successful submissions are saved locally in the new Dexie `requests` store and logged back into the Sam conversation with the "Request sent to [Rep Name]" confirmation.
+- **Backend workflow:** The API enforces managed-only access, stores preferred time/budget metadata, and associates each request with the manager/representative so future tooling can notify them and approve/decline with a confidential rate.
+- **Sessions:** Any session hydrated with `confidentialRate` displays "Private Rate" inside the HUD, suppresses Stripe collection, and informs the guest that the representative will finalize billing offline.
 
 ## Frontend Preview (Next.js)
 

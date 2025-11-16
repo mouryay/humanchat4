@@ -95,7 +95,7 @@ export default function SessionView({ conversation, session, messages, registerS
     setShowDonationModal(false);
   };
 
-  const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && showDonationModal && session);
+  const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && !callSummary.confidentialRate && showDonationModal && session);
 
   return (
     <div className={styles.sessionShell}>

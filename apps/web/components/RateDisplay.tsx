@@ -8,6 +8,7 @@ import CharityBadge from './CharityBadge';
 interface RateDisplayProps {
   conversationType?: 'free' | 'paid' | 'charity';
   confidentialRate?: boolean;
+  displayMode?: 'normal' | 'by_request' | 'confidential';
   instantRatePerMinute?: number;
   scheduledRates?: ScheduledRate[];
   isOnline?: boolean;
@@ -23,19 +24,21 @@ const formatCurrency = (value?: number) => {
 export default function RateDisplay({
   conversationType,
   confidentialRate,
+  displayMode,
   instantRatePerMinute,
   scheduledRates,
   isOnline,
   charityName,
   donationPreference
 }: RateDisplayProps) {
+  const isByRequest = Boolean(confidentialRate || displayMode === 'confidential' || displayMode === 'by_request');
   return (
     <div className={styles.rateSection}>
       <div className={styles.badgeGroup}>
         {conversationType === 'free' && <span className={clsx(styles.badge, styles.freeBadge)}>Free</span>}
         {conversationType === 'charity' && <CharityBadge charityName={charityName} />}
-        {confidentialRate && <span className={clsx(styles.badge, styles.confidentialBadge)}>By Request</span>}
-        {conversationType === 'paid' && !confidentialRate && isOnline && instantRatePerMinute != null && (
+        {isByRequest && <span className={clsx(styles.badge, styles.confidentialBadge)}>Available by Request</span>}
+        {conversationType === 'paid' && !isByRequest && isOnline && instantRatePerMinute != null && (
           <span className={clsx(styles.badge, styles.paidBadge)}>{formatCurrency(instantRatePerMinute)}/min</span>
         )}
         {donationPreference === 'on' && <span className={clsx(styles.badge, styles.tipBadge)}>Accepts tips ⭐</span>}

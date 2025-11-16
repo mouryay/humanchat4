@@ -44,6 +44,15 @@ components:
         manager_id:
           type: string
           nullable: true
+        confidential_rate:
+          type: boolean
+        display_mode:
+          type: string
+          enum: [normal, by_request, confidential]
+          nullable: true
+        manager_display_name:
+          type: string
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -81,6 +90,44 @@ components:
         payment_mode:
           type: string
           enum: [free, paid, charity]
+        confidential_rate:
+          type: boolean
+        representative_name:
+          type: string
+          nullable: true
+        display_mode:
+          type: string
+          enum: [normal, by_request, confidential]
+          nullable: true
+    Request:
+      type: object
+      properties:
+        id:
+          type: string
+        requester_user_id:
+          type: string
+        target_user_id:
+          type: string
+        manager_user_id:
+          type: string
+          nullable: true
+        representative_name:
+          type: string
+          nullable: true
+        message:
+          type: string
+        preferred_time:
+          type: string
+          nullable: true
+        budget_range:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, declined]
+        created_at:
+          type: string
+          format: date-time
 paths:
   /api/auth/register:
     post:
@@ -447,22 +494,75 @@ paths:
     post:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_user_id, message]
+              properties:
+                target_user_id:
+                  type: string
+                  format: uuid
+                message:
+                  type: string
+                preferred_time:
+                  type: string
+                  nullable: true
+                budget_range:
+                  type: string
+                  nullable: true
       responses:
         '201':
           description: Request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    $ref: '#/components/schemas/Request'
     get:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
       responses:
         '200':
           description: Request list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Request'
   /api/requests/{id}/status:
     patch:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [pending, approved, declined]
       responses:
         '200':
           description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    $ref: '#/components/schemas/Request'
   /api/sam/chat:
     post:
       security: [{ bearerAuth: [] }]

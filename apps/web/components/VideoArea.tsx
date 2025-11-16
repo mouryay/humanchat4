@@ -20,6 +20,8 @@ export interface CallEndSummary {
   donationAllowed?: boolean;
   charityName?: string;
   sessionId: string;
+  confidentialRate?: boolean;
+  representativeName?: string | null;
 }
 
 interface VideoAreaProps {
@@ -40,6 +42,7 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
   const startTimestamp = useRef<number>(session.startTime ?? Date.now());
   const markedStartRef = useRef(false);
   const endingRef = useRef(false);
+  const isConfidential = Boolean(session.confidentialRate);
 
   const isInitiator = useMemo(() => session.hostUserId === currentUserId, [session.hostUserId, currentUserId]);
 
@@ -122,6 +125,9 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
   };
 
   const calculateTotal = () => {
+    if (isConfidential) {
+      return 0;
+    }
     if (session.paymentMode === 'free') {
       return 0;
     }
@@ -149,10 +155,10 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
     }
 
     const total = calculateTotal();
-    const donationAllowed = Boolean(session.donationAllowed ?? (session.donationPreference === 'on'));
+    const donationAllowed = !isConfidential && Boolean(session.donationAllowed ?? (session.donationPreference === 'on'));
     const sessionMode: PaymentMode = session.paymentMode ?? 'paid';
     const stripeMode: 'instant' | 'scheduled' | 'charity' = sessionMode === 'charity' ? 'charity' : session.type === 'scheduled' ? 'scheduled' : 'instant';
-    const requiresPayment = sessionMode === 'paid' || sessionMode === 'charity';
+    const requiresPayment = !isConfidential && (sessionMode === 'paid' || sessionMode === 'charity');
 
     if (!requiresPayment) {
       onCallEnd({
@@ -162,7 +168,9 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
         paymentMode: sessionMode,
         donationAllowed,
         charityName: session.charityName,
-        sessionId: session.sessionId
+        sessionId: session.sessionId,
+        confidentialRate: isConfidential,
+        representativeName: session.representativeName ?? null
       });
       return;
     }
@@ -181,7 +189,9 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
         paymentMode: sessionMode,
         donationAllowed,
         charityName: session.charityName,
-        sessionId: session.sessionId
+        sessionId: session.sessionId,
+        confidentialRate: isConfidential,
+        representativeName: session.representativeName ?? null
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
@@ -192,7 +202,9 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
         paymentMode: sessionMode,
         donationAllowed,
         charityName: session.charityName,
-        sessionId: session.sessionId
+        sessionId: session.sessionId,
+        confidentialRate: isConfidential,
+        representativeName: session.representativeName ?? null
       });
     }
   };

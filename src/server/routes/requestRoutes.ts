@@ -9,7 +9,9 @@ const router = Router();
 
 const createSchema = z.object({
   target_user_id: z.string().uuid(),
-  message: z.string().min(5)
+  message: z.string().min(5),
+  preferred_time: z.string().min(3).max(160).optional(),
+  budget_range: z.string().min(2).max(80).optional()
 });
 
 router.post('/', authenticate, authenticatedLimiter, async (req, res, next) => {
@@ -18,7 +20,9 @@ router.post('/', authenticate, authenticatedLimiter, async (req, res, next) => {
     const request = await createRequest({
       requester_user_id: req.user!.id,
       target_user_id: payload.target_user_id,
-      message: payload.message
+      message: payload.message,
+      preferred_time: payload.preferred_time,
+      budget_range: payload.budget_range
     });
     success(res, { request }, 201);
   } catch (error) {

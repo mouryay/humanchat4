@@ -11,6 +11,8 @@ import {
   getMessages,
   getSession,
   getSetting,
+  getRequestsByRequester,
+  saveManagedRequest,
   incrementUnread,
   saveSetting,
   updateConversationActivity,
@@ -139,5 +141,26 @@ describe('Dexie helper functions', () => {
     const conversations = await getAllConversations();
     expect(conversations[0].conversationId).toBe('c2');
     expect(conversations[1].conversationId).toBe('c1');
+  });
+
+  it('persists managed connection requests', async () => {
+    const now = Date.now();
+    await saveManagedRequest({
+      requestId: 'req-1',
+      requesterId: 'guest-1',
+      targetUserId: 'talent-9',
+      managerId: 'rep-3',
+      representativeName: 'Jordan from VIP Desk',
+      message: 'Looking to collaborate next week',
+      preferredTime: 'Next Tuesday afternoon',
+      budgetRange: '$5k - $7k',
+      status: 'pending',
+      createdAt: now
+    });
+
+    const requests = await getRequestsByRequester('guest-1');
+    expect(requests).toHaveLength(1);
+    expect(requests[0].representativeName).toBe('Jordan from VIP Desk');
+    expect(requests[0].status).toBe('pending');
   });
 });

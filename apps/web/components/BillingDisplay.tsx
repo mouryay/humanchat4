@@ -11,11 +11,24 @@ interface BillingDisplayProps {
 const formatAmount = (amount: number): string => `$${amount.toFixed(2)}`;
 
 export const computeInstantTotal = (session: Session, elapsedSeconds: number): number => {
+  if (session.confidentialRate) {
+    return 0;
+  }
   const rate = session.instantRatePerMinute ?? (session.durationMinutes > 0 ? session.agreedPrice / session.durationMinutes : 0);
   return Math.max(0, (elapsedSeconds / 60) * rate);
 };
 
 export default function BillingDisplay({ session, elapsedSeconds }: BillingDisplayProps) {
+  if (session.confidentialRate) {
+    return (
+      <div className={styles.billingBadge}>
+        <span>Session Fee:</span>
+        <strong>Private Rate</strong>
+        <small className={styles.billingSubtext}>Their representative will send the final invoice.</small>
+      </div>
+    );
+  }
+
   if (session.paymentMode === 'charity') {
     const label = session.type === 'scheduled' ? 'Scheduled rate' : 'Live rate';
     const rate = session.type === 'scheduled' ? session.agreedPrice / Math.max(session.durationMinutes, 1) : session.instantRatePerMinute ?? 0;

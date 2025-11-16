@@ -8,6 +8,7 @@ import SamChatView from './SamChatView';
 import SessionView from './SessionView';
 import type { ProfileSummary } from '../../../src/lib/db';
 import BookingModal from './BookingModal';
+import RequestForm from './RequestForm';
 
 interface ConversationViewProps {
   activeConversationId?: string;
@@ -24,6 +25,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const bindingRef = useRef<ScrollBinding>({ node: null });
   const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
+  const [requestProfile, setRequestProfile] = useState<ProfileSummary | null>(null);
 
   const registerScrollContainer = useCallback(
     (node: HTMLDivElement | null) => {
@@ -111,9 +113,13 @@ export default function ConversationView({ activeConversationId, onSelectConvers
                 onConnectNow={(userId) => {
                   console.info('Connect now with', userId);
                 }}
-                  onBookTime={(profile) => {
-                    setBookingProfile(profile);
-                  }}
+                onBookTime={(profile) => {
+                  if (profile.managed && profile.confidentialRate) {
+                    setRequestProfile(profile);
+                    return;
+                  }
+                  setBookingProfile(profile);
+                }}
               />
             ) : (
               <SessionView
@@ -128,6 +134,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
       </div>
       </section>
       <BookingModal open={Boolean(bookingProfile)} profile={bookingProfile} conversation={conversation ?? null} onClose={() => setBookingProfile(null)} />
+      <RequestForm open={Boolean(requestProfile)} profile={requestProfile} conversation={conversation ?? null} onClose={() => setRequestProfile(null)} />
     </>
   );
 }

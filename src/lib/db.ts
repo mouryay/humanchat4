@@ -40,6 +40,10 @@ export interface ProfileSummary {
   bio?: string;
   conversationType?: 'free' | 'paid' | 'charity';
   confidentialRate?: boolean;
+  managed?: boolean;
+  managerId?: string | null;
+  managerName?: string | null;
+  displayMode?: 'normal' | 'by_request' | 'confidential';
   instantRatePerMinute?: number;
   scheduledRates?: ScheduledRate[];
   availability?: string;
@@ -149,11 +153,27 @@ export interface Session {
   charityName?: string;
   charityId?: string;
   charityStripeAccountId?: string;
+  confidentialRate?: boolean;
+  representativeName?: string | null;
+  displayMode?: 'normal' | 'by_request' | 'confidential';
 }
 
 export interface Setting {
   key: string;
   value: unknown;
+}
+
+export interface ManagedRequest {
+  requestId: string;
+  requesterId: string;
+  targetUserId: string;
+  managerId?: string | null;
+  representativeName?: string | null;
+  message: string;
+  preferredTime?: string | null;
+  budgetRange?: string | null;
+  status: 'pending' | 'approved' | 'declined';
+  createdAt: number;
 }
 
 type MessageInput = Omit<Message, 'id' | 'conversationId' | 'timestamp'> & {
@@ -183,6 +203,16 @@ const schemaMigrations: SchemaMigration[] = [
       sessions: '&sessionId,conversationId,status,startTime,endTime',
       settings: '&key'
     }
+  },
+  {
+    version: 2,
+    stores: {
+      conversations: '&conversationId,type,linkedSessionId,lastActivity,unreadCount',
+      messages: '++id,conversationId,senderId,timestamp,type',
+      sessions: '&sessionId,conversationId,status,startTime,endTime',
+      settings: '&key',
+      requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt'
+    }
   }
 ];
 
@@ -201,6 +231,7 @@ class HumanChatDB extends Dexie {
   messages!: Table<Message, number>;
   sessions!: Table<Session, string>;
   settings!: Table<Setting, string>;
+  requests!: Table<ManagedRequest, string>;
 
   constructor() {
     super(DATABASE_NAME);
@@ -365,6 +396,41 @@ export const clearUnread = async (conversationId: string): Promise<void> => {
     ensureUpdated(updated, 'Conversation', conversationId);
   } catch (error) {
     throw toDbError('clear unread count', error);
+  }
+};
+
+export const saveManagedRequest = async (request: ManagedRequest): Promise<void> => {
+  try {
+    await db.requests.put(request);
+  } catch (error) {
+    throw toDbError('save managed request', error);
+  }
+};
+
+export const getRequestsByManager = async (managerId: string): Promise<ManagedRequest[]> => {
+  try {
+    const rows = await db.requests.where('managerId').equals(managerId).toArray();
+    return rows.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (error) {
+    throw toDbError('list manager requests', error);
+  }
+};
+
+export const getRequestsByRequester = async (requesterId: string): Promise<ManagedRequest[]> => {
+  try {
+    const rows = await db.requests.where('requesterId').equals(requesterId).toArray();
+    return rows.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (error) {
+    throw toDbError('list requester requests', error);
+  }
+};
+
+export const getRequestsForTarget = async (targetUserId: string): Promise<ManagedRequest[]> => {
+  try {
+    const rows = await db.requests.where('targetUserId').equals(targetUserId).toArray();
+    return rows.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (error) {
+    throw toDbError('list target requests', error);
   }
 };
 

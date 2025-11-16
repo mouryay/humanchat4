@@ -36,6 +36,7 @@ AI concierge (Sam) handles discovery, scheduling, payments through chat.
 - Buffer between calls: 5 minutes
 - Three conversation types: Free, Paid, Charity
 - Managed accounts have confidential rates
+- Managed accounts route through representatives (Send Request → rep responds within 24h, no instant connect)
 - Calendar sync every 5 min
 - Users can be online but busy (in another call)
 

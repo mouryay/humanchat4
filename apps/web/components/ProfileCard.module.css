@@ -207,8 +207,25 @@
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
+.requestButton {
+  flex: 1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(147, 51, 234, 0.35);
+  background: rgba(147, 51, 234, 0.18);
+  color: #f3e8ff;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
 .primaryButton:disabled,
 .secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.requestButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

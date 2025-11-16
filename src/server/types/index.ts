@@ -21,7 +21,9 @@ export interface User {
   has_active_session: boolean;
   managed: boolean;
   manager_id: string | null;
-  confidential_rate: number | null;
+  confidential_rate: boolean | null;
+  display_mode?: 'normal' | 'by_request' | 'confidential' | null;
+  manager_display_name?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +48,9 @@ export interface Session {
   charity_id?: string | null;
   charity_name?: string | null;
   charity_stripe_account_id?: string | null;
+  confidential_rate?: boolean | null;
+  representative_name?: string | null;
+  display_mode?: 'normal' | 'by_request' | 'confidential' | null;
   created_at: string;
   updated_at: string;
 }
@@ -92,7 +97,11 @@ export interface Request {
   id: string;
   requester_user_id: string;
   target_user_id: string;
+  manager_user_id?: string | null;
+  representative_name?: string | null;
   message: string;
+  preferred_time?: string | null;
+  budget_range?: string | null;
   status: 'pending' | 'approved' | 'declined';
   created_at: string;
 }
