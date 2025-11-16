@@ -1,4 +1,9 @@
 export const logger = {
+  debug: (message: string, meta?: unknown): void => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug(`[DEBUG] ${message}`, meta ?? '');
+    }
+  },
   info: (message: string, meta?: unknown): void => {
     console.log(`[INFO] ${message}`, meta ?? '');
   },

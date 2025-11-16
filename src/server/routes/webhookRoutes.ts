@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import { success } from '../utils/apiResponse.js';
-import { verifyStripeSignature } from '../services/paymentService.js';
+import { verifyStripeSignature, handleStripeEvent } from '../services/stripeService.js';
+import { env } from '../config/env.js';
 
 const router = Router();
 
@@ -10,7 +11,8 @@ router.post('/stripe', express.raw({ type: 'application/json' }), (req, res, nex
     if (!signatureHeader || Array.isArray(signatureHeader)) {
       throw new Error('Missing Stripe signature header');
     }
-    const event = verifyStripeSignature(req.body as Buffer, signatureHeader, process.env.STRIPE_WEBHOOK_SECRET ?? '');
+    const event = verifyStripeSignature(req.body as Buffer, signatureHeader, env.stripeWebhookSecret);
+    void handleStripeEvent(event);
     success(res, { received: event.id });
   } catch (error) {
     next(error);

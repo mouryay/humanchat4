@@ -40,8 +40,9 @@ export interface PaymentSummary {
   currency: string;
 }
 
-export const processSessionPayment = async (amount: number, sessionId: string, currency: string = 'usd'): Promise<PaymentSummary> => {
+export const processSessionPayment = async (amount: number, sessionId: string, currency: string = 'usd', finalAmount?: number): Promise<PaymentSummary> => {
   const cents = Math.max(0, Math.round(amount * 100));
+  const finalCents = typeof finalAmount === 'number' ? Math.max(0, Math.round(finalAmount * 100)) : undefined;
   if (cents === 0) {
     return { amount, currency };
   }
@@ -50,7 +51,14 @@ export const processSessionPayment = async (amount: number, sessionId: string, c
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount: cents, currency, metadata: { sessionId } })
+    body: JSON.stringify({
+      amount: cents,
+      currency,
+      sessionId,
+      mode: 'instant',
+      captureMethod: 'manual',
+      metadata: { sessionId }
+    })
   });
   const { intent } = await handleResponse(intentResponse, 'Failed to create payment intent');
 
@@ -58,7 +66,7 @@ export const processSessionPayment = async (amount: number, sessionId: string, c
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paymentIntentId: intent?.id })
+    body: JSON.stringify({ paymentIntentId: intent?.id, finalAmount: finalCents ?? cents })
   });
   await handleResponse(captureResponse, 'Failed to capture payment');
 

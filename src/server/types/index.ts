@@ -42,6 +42,25 @@ export interface Session {
   updated_at: string;
 }
 
+export type SessionPaymentStatus = 'pending' | 'authorized' | 'captured' | 'refunded' | 'failed';
+
+export interface SessionPayment {
+  sessionId: string;
+  paymentIntentId: string | null;
+  amount: number;
+  currency: string;
+  status: SessionPaymentStatus;
+  platformFee: number;
+  hostPayout: number;
+  charityId?: string | null;
+  donationAmount?: number | null;
+  donationIntentId?: string | null;
+  donationCheckoutId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Conversation {
   id: string;
   type: ConversationType;

@@ -20,6 +20,8 @@ Copy `.env.example` or export the following environment variables before running
 - `JWT_SECRET`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PLATFORM_FEE_BPS` (optional, defaults to `1000` → 10%)
+- `STRIPE_CHARITY_CONNECT_ACCOUNT` (optional default destination for charity payouts)
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL` (optional, defaults to `gemini-1.5-flash`)
 
@@ -69,7 +71,7 @@ Each helper function includes defensive error handling and enforces the 15-minut
 - **Routing & Middleware:** Centralized response format, JWT auth, role-based rate limiting, and structured error handling.
 - **Data Access:** Typed services for users, sessions, conversations, payments, calendars, requests, and Sam AI chat orchestrations.
 - **Realtime:** WebSocket hub exposes `/session/:sessionId`, `/status`, and `/notifications/:userId` backed by Redis pub/sub for cross-instance fan-out.
-- **Payments:** Stripe helpers handle intents, capture, refunds, and webhook signature verification.
+- **Payments:** Expanded Stripe service manages intents, Connect onboarding, transfers, tips/donations, and webhook-driven status updates.
 - **Documentation:** `openapi.yaml` captures the REST contract for quick import into tools like Postman or Stoplight.
 - **Gemini Concierge:** `sendToSam` streams conversation history + UI context to Google Gemini, enforces JSON-only responses, and validates structured Sam actions before persisting them.
 

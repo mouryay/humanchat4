@@ -306,6 +306,35 @@ paths:
     post:
       security: [{ bearerAuth: [] }]
       tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+                currency:
+                  type: string
+                  example: usd
+                sessionId:
+                  type: string
+                  format: uuid
+                captureMethod:
+                  type: string
+                  enum: [automatic, manual]
+                mode:
+                  type: string
+                  enum: [instant, scheduled, charity, donation]
+                metadata:
+                  type: object
+                  additionalProperties:
+                    type: string
+                charityAccountId:
+                  type: string
+                waivePlatformFee:
+                  type: boolean
       responses:
         '201':
           description: PaymentIntent created
@@ -313,6 +342,17 @@ paths:
     post:
       security: [{ bearerAuth: [] }]
       tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentIntentId]
+              properties:
+                paymentIntentId:
+                  type: string
+                finalAmount:
+                  type: integer
       responses:
         '200':
           description: Captured
@@ -320,9 +360,89 @@ paths:
     post:
       security: [{ bearerAuth: [] }]
       tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentIntentId]
+              properties:
+                paymentIntentId:
+                  type: string
+                amount:
+                  type: integer
       responses:
         '200':
           description: Refunded
+  /api/payments/transfer:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId]
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+                amount:
+                  type: integer
+      responses:
+        '200':
+          description: Transfer initiated
+  /api/payments/donation:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, amount]
+              properties:
+                sessionId:
+                  type: string
+                  format: uuid
+                amount:
+                  type: integer
+                currency:
+                  type: string
+      responses:
+        '200':
+          description: Donation checkout created
+  /api/payments/connect-link:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                returnPath:
+                  type: string
+      responses:
+        '200':
+          description: Stripe Connect onboarding link
+  /api/payments/session/{sessionId}/receipt:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [Payments]
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session receipt payload
   /api/requests:
     post:
       security: [{ bearerAuth: [] }]
