@@ -39,6 +39,7 @@ AI concierge (Sam) handles discovery, scheduling, payments through chat.
 - Managed accounts route through representatives (Send Request → rep responds within 24h, no instant connect)
 - Calendar sync every 5 min
 - Users can be online but busy (in another call)
+- Requested people requests are logged (individual + aggregated) when Sam or search cannot find a person, so ops can reach out later
 
 ## Data Lives In
 - IndexedDB: conversations, messages, sessions, settings

@@ -99,6 +99,39 @@ components:
           type: string
           enum: [normal, by_request, confidential]
           nullable: true
+    RequestedPerson:
+      type: object
+      properties:
+        name:
+          type: string
+        normalized_name:
+          type: string
+        request_count:
+          type: integer
+        status:
+          type: string
+          enum: [pending, contacted, declined, onboarded]
+        last_requested_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+    RequestLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        requested_name:
+          type: string
+        search_query:
+          type: string
+        created_at:
+          type: string
+          format: date-time
     Request:
       type: object
       properties:
@@ -563,6 +596,85 @@ paths:
                 properties:
                   request:
                     $ref: '#/components/schemas/Request'
+    /api/requested-people:
+      get:
+        security: [{ bearerAuth: [] }]
+        tags: [RequestedPeople]
+        parameters:
+          - in: query
+            name: status
+            schema:
+              type: string
+              enum: [pending, contacted, declined, onboarded]
+        responses:
+          '200':
+            description: Requested people list
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    people:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/RequestedPerson'
+    /api/requested-people/log:
+      post:
+        security: [{ bearerAuth: [] }]
+        tags: [RequestedPeople]
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requestedName, searchQuery]
+                properties:
+                  requestedName:
+                    type: string
+                  searchQuery:
+                    type: string
+        responses:
+          '201':
+            description: Logged
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    person:
+                      $ref: '#/components/schemas/RequestedPerson'
+    /api/requested-people/{normalizedName}/status:
+      patch:
+        security: [{ bearerAuth: [] }]
+        tags: [RequestedPeople]
+        parameters:
+          - in: path
+            name: normalizedName
+            required: true
+            schema:
+              type: string
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [pending, contacted, declined, onboarded]
+        responses:
+          '200':
+            description: Updated requested person
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    person:
+                      $ref: '#/components/schemas/RequestedPerson'
   /api/sam/chat:
     post:
       security: [{ bearerAuth: [] }]

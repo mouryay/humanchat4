@@ -106,12 +106,23 @@ export interface Request {
   created_at: string;
 }
 
+export type RequestedPersonStatus = 'pending' | 'contacted' | 'declined' | 'onboarded';
+
 export interface RequestedPerson {
   name: string;
   normalized_name: string;
   request_count: number;
-  status: 'pending' | 'approved' | 'declined';
+  status: RequestedPersonStatus;
   last_requested_at: string;
+  created_at: string;
+}
+
+export interface RequestLog {
+  id: string;
+  user_id: string;
+  requested_name: string;
+  search_query: string;
+  created_at: string;
 }
 
 export interface SamProfileSummary {

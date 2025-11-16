@@ -7,6 +7,7 @@ import calendarRoutes from './calendarRoutes.js';
 import paymentRoutes from './paymentRoutes.js';
 import requestRoutes from './requestRoutes.js';
 import samRoutes from './samRoutes.js';
+import requestedPeopleRoutes from './requestedPeopleRoutes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/calendar', calendarRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/requests', requestRoutes);
 router.use('/sam', samRoutes);
+router.use('/requested-people', requestedPeopleRoutes);
 
 export default router;

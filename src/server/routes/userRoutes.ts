@@ -4,13 +4,8 @@ import { authenticate } from '../middleware/auth.js';
 import { authenticatedLimiter } from '../middleware/rateLimit.js';
 import { success } from '../utils/apiResponse.js';
 import type { User } from '../types/index.js';
-import {
-  getUserById,
-  updateUserProfile,
-  searchUsers,
-  getUserAvailability,
-  getUserStatus
-} from '../services/userService.js';
+import { getUserById, updateUserProfile, searchUsers, getUserAvailability, getUserStatus } from '../services/userService.js';
+import { logRequestedPersonInterest } from '../services/requestedPeopleService.js';
 
 const router = Router();
 
@@ -19,6 +14,16 @@ router.get('/search', authenticate, authenticatedLimiter, async (req, res, next)
     const q = (req.query.q as string) ?? '';
     const online = req.query.online ? req.query.online === 'true' : undefined;
     const users = await searchUsers(q, online);
+    const trimmed = q.trim();
+    if (users.length === 0 && trimmed.length >= 3) {
+      await logRequestedPersonInterest({
+        requestedName: trimmed,
+        searchQuery: q,
+        userId: req.user!.id
+      }).catch((error) => {
+        console.warn('Failed to log requested person', error);
+      });
+    }
     success(res, { users });
   } catch (error) {
     next(error);

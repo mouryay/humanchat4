@@ -90,6 +90,12 @@ Each helper function includes defensive error handling and enforces the 15-minut
 - **Backend workflow:** The API enforces managed-only access, stores preferred time/budget metadata, and associates each request with the manager/representative so future tooling can notify them and approve/decline with a confidential rate.
 - **Sessions:** Any session hydrated with `confidentialRate` displays "Private Rate" inside the HUD, suppresses Stripe collection, and informs the guest that the representative will finalize billing offline.
 
+## Requested People Tracking
+
+- **Automatic logging:** Every time a member searches for or asks Sam to connect with someone who isn’t yet on HumanChat, the platform logs both the individual query (`request_logs`) and the aggregated totals (`requested_people`). Names are normalized (`"Elon Musk" → "elonmusk"`) to deduplicate variations.
+- **Sam messaging:** When Sam detects a request for an unavailable person, it acknowledges the ask, confirms the interest was recorded, and offers to recommend similar profiles.
+- **Admin dashboard:** Visit `/admin/requests` in the Next.js app to review the aggregated table, filter by status (pending/contacted/declined/onboarded), and update outreach progress inline.
+
 ## Frontend Preview (Next.js)
 
 The `apps/web` folder now hosts an app-router Next.js client that renders the fixed conversation sidebar **and** a fully responsive conversation workspace backed by the Dexie cache:
