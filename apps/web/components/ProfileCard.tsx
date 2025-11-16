@@ -10,7 +10,7 @@ import RateDisplay from './RateDisplay';
 interface ProfileCardProps {
   profile: ProfileSummary;
   onConnectNow?: (userId: string) => void;
-  onBookTime?: (userId: string) => void;
+  onBookTime?: (profile: ProfileSummary) => void;
 }
 
 export default function ProfileCard({ profile, onConnectNow, onBookTime }: ProfileCardProps) {
@@ -68,7 +68,7 @@ export default function ProfileCard({ profile, onConnectNow, onBookTime }: Profi
           </button>
           {tooltip && <span className={styles.tooltipText}>{tooltip}</span>}
         </div>
-        <button className={styles.secondaryButton} type="button" onClick={() => onBookTime?.(profile.userId)}>
+        <button className={styles.secondaryButton} type="button" onClick={() => onBookTime?.(profile)}>
           Book Time
         </button>
       </div>

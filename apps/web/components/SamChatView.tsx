@@ -14,7 +14,7 @@ interface SamChatViewProps {
   registerScrollContainer: (node: HTMLDivElement | null) => void;
   onOpenConversation?: (conversationId: string) => void;
   onConnectNow?: (userId: string) => void;
-  onBookTime?: (userId: string) => void;
+  onBookTime?: (profile: ProfileSummary) => void;
 }
 
 const isSamMessage = (message: Message) => message.type === 'sam_response' || message.senderId === 'sam';

@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import styles from './ConversationView.module.css';
 import { useConversationDetail } from '../hooks/useConversationDetail';
 import SamChatView from './SamChatView';
 import SessionView from './SessionView';
+import type { ProfileSummary } from '../../../src/lib/db';
+import BookingModal from './BookingModal';
 
 interface ConversationViewProps {
   activeConversationId?: string;
@@ -21,6 +23,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
   const { conversation, session, messages, loading, error } = useConversationDetail(activeConversationId);
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const bindingRef = useRef<ScrollBinding>({ node: null });
+  const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
 
   const registerScrollContainer = useCallback(
     (node: HTMLDivElement | null) => {
@@ -78,7 +81,8 @@ export default function ConversationView({ activeConversationId, onSelectConvers
   }, [activeConversationId, conversation]);
 
   return (
-    <section className={styles.container}>
+    <>
+      <section className={styles.container}>
       <div className={styles.header}>
         <div>
           <div className={styles.title}>{summary.title}</div>
@@ -107,9 +111,9 @@ export default function ConversationView({ activeConversationId, onSelectConvers
                 onConnectNow={(userId) => {
                   console.info('Connect now with', userId);
                 }}
-                onBookTime={(userId) => {
-                  console.info('Book time with', userId);
-                }}
+                  onBookTime={(profile) => {
+                    setBookingProfile(profile);
+                  }}
               />
             ) : (
               <SessionView
@@ -122,6 +126,8 @@ export default function ConversationView({ activeConversationId, onSelectConvers
           </div>
         )}
       </div>
-    </section>
+      </section>
+      <BookingModal open={Boolean(bookingProfile)} profile={bookingProfile} conversation={conversation ?? null} onClose={() => setBookingProfile(null)} />
+    </>
   );
 }

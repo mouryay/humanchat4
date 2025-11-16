@@ -11,7 +11,7 @@ interface ActionRendererProps {
   onCreateSession?: (conversation: Conversation, session: Session) => void;
   onSelectSlot?: (slotId: string) => void;
   onConnectNow?: (userId: string) => void;
-  onBookTime?: (userId: string) => void;
+  onBookTime?: (profile: ProfileSummary) => void;
 }
 
 const formatRate = (rate?: number) => (rate ? `$${rate.toFixed(2)}/min` : '');
