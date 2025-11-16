@@ -236,6 +236,11 @@ export const capturePayment = async (
 			platform_fee: platformFee,
 			host_payout: Math.max(total - platformFee, 0)
 		});
+		try {
+			await transferToHost(paymentRecord.sessionId, undefined, 'session_payout');
+		} catch (error) {
+			logger.warn('Stripe transfer failed', { sessionId: paymentRecord.sessionId, error });
+		}
 	}
 	return captured;
 };
@@ -452,6 +457,8 @@ export const generateReceipt = async (sessionId: string) => {
 		payment_mode: string;
 		start_time: string;
 		end_time: string | null;
+		charity_name: string | null;
+		donation_allowed: boolean | null;
 	}>('SELECT * FROM sessions WHERE id = $1', [sessionId]);
 	const session = sessionResult.rows[0];
 	if (!session) {
@@ -471,6 +478,9 @@ export const generateReceipt = async (sessionId: string) => {
 		platformFee: payment.platformFee,
 		hostPayout: payment.hostPayout,
 		donationAmount: payment.donationAmount ?? 0,
+		paymentMode: session.payment_mode,
+		charityName: session.charity_name,
+		donationAllowed: Boolean(session.donation_allowed),
 		issuedAt: payment.updatedAt,
 		startedAt: session.start_time,
 		endedAt: session.end_time,

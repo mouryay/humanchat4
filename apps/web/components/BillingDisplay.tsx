@@ -16,6 +16,20 @@ export const computeInstantTotal = (session: Session, elapsedSeconds: number): n
 };
 
 export default function BillingDisplay({ session, elapsedSeconds }: BillingDisplayProps) {
+  if (session.paymentMode === 'charity') {
+    const label = session.type === 'scheduled' ? 'Scheduled rate' : 'Live rate';
+    const rate = session.type === 'scheduled' ? session.agreedPrice / Math.max(session.durationMinutes, 1) : session.instantRatePerMinute ?? 0;
+    return (
+      <div className={styles.billingBadge}>
+        <div>
+          <span>{label}:</span>
+          <strong>{formatAmount(rate)} → {session.charityName ?? 'charity partner'}</strong>
+        </div>
+        <small className={styles.billingSubtext}>100% goes to charity</small>
+      </div>
+    );
+  }
+
   if (session.paymentMode === 'free') {
     return (
       <div className={styles.billingBadge}>

@@ -13,6 +13,7 @@ export interface User {
   bio: string | null;
   conversation_type: ConversationCategory;
   donation_preference: string | null;
+  charity_id: string | null;
   charity_name: string | null;
   instant_rate_per_minute: number | null;
   scheduled_rates: Record<string, number> | null;
@@ -38,6 +39,13 @@ export interface Session {
   agreed_price: number;
   payment_mode: PaymentMode;
   payment_intent_id: string | null;
+  donation_allowed?: boolean | null;
+  donation_target?: string | null;
+  donation_preference?: string | null;
+  donation_amount?: number | null;
+  charity_id?: string | null;
+  charity_name?: string | null;
+  charity_stripe_account_id?: string | null;
   created_at: string;
   updated_at: string;
 }

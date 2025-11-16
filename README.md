@@ -75,6 +75,13 @@ Each helper function includes defensive error handling and enforces the 15-minut
 - **Documentation:** `openapi.yaml` captures the REST contract for quick import into tools like Postman or Stoplight.
 - **Gemini Concierge:** `sendToSam` streams conversation history + UI context to Google Gemini, enforces JSON-only responses, and validates structured Sam actions before persisting them.
 
+## Charity & Donation Experience
+
+- **Conversation types:** Hosts can mark profiles as `free`, `paid`, or `charity`. Charity conversations automatically surface the 💚 badge, route funds to the designated charity Connect account, and display "100% goes to charity" messaging across tiles and session HUDs.
+- **Tips & donations:** When `donationPreference === 'on'`, the session end flow surfaces a "Send thanks" CTA that launches an in-app tip modal with suggested amounts ($5, $10, $20, custom). The modal calls `/api/payments/donation`, which spins up a Stripe Checkout session tied to the same payout target (host or charity).
+- **Session receipts:** `stripeService.generateReceipt` now returns payment mode, charity name, donation allowance, and donation totals so clients can render impact summaries like "Your $40 supports Girls Who Code".
+- **Automatic routing:** After a session PaymentIntent is captured the backend immediately kicks off a Connect transfer via Stripe's Transfer API. Charity sessions waive platform fees (configurable via `STRIPE_PLATFORM_FEE_BPS`) and land in the charity's Connect account, while paid sessions send the post-fee share to the host.
+
 ## Frontend Preview (Next.js)
 
 The `apps/web` folder now hosts an app-router Next.js client that renders the fixed conversation sidebar **and** a fully responsive conversation workspace backed by the Dexie cache:

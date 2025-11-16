@@ -40,7 +40,20 @@ export interface PaymentSummary {
   currency: string;
 }
 
-export const processSessionPayment = async (amount: number, sessionId: string, currency: string = 'usd', finalAmount?: number): Promise<PaymentSummary> => {
+type PaymentMode = 'instant' | 'scheduled' | 'charity';
+
+interface SessionPaymentOptions {
+  currency?: string;
+  captureMethod?: 'automatic' | 'manual';
+  finalAmount?: number;
+  mode?: PaymentMode;
+}
+
+export const processSessionPayment = async (
+  amount: number,
+  sessionId: string,
+  { currency = 'usd', captureMethod = 'manual', finalAmount, mode = 'instant' }: SessionPaymentOptions = {}
+): Promise<PaymentSummary> => {
   const cents = Math.max(0, Math.round(amount * 100));
   const finalCents = typeof finalAmount === 'number' ? Math.max(0, Math.round(finalAmount * 100)) : undefined;
   if (cents === 0) {
@@ -55,9 +68,9 @@ export const processSessionPayment = async (amount: number, sessionId: string, c
       amount: cents,
       currency,
       sessionId,
-      mode: 'instant',
-      captureMethod: 'manual',
-      metadata: { sessionId }
+      mode,
+      captureMethod,
+      metadata: { sessionId, paymentMode: mode }
     })
   });
   const { intent } = await handleResponse(intentResponse, 'Failed to create payment intent');
@@ -71,4 +84,14 @@ export const processSessionPayment = async (amount: number, sessionId: string, c
   await handleResponse(captureResponse, 'Failed to capture payment');
 
   return { paymentIntentId: intent?.id, amount, currency };
+};
+
+export const initiateDonation = async (sessionId: string, amountCents: number, currency: string = 'usd'): Promise<{ checkoutUrl: string | null; amount: number }> => {
+  const response = await fetch(`${API_BASE_URL}/api/payments/donation`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId, amount: amountCents, currency })
+  });
+  return handleResponse(response, 'Failed to start donation');
 };

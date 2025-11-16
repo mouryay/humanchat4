@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Session } from '../../../src/lib/db';
+import type { PaymentMode, Session } from '../../../src/lib/db';
 import { db } from '../../../src/lib/db';
 import { VideoCall, type VideoCallState } from '../services/videoCall';
 import { sessionStatusManager } from '../services/sessionStatusManager';
@@ -11,10 +11,21 @@ import SessionTimer from './SessionTimer';
 import BillingDisplay, { computeInstantTotal } from './BillingDisplay';
 import styles from './ConversationView.module.css';
 
+export interface CallEndSummary {
+  durationSeconds: number;
+  totalAmount: number;
+  currency: string;
+  paymentIntentId?: string;
+  paymentMode: PaymentMode;
+  donationAllowed?: boolean;
+  charityName?: string;
+  sessionId: string;
+}
+
 interface VideoAreaProps {
   session: Session;
   currentUserId: string;
-  onCallEnd: (summary: { durationSeconds: number; totalAmount: number; paymentIntentId?: string; currency: string }) => void;
+  onCallEnd: (summary: CallEndSummary) => void;
 }
 
 export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAreaProps) {
@@ -138,17 +149,51 @@ export default function VideoArea({ session, currentUserId, onCallEnd }: VideoAr
     }
 
     const total = calculateTotal();
+    const donationAllowed = Boolean(session.donationAllowed ?? (session.donationPreference === 'on'));
+    const sessionMode: PaymentMode = session.paymentMode ?? 'paid';
+    const stripeMode: 'instant' | 'scheduled' | 'charity' = sessionMode === 'charity' ? 'charity' : session.type === 'scheduled' ? 'scheduled' : 'instant';
+    const requiresPayment = sessionMode === 'paid' || sessionMode === 'charity';
+
+    if (!requiresPayment) {
+      onCallEnd({
+        durationSeconds: elapsedSeconds,
+        totalAmount: total,
+        currency: 'usd',
+        paymentMode: sessionMode,
+        donationAllowed,
+        charityName: session.charityName,
+        sessionId: session.sessionId
+      });
+      return;
+    }
+
     try {
-      const payment = await processSessionPayment(total, session.sessionId);
+      const payment = await processSessionPayment(total, session.sessionId, {
+        mode: stripeMode,
+        captureMethod: session.type === 'scheduled' ? 'automatic' : 'manual',
+        finalAmount: total
+      });
       onCallEnd({
         durationSeconds: elapsedSeconds,
         totalAmount: payment.amount,
         currency: payment.currency,
-        paymentIntentId: payment.paymentIntentId
+        paymentIntentId: payment.paymentIntentId,
+        paymentMode: sessionMode,
+        donationAllowed,
+        charityName: session.charityName,
+        sessionId: session.sessionId
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
-      onCallEnd({ durationSeconds: elapsedSeconds, totalAmount: total, currency: 'usd' });
+      onCallEnd({
+        durationSeconds: elapsedSeconds,
+        totalAmount: total,
+        currency: 'usd',
+        paymentMode: sessionMode,
+        donationAllowed,
+        charityName: session.charityName,
+        sessionId: session.sessionId
+      });
     }
   };
 

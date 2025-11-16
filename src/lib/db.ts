@@ -46,6 +46,8 @@ export interface ProfileSummary {
   isOnline?: boolean;
   hasActiveSession?: boolean;
   charityName?: string;
+  charityId?: string;
+  charityStripeAccountId?: string;
   donationPreference?: 'on' | 'off';
 }
 
@@ -140,6 +142,13 @@ export interface Session {
   agreedPrice: number;
   instantRatePerMinute?: number;
   paymentMode: PaymentMode;
+  donationAllowed?: boolean;
+  donationTarget?: string;
+  donationPreference?: 'on' | 'off';
+  donationAmount?: number;
+  charityName?: string;
+  charityId?: string;
+  charityStripeAccountId?: string;
 }
 
 export interface Setting {

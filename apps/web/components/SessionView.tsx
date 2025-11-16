@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Conversation, Message, Session } from '../../../src/lib/db';
 import styles from './ConversationView.module.css';
-import VideoArea from './VideoArea';
+import VideoArea, { type CallEndSummary } from './VideoArea';
 import ChatArea from './ChatArea';
 import EndCallFlow from './EndCallFlow';
+import DonationModal from './DonationModal';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 
 interface SessionViewProps {
@@ -31,7 +32,8 @@ const formatCountdown = (target: number) => {
 export default function SessionView({ conversation, session, messages, registerScrollContainer }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
-  const [callSummary, setCallSummary] = useState<{ durationSeconds: number; totalAmount: number; paymentIntentId?: string; currency: string } | null>(null);
+  const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
+  const [showDonationModal, setShowDonationModal] = useState(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -83,15 +85,42 @@ export default function SessionView({ conversation, session, messages, registerS
     return <div className={styles.error}>Sign in again to join this session.</div>;
   }
 
+  const handleCallEnd = (summary: CallEndSummary) => {
+    setCallSummary({ ...summary, peerName: peerLabel });
+    setShowDonationModal(false);
+  };
+
+  const handleDismissSummary = () => {
+    setCallSummary(null);
+    setShowDonationModal(false);
+  };
+
+  const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && showDonationModal && session);
+
   return (
     <div className={styles.sessionShell}>
       <div className={styles.videoSection}>
-        <VideoArea session={session} currentUserId={currentUserId} onCallEnd={(summary) => setCallSummary(summary)} />
+        <VideoArea session={session} currentUserId={currentUserId} onCallEnd={handleCallEnd} />
       </div>
       <div className={styles.chatSection}>
         <ChatArea conversation={conversation} messages={messages} registerScrollContainer={registerScrollContainer} currentUserId={currentUserId} />
       </div>
-      {callSummary && <EndCallFlow summary={callSummary} onDismiss={() => setCallSummary(null)} />}
+      {callSummary && (
+        <EndCallFlow
+          summary={callSummary}
+          onDismiss={handleDismissSummary}
+          onDonate={callSummary.donationAllowed ? () => setShowDonationModal(true) : undefined}
+        />
+      )}
+      {shouldShowDonationModal && callSummary && (
+        <DonationModal
+          sessionId={callSummary.sessionId}
+          hostName={callSummary.peerName ?? 'your host'}
+          charityName={callSummary.charityName}
+          paymentMode={callSummary.paymentMode}
+          onClose={() => setShowDonationModal(false)}
+        />
+      )}
     </div>
   );
 }

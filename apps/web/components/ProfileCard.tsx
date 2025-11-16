@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import type { ProfileSummary } from '../../../src/lib/db';
 import styles from './ProfileCard.module.css';
@@ -18,6 +18,18 @@ export default function ProfileCard({ profile, onConnectNow, onBookTime }: Profi
 
   const canConnect = Boolean(profile.isOnline && !profile.hasActiveSession);
   const tooltip = profile.hasActiveSession ? 'Currently in a call' : undefined;
+  const contributionBlurb = useMemo(() => {
+    if (profile.conversationType === 'charity' && profile.instantRatePerMinute) {
+      return `${profile.name} charges $${profile.instantRatePerMinute.toFixed(2)}/min — all proceeds go to ${profile.charityName ?? 'their charity partner'}.`;
+    }
+    if (profile.conversationType === 'free' && profile.donationPreference === 'on') {
+      return `${profile.name} talks for free and accepts tips.`;
+    }
+    if (profile.conversationType === 'paid' && profile.donationPreference === 'on') {
+      return `${profile.name} offers paid sessions with optional donations.`;
+    }
+    return null;
+  }, [profile.conversationType, profile.donationPreference, profile.instantRatePerMinute, profile.name, profile.charityName]);
 
   return (
     <article className={styles.card}>
@@ -54,7 +66,10 @@ export default function ProfileCard({ profile, onConnectNow, onBookTime }: Profi
         scheduledRates={profile.scheduledRates}
         isOnline={profile.isOnline}
         charityName={profile.charityName}
+        donationPreference={profile.donationPreference}
       />
+
+      {contributionBlurb && <p className={styles.sessionBlurb}>{contributionBlurb}</p>}
 
       <div className={styles.actions}>
         <div className={styles.tooltip}>
