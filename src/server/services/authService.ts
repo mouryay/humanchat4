@@ -47,8 +47,8 @@ const ensureUserByEmail = async (email: string, nameHint?: string): Promise<User
   }
   const fallbackName = nameHint ?? email.split('@')[0];
   const insert = await query<User>(
-    `INSERT INTO users (name, email, conversation_type, is_online, has_active_session, managed, created_at, updated_at)
-     VALUES ($1,$2,'free',false,false,false,NOW(),NOW()) RETURNING *`,
+    `INSERT INTO users (name, email, role, conversation_type, is_online, has_active_session, managed, created_at, updated_at)
+     VALUES ($1,$2,'user','free',false,false,false,NOW(),NOW()) RETURNING *`,
     [fallbackName, email]
   );
   return insert.rows[0];
@@ -63,8 +63,8 @@ export const registerUser = async ({ name, email, password }: RegisterInput): Pr
   const passwordHash = await bcrypt.hash(password, 10);
 
   const insert = await query<User>(
-    `INSERT INTO users (name, email, password_hash, conversation_type, is_online, has_active_session, managed, created_at, updated_at)
-     VALUES ($1, $2, $3, 'paid', false, false, false, NOW(), NOW())
+    `INSERT INTO users (name, email, password_hash, role, conversation_type, is_online, has_active_session, managed, created_at, updated_at)
+     VALUES ($1, $2, $3, 'user', 'paid', false, false, false, NOW(), NOW())
      RETURNING *`,
     [name, email, passwordHash]
   );

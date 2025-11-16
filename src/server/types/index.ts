@@ -4,10 +4,13 @@ export type SessionType = 'instant' | 'scheduled';
 export type SessionStatus = 'pending' | 'in_progress' | 'complete';
 export type PaymentMode = 'free' | 'paid' | 'charity';
 
+export type UserRole = 'user' | 'admin' | 'manager';
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
   avatar_url: string | null;
   headline: string | null;
   bio: string | null;

@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { env } from '../config/env.js';
 import { query } from '../db/postgres.js';
 import { ApiError } from '../errors/ApiError.js';
+import { UserRole } from '../types/index.js';
 
 const ACCESS_COOKIE = 'hc_access';
 const REFRESH_COOKIE = 'hc_refresh';
@@ -17,9 +18,18 @@ interface SessionTokenRow {
   last_used_at: string;
 }
 
-const getUserEmail = async (userId: string): Promise<string> => {
-  const result = await query<{ email: string }>('SELECT email FROM users WHERE id = $1', [userId]);
-  return result.rows[0]?.email ?? '';
+interface UserIdentity {
+  email: string;
+  role: UserRole;
+}
+
+const getUserIdentity = async (userId: string): Promise<UserIdentity> => {
+  const result = await query<UserIdentity>('SELECT email, role FROM users WHERE id = $1', [userId]);
+  const identity = result.rows[0];
+  if (!identity) {
+    throw new ApiError(404, 'NOT_FOUND', 'User missing while issuing access token');
+  }
+  return identity;
 };
 
 const isProd = env.nodeEnv === 'production';
@@ -83,7 +93,7 @@ export const revokeAllSessionsForUser = async (userId: string): Promise<void> =>
   await query('DELETE FROM session_tokens WHERE user_id = $1', [userId]);
 };
 
-const signAccessToken = (payload: { id: string; email: string }): string => {
+const signAccessToken = (payload: { id: string; email: string; role: UserRole }): string => {
   return jwt.sign(payload, env.jwtSecret as Secret, { expiresIn: env.jwtExpiresIn } as SignOptions);
 };
 
@@ -97,10 +107,10 @@ const setRefreshCookie = (res: Response, token: string, maxAge: number): void =>
 
 export const issueAuthCookies = async (
   res: Response,
-  user: { id: string; email: string },
+  user: { id: string; email: string; role: UserRole },
   rememberMe = false
 ): Promise<void> => {
-  const accessToken = signAccessToken({ id: user.id, email: user.email });
+  const accessToken = signAccessToken({ id: user.id, email: user.email, role: user.role });
   const refresh = await createRefreshToken(user.id, rememberMe);
   setAccessCookie(res, accessToken);
   setRefreshCookie(res, refresh.token, refresh.maxAge);
@@ -120,8 +130,8 @@ export const refreshFromRequest = async (req: Request, res: Response): Promise<v
     throw new ApiError(401, 'UNAUTHORIZED', 'Missing refresh token');
   }
   const session = await refreshSession(refreshToken);
-  const email = await getUserEmail(session.user_id);
-  const accessToken = signAccessToken({ id: session.user_id, email });
+  const identity = await getUserIdentity(session.user_id);
+  const accessToken = signAccessToken({ id: session.user_id, email: identity.email, role: identity.role });
   setAccessCookie(res, accessToken);
 };
 
@@ -135,9 +145,15 @@ export const extractAccessToken = (req: Request): string | null => {
   return null;
 };
 
-export const verifyAccessToken = (token: string): JwtPayload => {
+export interface AccessTokenPayload extends JwtPayload {
+  id: string;
+  email: string;
+  role: UserRole;
+}
+
+export const verifyAccessToken = (token: string): AccessTokenPayload => {
   try {
-    return jwt.verify(token, env.jwtSecret) as JwtPayload;
+    return jwt.verify(token, env.jwtSecret) as AccessTokenPayload;
   } catch (error) {
     throw new ApiError(401, 'UNAUTHORIZED', 'Invalid token');
   }

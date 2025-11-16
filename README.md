@@ -90,6 +90,14 @@ Each helper function includes defensive error handling and enforces the 15-minut
 - **Backend workflow:** The API enforces managed-only access, stores preferred time/budget metadata, and associates each request with the manager/representative so future tooling can notify them and approve/decline with a confidential rate.
 - **Sessions:** Any session hydrated with `confidentialRate` displays "Private Rate" inside the HUD, suppresses Stripe collection, and informs the guest that the representative will finalize billing offline.
 
+## Admin Dashboard & RBAC
+
+- **Role-aware auth:** JWT payloads now embed `role` (`user`, `manager`, `admin`) so the Express middleware can gate endpoints via `requireRole()`. Run the migration in `src/server/db/migrations/20251116_add_role_to_users.sql` and set `users.role` for your initial admins.
+- **Admin API surface:** `/api/admin/*` exposes overview metrics, user management, session telemetry, managed requests, requested people, and announcement feeds. Every route sits behind `authenticate + requireRole(['admin','manager'])`, with write paths limited to admins.
+- **Next.js workspace:** Visiting `/admin` in `apps/web` loads a dedicated layout with navigation (Overview, People, Sessions, Requests, Announcements). Each page fetches via the new `apps/web/services/adminApi.ts` helpers and gracefully handles loading/error states.
+- **Analytics & charts:** The overview page renders sparkline charts (Recharts) for active sessions vs. revenue, plus stat cards for totals, managed share, and donation impact.
+- **Operational tooling:** Admins can reassign roles/managed flags inline, review pending concierge requests, update requested-people statuses, inspect recent sessions, and broadcast announcements to Redis-backed feeds for the broader ops team.
+
 ## Requested People Tracking
 
 - **Automatic logging:** Every time a member searches for or asks Sam to connect with someone who isn’t yet on HumanChat, the platform logs both the individual query (`request_logs`) and the aggregated totals (`requested_people`). Names are normalized (`"Elon Musk" → "elonmusk"`) to deduplicate variations.

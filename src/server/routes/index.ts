@@ -8,6 +8,7 @@ import paymentRoutes from './paymentRoutes.js';
 import requestRoutes from './requestRoutes.js';
 import samRoutes from './samRoutes.js';
 import requestedPeopleRoutes from './requestedPeopleRoutes.js';
+import adminRoutes from './adminRoutes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/payments', paymentRoutes);
 router.use('/requests', requestRoutes);
 router.use('/sam', samRoutes);
 router.use('/requested-people', requestedPeopleRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;
