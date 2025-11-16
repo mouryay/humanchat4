@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Conversation, Message, Session } from '../../../src/lib/db';
 import styles from './ConversationView.module.css';
-import VideoCallPanel from './VideoCallPanel';
+import VideoArea from './VideoArea';
+import ChatArea from './ChatArea';
+import EndCallFlow from './EndCallFlow';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 
 interface SessionViewProps {
@@ -29,6 +31,7 @@ const formatCountdown = (target: number) => {
 export default function SessionView({ conversation, session, messages, registerScrollContainer }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
+  const [callSummary, setCallSummary] = useState<{ durationSeconds: number; totalAmount: number; paymentIntentId?: string; currency: string } | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -40,7 +43,7 @@ export default function SessionView({ conversation, session, messages, registerS
     return () => unsubscribe();
   }, []);
 
-  const orderedMessages = useMemo(() => messages.sort((a, b) => a.timestamp - b.timestamp), [messages]);
+  const orderedMessages = useMemo(() => [...messages].sort((a, b) => a.timestamp - b.timestamp), [messages]);
   const isInProgress = session?.status === 'in_progress';
   const isComplete = session?.status === 'complete';
   const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
@@ -76,39 +79,19 @@ export default function SessionView({ conversation, session, messages, registerS
     );
   }
 
+  if (!session || !currentUserId) {
+    return <div className={styles.error}>Sign in again to join this session.</div>;
+  }
+
   return (
-    <div className={styles.humanView}>
-      <div className={styles.sessionLayout}>
-        {session && currentUserId ? (
-          <VideoCallPanel
-            sessionId={session.sessionId}
-            userId={currentUserId}
-            isInitiator={session.hostUserId === currentUserId}
-            participantLabel={peerLabel}
-            autoStart={session.status === 'in_progress'}
-          />
-        ) : (
-          <div className={styles.videoPanel}>
-            {currentUserId ? 'Waiting for session to start…' : 'Sign in again to join the call.'}
-          </div>
-        )}
-        <div className={styles.chatPanel}>
-          <div className={styles.messageList} ref={registerScrollContainer}>
-            {orderedMessages.map((message) => (
-              <div
-                key={message.id ?? `${message.timestamp}-${message.senderId}`}
-                className={`${styles.bubbleRow} ${isUserMessage(message, conversation) ? styles.userRow : styles.samRow}`}
-              >
-                <div className={styles.bubble}>{message.content}</div>
-              </div>
-            ))}
-          </div>
-          <form className={styles.inputBar} onSubmit={(event) => event.preventDefault()}>
-            <textarea placeholder="Message during session..." />
-            <button type="submit">Send</button>
-          </form>
-        </div>
+    <div className={styles.sessionShell}>
+      <div className={styles.videoSection}>
+        <VideoArea session={session} currentUserId={currentUserId} onCallEnd={(summary) => setCallSummary(summary)} />
       </div>
+      <div className={styles.chatSection}>
+        <ChatArea conversation={conversation} messages={messages} registerScrollContainer={registerScrollContainer} currentUserId={currentUserId} />
+      </div>
+      {callSummary && <EndCallFlow summary={callSummary} onDismiss={() => setCallSummary(null)} />}
     </div>
   );
 }

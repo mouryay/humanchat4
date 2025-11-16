@@ -61,6 +61,24 @@
   flex-direction: column;
 }
 
+.sessionShell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.videoSection {
+  flex: 6;
+  min-height: 60%;
+}
+
+.chatSection {
+  flex: 4;
+  min-height: 40%;
+}
+
 .messageList {
   flex: 1;
   overflow-y: auto;
@@ -316,16 +334,34 @@
   color: rgba(226, 232, 240, 0.95);
 }
 
-.videoStatusBar {
+.videoAreaWrapper {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(2, 6, 23, 0.95));
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 16px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.videoStatusCopy {
-  font-size: 12px;
-  color: rgba(148, 163, 184, 0.8);
-  margin-top: 4px;
+.videoStatsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.billingBadge,
+.timerBadge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  font-size: 13px;
 }
 
 .videoStage {
@@ -368,6 +404,16 @@
   font-weight: 600;
 }
 
+.controlsOverlay {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  display: flex;
+  justify-content: center;
+}
+
 .audioMeter {
   width: 100%;
   height: 6px;
@@ -395,6 +441,56 @@
   padding: 16px;
 }
 
+.chatArea {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chatArea .messageList {
+  flex: 1;
+  padding: 20px;
+}
+
+.chatInputBar {
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 12px 20px;
+  display: flex;
+  gap: 12px;
+  background: rgba(2, 6, 23, 0.75);
+}
+
+.chatInputBar textarea {
+  flex: 1;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  color: #f8fafc;
+  padding: 12px;
+  resize: none;
+  min-height: 60px;
+}
+
+.chatInputBar button {
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  border: none;
+  color: #020617;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.typingIndicator {
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.8);
+  padding: 8px 16px;
+}
+
 .countdown {
   margin: auto;
   text-align: center;
@@ -412,6 +508,26 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
   color: rgba(148, 163, 184, 0.85);
   font-size: 14px;
+}
+
+.endCallOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  background: rgba(2, 6, 23, 0.5);
+}
+
+.endCallCard {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 20px;
+  padding: 28px;
+  text-align: center;
+  width: min(360px, 90%);
+  color: #f8fafc;
 }
 
 .controlsRow {

@@ -1,5 +1,7 @@
 'use client';
 
+import { markSessionStart, markSessionComplete } from './sessionApi';
+
 export interface StatusObject {
   userId: string;
   isOnline: boolean;
@@ -70,17 +72,7 @@ class SessionStatusManager {
   }
 
   public async startSession(sessionId: string, userId: string): Promise<StatusObject> {
-    const status = await this.withRetry(() =>
-      fetch(`${API_BASE_URL}/api/sessions/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ sessionId, userId })
-      })
-    );
-    if (!status.ok) {
-      throw new Error('Failed to start session');
-    }
+    await markSessionStart(sessionId);
 
     const updated = this.updateStatus(userId, {
       hasActiveSession: true,
@@ -92,17 +84,7 @@ class SessionStatusManager {
   }
 
   public async endSession(sessionId: string, userId: string): Promise<StatusObject> {
-    const response = await this.withRetry(() =>
-      fetch(`${API_BASE_URL}/api/sessions/end`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ sessionId, userId })
-      })
-    );
-    if (!response.ok) {
-      throw new Error('Failed to end session');
-    }
+    await markSessionComplete(sessionId);
 
     const updated = this.updateStatus(userId, {
       hasActiveSession: false,
