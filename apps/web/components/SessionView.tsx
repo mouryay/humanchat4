@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Conversation, Message, Session } from '../../../src/lib/db';
 import styles from './ConversationView.module.css';
+import VideoCallPanel from './VideoCallPanel';
+import { sessionStatusManager } from '../services/sessionStatusManager';
 
 interface SessionViewProps {
   conversation: Conversation;
@@ -26,16 +28,26 @@ const formatCountdown = (target: number) => {
 
 export default function SessionView({ conversation, session, messages, registerScrollContainer }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = sessionStatusManager.onCurrentUserChange((userId) => setCurrentUserId(userId));
+    return () => unsubscribe();
+  }, []);
+
   const orderedMessages = useMemo(() => messages.sort((a, b) => a.timestamp - b.timestamp), [messages]);
   const isInProgress = session?.status === 'in_progress';
   const isComplete = session?.status === 'complete';
   const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
+  const peerLabel = useMemo(() => {
+    const peer = conversation.participants.find((participant) => participant !== currentUserId);
+    return peer ?? 'Session participant';
+  }, [conversation.participants, currentUserId]);
 
   if (isScheduled) {
     return (
@@ -67,7 +79,19 @@ export default function SessionView({ conversation, session, messages, registerS
   return (
     <div className={styles.humanView}>
       <div className={styles.sessionLayout}>
-        <div className={styles.videoPanel}>Live Video Placeholder</div>
+        {session && currentUserId ? (
+          <VideoCallPanel
+            sessionId={session.sessionId}
+            userId={currentUserId}
+            isInitiator={session.hostUserId === currentUserId}
+            participantLabel={peerLabel}
+            autoStart={session.status === 'in_progress'}
+          />
+        ) : (
+          <div className={styles.videoPanel}>
+            {currentUserId ? 'Waiting for session to start…' : 'Sign in again to join the call.'}
+          </div>
+        )}
         <div className={styles.chatPanel}>
           <div className={styles.messageList} ref={registerScrollContainer}>
             {orderedMessages.map((message) => (

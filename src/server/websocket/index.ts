@@ -1,9 +1,10 @@
 import { Server } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { parse } from 'url';
 import { redis } from '../db/redis.js';
 
 const sessionChannels = new Map<string, Set<WebSocket>>();
+const sessionMeta = new WeakMap<WebSocket, { sessionId: string; userId?: string }>();
 const statusClients = new Set<WebSocket>();
 const notificationChannels = new Map<string, Set<WebSocket>>();
 
@@ -29,6 +30,42 @@ const broadcast = (set: Set<WebSocket> | undefined, data: unknown): void => {
   });
 };
 
+const broadcastToSession = (sessionId: string, data: unknown, sender?: WebSocket): void => {
+  const listeners = sessionChannels.get(sessionId);
+  if (!listeners) return;
+  const payload = JSON.stringify(data);
+  listeners.forEach((client) => {
+    if (client === sender) return;
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  });
+};
+
+const handleSessionMessage = (sessionId: string, socket: WebSocket, raw: RawData): void => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.toString());
+  } catch (error) {
+    console.warn('Ignoring non-JSON signaling payload', error);
+    return;
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return;
+  }
+
+  const meta = sessionMeta.get(socket);
+  const envelope = {
+    ...parsed,
+    senderId: (parsed as { senderId?: string }).senderId ?? meta?.userId,
+    sessionId,
+    timestamp: Date.now()
+  };
+
+  broadcastToSession(sessionId, envelope, socket);
+};
+
 export const setupWebSockets = (server: Server): void => {
   const wss = new WebSocketServer({ server });
 
@@ -41,11 +78,31 @@ export const setupWebSockets = (server: Server): void => {
 
     if (pathname.startsWith('/session/')) {
       const sessionId = pathname.split('/')[2];
+      if (!sessionId) {
+        socket.close(1008, 'Missing session id');
+        return;
+      }
+
+      const { query } = parse(req.url ?? '/', true);
+      const userId = typeof query?.userId === 'string' ? query.userId : undefined;
+
       addToChannel(sessionChannels, sessionId, socket);
-      socket.on('message', (message) => {
-        broadcast(sessionChannels.get(sessionId), { type: 'signal', payload: message.toString() });
+      sessionMeta.set(socket, { sessionId, userId });
+      socket.send(
+        JSON.stringify({
+          type: 'session-ready',
+          sessionId,
+          userId,
+          peers: sessionChannels.get(sessionId)?.size ?? 1
+        })
+      );
+
+      socket.on('message', (message) => handleSessionMessage(sessionId, socket, message));
+      socket.on('close', () => {
+        removeSocket(sessionChannels.get(sessionId), socket);
+        sessionMeta.delete(socket);
+        broadcastToSession(sessionId, { type: 'peer-left', sessionId, userId }, socket);
       });
-      socket.on('close', () => removeSocket(sessionChannels.get(sessionId), socket));
       return;
     }
 
