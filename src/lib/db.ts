@@ -180,6 +180,19 @@ type MessageInput = Omit<Message, 'id' | 'conversationId' | 'timestamp'> & {
   timestamp?: number;
 };
 
+export type BootstrapPayload = {
+  conversations?: Conversation[];
+  messages?: Message[];
+  sessions?: Session[];
+  requests?: ManagedRequest[];
+};
+
+declare global {
+  interface Window {
+    __HUMANCHAT_BOOTSTRAP__?: BootstrapPayload;
+  }
+}
+
 type SchemaDefinition = Record<string, string>;
 
 interface SchemaMigration {
@@ -236,10 +249,39 @@ class HumanChatDB extends Dexie {
   constructor() {
     super(DATABASE_NAME);
     registerMigrations(this);
+    this.on('populate', async () => {
+      const bootstrap = getBootstrapSeed();
+      if (!bootstrap) {
+        return;
+      }
+      if (bootstrap.conversations?.length) {
+        await this.conversations.bulkPut(bootstrap.conversations);
+      }
+      if (bootstrap.messages?.length) {
+        await this.messages.bulkPut(bootstrap.messages);
+      }
+      if (bootstrap.sessions?.length) {
+        await this.sessions.bulkPut(bootstrap.sessions);
+      }
+      if (bootstrap.requests?.length) {
+        await this.requests.bulkPut(bootstrap.requests);
+      }
+    });
   }
 }
 
 export const db = new HumanChatDB();
+
+function getBootstrapSeed(): BootstrapPayload | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const scoped = (window as Window & { __HUMANCHAT_BOOTSTRAP__?: BootstrapPayload }).__HUMANCHAT_BOOTSTRAP__;
+  if (!scoped) {
+    return null;
+  }
+  return scoped;
+}
 
 const toDbError = (operation: string, error: unknown): Error => {
   const message = error instanceof Error ? error.message : String(error);

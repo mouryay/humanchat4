@@ -4,7 +4,7 @@
   "module": "ESNext",
   "moduleResolution": "Bundler",
     "lib": ["ES2021", "DOM"],
-    "types": ["node", "react"],
+    "types": ["node", "react", "jest", "@testing-library/jest-dom"],
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
@@ -14,6 +14,6 @@
     "allowSyntheticDefaultImports": true,
     "outDir": "dist"
   },
-  "include": ["src/**/*", "tests/**/*", "apps/web/**/*"],
+  "include": ["src/**/*", "tests/**/*", "apps/web/**/*", "e2e/**/*"],
   "exclude": ["node_modules", "dist"]
 }
