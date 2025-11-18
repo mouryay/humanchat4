@@ -294,6 +294,13 @@ const ensureUpdated = (count: number, entity: string, id: string): void => {
   }
 };
 
+/**
+ * Persists a message in the Dexie store and bumps the parent conversation's activity timestamp.
+ * @param conversationId - Identifier of the conversation receiving the message.
+ * @param message - Partial message payload (without id) to be stored.
+ * @returns Database-generated numeric message id.
+ * @throws Error when the conversation cannot be updated or the add operation fails.
+ */
 export const addMessage = async (
   conversationId: string,
   message: MessageInput
@@ -317,6 +324,11 @@ export const addMessage = async (
   }
 };
 
+/**
+ * Retrieves all messages for a conversation sorted by timestamp.
+ * @param conversationId - Conversation identifier to query.
+ * @returns Chronologically sorted array of messages.
+ */
 export const getMessages = async (conversationId: string): Promise<Message[]> => {
   try {
     return await db.messages
@@ -328,6 +340,10 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
   }
 };
 
+/**
+ * Fetches a single conversation record or null when missing.
+ * @param conversationId - Primary key of the conversation.
+ */
 export const getConversation = async (
   conversationId: string
 ): Promise<Conversation | null> => {
@@ -338,6 +354,9 @@ export const getConversation = async (
   }
 };
 
+/**
+ * Lists all conversations ordered by most recent activity.
+ */
 export const getAllConversations = async (): Promise<Conversation[]> => {
   try {
     return await db.conversations.orderBy('lastActivity').reverse().toArray();
@@ -346,6 +365,11 @@ export const getAllConversations = async (): Promise<Conversation[]> => {
   }
 };
 
+/**
+ * Updates the `lastActivity` timestamp for a conversation.
+ * @param conversationId - Conversation identifier to update.
+ * @param timestamp - Replacement timestamp (defaults to now).
+ */
 export const updateConversationActivity = async (
   conversationId: string,
   timestamp: number = Date.now()
@@ -360,6 +384,11 @@ export const updateConversationActivity = async (
   }
 };
 
+/**
+ * Inserts a session record and links it to its conversation.
+ * @param sessionData - Fully populated session payload.
+ * @returns The same session payload once persisted.
+ */
 export const createSession = async (sessionData: Session): Promise<Session> => {
   try {
     if (sessionData.durationMinutes < 15) {
@@ -376,6 +405,10 @@ export const createSession = async (sessionData: Session): Promise<Session> => {
   }
 };
 
+/**
+ * Fetches a session by id.
+ * @param sessionId - Primary key of the session.
+ */
 export const getSession = async (sessionId: string): Promise<Session | null> => {
   try {
     return (await db.sessions.get(sessionId)) ?? null;
@@ -384,6 +417,12 @@ export const getSession = async (sessionId: string): Promise<Session | null> => 
   }
 };
 
+/**
+ * Updates the status (and optional endTime) for a session record.
+ * @param sessionId - Target session id.
+ * @param status - New status value.
+ * @param endTime - Optional custom completion timestamp.
+ */
 export const updateSessionStatus = async (
   sessionId: string,
   status: SessionStatus,
@@ -401,6 +440,11 @@ export const updateSessionStatus = async (
   }
 };
 
+/**
+ * Stores or replaces a setting key/value pair.
+ * @param key - Setting identifier.
+ * @param value - Serializable payload.
+ */
 export const saveSetting = async (key: string, value: unknown): Promise<void> => {
   try {
     await db.settings.put({ key, value });
@@ -409,6 +453,10 @@ export const saveSetting = async (key: string, value: unknown): Promise<void> =>
   }
 };
 
+/**
+ * Retrieves a setting by key.
+ * @param key - Setting identifier to look up.
+ */
 export const getSetting = async (key: string): Promise<unknown> => {
   try {
     const result = await db.settings.get(key);
@@ -418,6 +466,10 @@ export const getSetting = async (key: string): Promise<unknown> => {
   }
 };
 
+/**
+ * Increments the unread counter for a conversation.
+ * @param conversationId - Conversation to mutate.
+ */
 export const incrementUnread = async (conversationId: string): Promise<void> => {
   try {
     const updated = await db.conversations
@@ -432,6 +484,10 @@ export const incrementUnread = async (conversationId: string): Promise<void> => 
   }
 };
 
+/**
+ * Resets the unread counter to zero for a conversation.
+ * @param conversationId - Conversation id to clear.
+ */
 export const clearUnread = async (conversationId: string): Promise<void> => {
   try {
     const updated = await db.conversations.update(conversationId, { unreadCount: 0 });
@@ -441,6 +497,10 @@ export const clearUnread = async (conversationId: string): Promise<void> => {
   }
 };
 
+/**
+ * Persists a managed connection request for concierge workflows.
+ * @param request - Managed request payload to store.
+ */
 export const saveManagedRequest = async (request: ManagedRequest): Promise<void> => {
   try {
     await db.requests.put(request);
@@ -449,6 +509,10 @@ export const saveManagedRequest = async (request: ManagedRequest): Promise<void>
   }
 };
 
+/**
+ * Lists managed requests assigned to a specific manager.
+ * @param managerId - Manager identifier.
+ */
 export const getRequestsByManager = async (managerId: string): Promise<ManagedRequest[]> => {
   try {
     const rows = await db.requests.where('managerId').equals(managerId).toArray();
@@ -458,6 +522,10 @@ export const getRequestsByManager = async (managerId: string): Promise<ManagedRe
   }
 };
 
+/**
+ * Lists managed requests submitted by a requester.
+ * @param requesterId - Requester identifier.
+ */
 export const getRequestsByRequester = async (requesterId: string): Promise<ManagedRequest[]> => {
   try {
     const rows = await db.requests.where('requesterId').equals(requesterId).toArray();
@@ -467,6 +535,10 @@ export const getRequestsByRequester = async (requesterId: string): Promise<Manag
   }
 };
 
+/**
+ * Lists requests targeting a specific expert/host.
+ * @param targetUserId - Target identifier.
+ */
 export const getRequestsForTarget = async (targetUserId: string): Promise<ManagedRequest[]> => {
   try {
     const rows = await db.requests.where('targetUserId').equals(targetUserId).toArray();
