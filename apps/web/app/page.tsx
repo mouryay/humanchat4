@@ -124,7 +124,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col gap-4 sm:flex-row">
             <Link
-              href="/signup"
+              href="/chat?focus=sam"
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-8 py-3 font-semibold text-midnight shadow-lg shadow-indigoGlow/30 transition hover:scale-105"
             >
               Start Chatting

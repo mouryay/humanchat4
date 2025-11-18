@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ConversationSidebar from '../../components/ConversationSidebar';
 import ConversationView from '../../components/ConversationView';
 import MobileBottomNav, { type MobileNavRoute } from '../../components/MobileBottomNav';
@@ -11,6 +11,7 @@ import { useConversationData } from '../../hooks/useConversationData';
 
 export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
+  const [shouldOpenSam, setShouldOpenSam] = useState(false);
   const [mobilePane, setMobilePane] = useState<'list' | 'conversation'>('list');
   const [activeNav, setActiveNav] = useState<MobileNavRoute>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -20,6 +21,25 @@ export default function ChatPage() {
   const samConversationId = useMemo(() => {
     return conversations.find((entry) => entry.conversation.type === 'sam')?.conversation.conversationId ?? 'sam-concierge';
   }, [conversations]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const focus = new URLSearchParams(window.location.search).get('focus');
+    if (focus === 'sam') {
+      setShouldOpenSam(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!shouldOpenSam) return;
+    setActiveConversationId(samConversationId);
+    if (isMobile) {
+      setActiveNav('sam');
+      setMobilePane('conversation');
+    } else {
+      setActiveNav('home');
+    }
+  }, [shouldOpenSam, samConversationId, isMobile]);
 
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
