@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json && npm run web:build && rm -rf .next && cp -R apps/web/.next .next",
+    "build": "tsc -p tsconfig.json && npm run web:build",
     "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:unit": "cross-env NODE_ENV=test jest --runInBand --selectProjects client",
