@@ -11,6 +11,8 @@ Use this guide to configure production, staging, and local environments for Huma
 | Frontend | `NEXT_PUBLIC_WS_URL` | WSS endpoint for real-time updates. |
 | Frontend | `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` | Publishable Stripe key. |
 | Frontend | `NEXT_PUBLIC_GEMINI_API_KEY` | Optional Gemini key for client-side experiments. |
+| Frontend | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by the browser client. |
+| Frontend | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key for client-side auth. |
 | Backend | `DATABASE_URL` | Postgres connection string from Supabase/Railway. |
 | Backend | `REDIS_URL` | Upstash Redis REST/Redis URL. |
 | Backend | `JWT_SECRET` | 32+ char secret for user tokens. |

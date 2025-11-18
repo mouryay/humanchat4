@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import SignupActions from '../../components/SignupActions';
 
 const personas = [
   {
@@ -103,20 +104,7 @@ export default function SignupPage() {
             Tell us if you are joining as a host, an operator, or a team. We will guide you through payouts, access, and
             guardrails so Sam can introduce you to the right humans within minutes.
           </p>
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/chat"
-              className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-midnight transition hover:scale-105"
-            >
-              Open the workspace
-            </Link>
-            <a
-              href="mailto:sam@humanchat.com?subject=Join%20HumanChat&body=Share%20a%20line%20about%20what%20you%20want%20to%20host%20or%20learn."
-              className="inline-flex items-center justify-center rounded-full border border-white/30 px-8 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/5"
-            >
-              Email Sam
-            </a>
-          </div>
+          <SignupActions />
         </div>
 
         <section>
