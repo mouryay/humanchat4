@@ -1,6 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
+import type { BootstrapPayload } from '../src/lib/db';
 
-const bootstrapSeed = {
+const bootstrapSeed: BootstrapPayload = {
   conversations: [
     {
       conversationId: 'sam-concierge',
