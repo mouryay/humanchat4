@@ -31,16 +31,20 @@ jest.mock('../../src/server/db/redis', () => ({
 describe('setupWebSockets', () => {
   let server: http.Server;
   let baseUrl: string;
+  let closeSockets: (() => Promise<void>) | undefined;
 
   beforeAll(async () => {
     server = http.createServer();
-    setupWebSockets(server);
+    ({ close: closeSockets } = setupWebSockets(server));
     await new Promise<void>((resolve) => server.listen(0, resolve));
     const { port } = server.address() as AddressInfo;
     baseUrl = `ws://127.0.0.1:${port}`;
   });
 
   afterAll(async () => {
+    if (closeSockets) {
+      await closeSockets();
+    }
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
