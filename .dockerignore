@@ -1,0 +1,26 @@
+# Node / workspace artifacts
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# Build outputs
+/dist
+/apps/web/.next
+.next
+coverage
+
+# Tooling
+.vscode
+.idea
+.DS_Store
+.git
+.gitignore
+
+# Env & secrets
+.env
+.env.*
+.env.local
+*.pem
+*.key
