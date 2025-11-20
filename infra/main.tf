@@ -5,10 +5,6 @@ terraform {
       source  = "vercel/vercel"
       version = "~> 0.13"
     }
-    railway = {
-      source  = "railwayapp/railway"
-      version = "~> 1.9"
-    }
     supabase = {
       source  = "supabase/supabase"
       version = "~> 0.11"
@@ -21,15 +17,15 @@ terraform {
       source  = "upstash/upstash"
       version = "~> 0.3"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.30"
+    }
   }
 }
 
 provider "vercel" {
   token = var.vercel_token
-}
-
-provider "railway" {
-  token = var.railway_token
 }
 
 provider "supabase" {
@@ -45,6 +41,11 @@ provider "upstash" {
   api_key = var.upstash_api_key
 }
 
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
 module "frontend" {
   source        = "./modules/frontend"
   project_name  = var.project_name
@@ -53,24 +54,26 @@ module "frontend" {
   env_variables = var.frontend_env
 }
 
-module "api" {
-  source             = "./modules/railway-service"
-  service_name       = "api"
-  repository_url     = var.repository_url
-  env_variables      = var.backend_env
-  plan               = "standard"
-  min_instances      = 1
-  max_instances      = 3
+module "api_service" {
+  source        = "./modules/cloud-run-service"
+  project_id    = var.gcp_project_id
+  region        = var.gcp_region
+  service_name  = "humanchat-api"
+  image         = var.api_image
+  env_variables = var.backend_env
+  min_instances = 1
+  max_instances = 3
 }
 
-module "ws" {
-  source             = "./modules/railway-service"
-  service_name       = "ws"
-  repository_url     = var.repository_url
-  env_variables      = var.ws_env
-  plan               = "standard"
-  min_instances      = 0
-  max_instances      = 5
+module "ws_service" {
+  source        = "./modules/cloud-run-service"
+  project_id    = var.gcp_project_id
+  region        = var.gcp_region
+  service_name  = "humanchat-ws"
+  image         = var.ws_image
+  env_variables = var.ws_env
+  min_instances = 0
+  max_instances = 5
 }
 
 module "database" {
@@ -94,6 +97,6 @@ module "dns" {
   api_domain      = var.api_domain
   ws_domain       = var.ws_domain
   frontend_target = module.frontend.hosted_domain
-  api_target      = module.api.hostname
-  ws_target       = module.ws.hostname
+  api_target      = module.api_service.hostname
+  ws_target       = module.ws_service.hostname
 }
