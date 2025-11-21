@@ -11,6 +11,7 @@ See `docs/environment.md` for the master list. Provider-specific highlights:
 - `VERCEL_TOKEN`, `VERCEL_TEAM`
 - `GCP_PROJECT`, `GOOGLE_APPLICATION_CREDENTIALS` (service-account JSON for Cloud Run deploys)
 - `SUPABASE_TOKEN`
+- Secret Manager entries: `cloudsql-database-url`, `cloudsql-db-password`
 - `CLOUDFLARE_TOKEN`, `CLOUDFLARE_ZONE_ID`
 - `UPSTASH_EMAIL`, `UPSTASH_API_KEY`
 
@@ -39,9 +40,11 @@ Variables file should contain provider tokens and environment-specific URLs. Out
 ./scripts/verify-env.sh
 ./scripts/deploy-web.sh
 PROJECT_ID=<gcp-project> REGION=us-central1 SERVICE_NAME=humanchat-api \
-   ENV_FILE=.env.cloudrun ./scripts/deploy-api.sh
+   CLOUD_SQL_INSTANCES="loyal-env-475400-u0:us-central1:users" \
+   SET_SECRETS="DATABASE_URL=cloudsql-database-url:latest,FIREBASE_PROJECT_ID=firebase-project-id:latest,FIREBASE_CLIENT_EMAIL=firebase-client-email:latest,FIREBASE_PRIVATE_KEY=firebase-private-key:latest" \
+   ./scripts/deploy-api.sh
 ```
-The `ENV_FILE` should contain production-safe key/value pairs (no comments) that match the variables required by `src/server/config/env.ts`. See `infra/google-cloud/README.md` for details.
+Use `SET_SECRETS` to mix Cloud SQL (`DATABASE_URL`) with other sensitive values. If you still rely on a static env file for non-secret config, pass `ENV_FILE=.env.cloudrun` alongside the flags above. See `infra/google-cloud/README.md` for details.
 
 ## Rollback Procedures
 - **Frontend**: `vercel rollback --to <deployment-id>` or select previous build in dashboard.

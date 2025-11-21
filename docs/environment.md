@@ -17,7 +17,7 @@ Use this guide to configure production, staging, and local environments for Huma
 | Backend | `FIREBASE_PROJECT_ID` | Same Firebase project ID used by the admin SDK. |
 | Backend | `FIREBASE_CLIENT_EMAIL` | Service-account client email for Firebase Admin. |
 | Backend | `FIREBASE_PRIVATE_KEY` | Private key (escape `\n`) for Firebase Admin credentials. |
-| Backend | `DATABASE_URL` | Cloud SQL for PostgreSQL connection string. |
+| Backend | `DATABASE_URL` | Cloud SQL connection string (stored in Secret Manager as `cloudsql-database-url`). |
 | Backend | `REDIS_URL` | Upstash Redis REST/Redis URL. |
 | Backend | `JWT_SECRET` | 32+ char secret for user tokens. |
 | Backend | `STRIPE_SECRET_KEY` | Live-mode Stripe secret. |
@@ -37,6 +37,14 @@ Use this guide to configure production, staging, and local environments for Huma
 4. In Cloud Run service configuration, set backend keys (or reference Secret Manager entries) for each environment.
 5. Store master secrets in 1Password; reference them via GitHub Actions secrets (`VERCEL_TOKEN`, `GCP_SA_KEY`, etc.).
 6. Rotate secrets quarterly or immediately after an incident; update IaC variable files and provider dashboards.
+
+### Cloud SQL + Secret Manager
+1. Create the Cloud SQL instance (e.g., `loyal-env-475400-u0:us-central1:users`) and confirm the target database (default `postgres`).
+2. Reset or create a SQL user password, then store it in Secret Manager (`cloudsql-db-password`).
+3. Create the connection-string secret:
+	- `postgresql://postgres:<password>@/postgres?host=/cloudsql/<instance>` → `cloudsql-database-url`.
+4. When deploying Cloud Run, pass `CLOUD_SQL_INSTANCES=<instance>` and set `SET_SECRETS="DATABASE_URL=cloudsql-database-url:latest,..."` so the service mounts the connector and reads the secret directly.
+5. Keep Supabase credentials only for local development; production should exclusively reference the Cloud SQL secrets above.
 
 ## Promotion Flow
 - Update staging environment first, run smoke tests.
