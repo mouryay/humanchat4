@@ -18,10 +18,6 @@ variable "concurrency" {
   type    = number
   default = 80
 }
-variable "ingress" {
-  type    = string
-  default = "INGRESS_TRAFFIC_ALL"
-}
 variable "timeout_seconds" {
   type    = number
   default = 300
@@ -70,7 +66,6 @@ resource "google_cloud_run_service" "this" {
   name     = var.service_name
   location = var.region
   project  = var.project_id
-  ingress  = var.ingress
 
   autogenerate_revision_name = true
 

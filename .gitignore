@@ -14,3 +14,11 @@ coverage/
 .idea/
 apps/web/.next/
 .next/
+
+# Terraform local artifacts
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+infra/.terraform/

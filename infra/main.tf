@@ -9,10 +9,6 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 4.30"
     }
-    upstash = {
-      source  = "upstash/upstash"
-      version = "~> 0.3"
-    }
     google = {
       source  = "hashicorp/google"
       version = "~> 5.30"
@@ -21,21 +17,37 @@ terraform {
 }
 
 provider "vercel" {
-  token = var.vercel_token
+  api_token = var.vercel_token
 }
 
 provider "cloudflare" {
   api_token = var.cloudflare_token
 }
 
-provider "upstash" {
-  email = var.upstash_email
-  api_key = var.upstash_api_key
-}
-
 provider "google" {
   project = var.gcp_project_id
   region  = var.gcp_region
+}
+
+resource "google_compute_network" "main" {
+  name                    = "${var.project_name}-network"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "main" {
+  name          = "${var.project_name}-subnet"
+  ip_cidr_range = "10.100.0.0/24"
+  region        = var.gcp_region
+  network       = google_compute_network.main.id
+}
+
+resource "google_vpc_access_connector" "cloud_run" {
+  name   = "${var.project_name}-connector"
+  region = var.gcp_region
+
+  subnet {
+    name = google_compute_subnetwork.main.name
+  }
 }
 
 module "frontend" {
@@ -52,9 +64,11 @@ module "api_service" {
   region        = var.gcp_region
   service_name  = "humanchat-api"
   image         = var.api_image
-  env_variables = var.backend_env
+  env_variables = merge(var.backend_env, { REDIS_URL = local.redis_url })
   min_instances = 1
   max_instances = 3
+  vpc_connector = google_vpc_access_connector.cloud_run.name
+  vpc_connector_egress = "ALL_TRAFFIC"
 }
 
 module "ws_service" {
@@ -63,16 +77,23 @@ module "ws_service" {
   region        = var.gcp_region
   service_name  = "humanchat-ws"
   image         = var.ws_image
-  env_variables = var.ws_env
+  env_variables = merge(var.ws_env, { REDIS_URL = local.redis_url })
   min_instances = 0
   max_instances = 5
+  vpc_connector = google_vpc_access_connector.cloud_run.name
+  vpc_connector_egress = "ALL_TRAFFIC"
 }
 
 module "redis" {
-  source      = "./modules/upstash-redis"
-  cluster_name = "${var.project_name}-redis"
-  region       = var.redis_region
-  multiregion  = true
+  source     = "./modules/memorystore-redis"
+  name       = "${var.project_name}-redis"
+  project_id = var.gcp_project_id
+  region     = var.gcp_region
+  network    = google_compute_network.main.id
+}
+
+locals {
+  redis_url = "redis://${module.redis.host}:${module.redis.port}"
 }
 
 module "dns" {

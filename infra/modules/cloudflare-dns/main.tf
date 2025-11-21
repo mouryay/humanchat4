@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.30"
+    }
+  }
+}
+
 variable "zone_id" { type = string }
 variable "primary_domain" { type = string }
 variable "api_domain" { type = string }
