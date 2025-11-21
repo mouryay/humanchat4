@@ -5,10 +5,6 @@ terraform {
       source  = "vercel/vercel"
       version = "~> 0.13"
     }
-    supabase = {
-      source  = "supabase/supabase"
-      version = "~> 0.11"
-    }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 4.30"
@@ -26,10 +22,6 @@ terraform {
 
 provider "vercel" {
   token = var.vercel_token
-}
-
-provider "supabase" {
-  access_token = var.supabase_token
 }
 
 provider "cloudflare" {
@@ -74,13 +66,6 @@ module "ws_service" {
   env_variables = var.ws_env
   min_instances = 0
   max_instances = 5
-}
-
-module "database" {
-  source        = "./modules/supabase"
-  project_name  = "${var.project_name}-db"
-  region        = var.db_region
-  enable_replicas = true
 }
 
 module "redis" {
