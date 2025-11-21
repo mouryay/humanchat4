@@ -1,10 +1,10 @@
 # HumanChat Project Summary
 
 ## Current Focus
-- Firebase auth migration is complete end-to-end (frontend session bridge + backend cookie issuance) and powering all sessions.
-- Jest open-handle warnings resolved through Redis teardown logic and WebSocket cleanup helpers.
-- Cloud Run API now deploys against the new Cloud SQL Postgres instance via Secret Manager–backed env vars; latest revision `humanchat-api-00011-v94` passes `/health` checks.
-- Local `.env` matches production secrets now that Supabase has been fully removed in favor of Cloud SQL.
+- Terraform now provisions the full GCP footprint (custom VPC, Serverless VPC connector, Cloud Run API + WebSocket services, Memorystore Redis) alongside Cloudflare DNS and the Vercel frontend; latest apply reconciled DNS and public invoker bindings.
+- Fresh API/WS containers are built through Cloud Build into Artifact Registry and deployed via Terraform; WebSocket revision `humanchat-ws-00005-r6p` is healthy, while the API is still being tuned to connect to Cloud SQL due to password encoding quirks.
+- Cloudflare now proxies `humanchat.com`, `api.humanchat.com`, and `ws.humanchat.com` directly to the GCP services, completing the DNS cutover away from the legacy Railway endpoints.
+- Local `.env` and `infra/terraform.tfvars` contain the authoritative secret set for Firebase, Google, Stripe, Redis, and deployment tokens so we can regenerate infrastructure reproducibly.
 
 ## Backend Highlights
 - Express-based API with Firebase-authenticated sessions, Redis-backed WebSocket signaling, and Stripe integrations.
@@ -21,12 +21,13 @@
 - Scripts folder contains deploy helpers, migration runners, and environment verification utilities.
 
 ## Infrastructure Roadmap
-- Terraform currently provisions Vercel (frontend), Railway (API/ws), Upstash Redis, and Cloudflare DNS; Cloud SQL + Cloud Run are being introduced alongside Secret Manager.
-- `scripts/deploy-cloud-run.sh` and `docs/environment.md` cover deploying to Cloud Run with `--add-cloudsql-instances` and `--set-secrets` for Firebase + Postgres credentials; manual `gcloud run services update` has been validated.
-- Remaining work: encode Cloud SQL, Cloud Run, and Secret Manager resources in Terraform, grant workload identity permissions, and prep DNS cutover toward Google Cloud endpoints once traffic parity is confirmed.
+- Terraform now controls GCP networking, Cloud Run services, Memorystore, Cloudflare DNS, and the Vercel project; Secret Manager integration and CI/CD wiring are still pending.
+- `scripts/deploy-cloud-run.sh` remains available for manual rollouts, but day-to-day deployments now happen through `terraform apply` plus Cloud Build image pushes.
+- Remaining work: finish stabilizing the Cloud SQL connectivity (password encoding + private service access), capture Cloud SQL instance/User/IAM resources in Terraform, and decommission the dormant Railway stack once parity checks pass.
+- Add monitoring/alerts (Cloud Monitoring uptime checks + Log-based metrics) for the new Cloud Run endpoints and document the rollback path before opening the traffic floodgates.
 
 ## Next Steps
-1. Promote the new Cloud SQL-backed Cloud Run revision by exercising authenticated endpoints, watching logs, and validating migrations.
-2. Encode Cloud SQL/Cloud Run/Secret Manager resources plus IAM bindings in Terraform, then remove the legacy Railway dependencies when parity is proven.
-3. Wire the Cloud Run deploy script into CI/CD (GitHub Actions) using workload identity; add regression tests (health + smoke flows) post-deploy.
-4. Update monitoring/alerts (Cloud Logging + uptime checks) and document the DNS cutover plan before routing production traffic away from Railway.
+1. Resolve the Cloud Run API ↔ Cloud SQL connection issue (sanitize `DATABASE_URL`, verify connector reachability) and redeploy until `/health` succeeds.
+2. Import/manage the Cloud SQL instance, users, and secrets in Terraform so the entire backend stack is codified; remove the old Railway resources afterward.
+3. Wire Cloud Build + Terraform into GitHub Actions with workload identity federation to automate image builds and applies.
+4. Add monitoring/alerting plus a runbook covering DNS rollback and log triage so the new stack can be promoted with confidence.

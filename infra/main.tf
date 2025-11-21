@@ -36,7 +36,7 @@ resource "google_compute_network" "main" {
 
 resource "google_compute_subnetwork" "main" {
   name          = "${var.project_name}-subnet"
-  ip_cidr_range = "10.100.0.0/24"
+  ip_cidr_range = "10.100.0.0/28"
   region        = var.gcp_region
   network       = google_compute_network.main.id
 }
@@ -55,6 +55,7 @@ module "frontend" {
   project_name  = var.project_name
   domain        = var.primary_domain
   vercel_team   = var.vercel_team
+  git_repo_slug = var.git_repo_slug
   env_variables = var.frontend_env
 }
 
@@ -68,7 +69,8 @@ module "api_service" {
   min_instances = 1
   max_instances = 3
   vpc_connector = google_vpc_access_connector.cloud_run.name
-  vpc_connector_egress = "ALL_TRAFFIC"
+  vpc_connector_egress = "all-traffic"
+  cloud_sql_instances  = var.api_cloud_sql_instances
 }
 
 module "ws_service" {
@@ -81,7 +83,7 @@ module "ws_service" {
   min_instances = 0
   max_instances = 5
   vpc_connector = google_vpc_access_connector.cloud_run.name
-  vpc_connector_egress = "ALL_TRAFFIC"
+  vpc_connector_egress = "all-traffic"
 }
 
 module "redis" {
@@ -102,7 +104,7 @@ module "dns" {
   primary_domain  = var.primary_domain
   api_domain      = var.api_domain
   ws_domain       = var.ws_domain
-  frontend_target = module.frontend.hosted_domain
+  frontend_target = "cname.vercel-dns.com"
   api_target      = module.api_service.hostname
   ws_target       = module.ws_service.hostname
 }

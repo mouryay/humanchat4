@@ -10,6 +10,7 @@ terraform {
 variable "project_name" { type = string }
 variable "domain" { type = string }
 variable "vercel_team" { type = string }
+variable "git_repo_slug" { type = string }
 variable "env_variables" { type = map(string) }
 
 resource "vercel_project" "this" {
@@ -17,7 +18,7 @@ resource "vercel_project" "this" {
   framework = "nextjs"
   git_repository = {
     type = "github"
-    repo  = var.project_name
+    repo  = var.git_repo_slug
   }
 }
 

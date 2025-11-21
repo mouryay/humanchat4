@@ -46,6 +46,10 @@ variable "vpc_connector_egress" {
   type    = string
   default = null
 }
+variable "cloud_sql_instances" {
+  type    = list(string)
+  default = []
+}
 variable "labels" {
   type    = map(string)
   default = {}
@@ -57,6 +61,7 @@ locals {
     var.max_instances != null ? { "autoscaling.knative.dev/maxScale" = tostring(var.max_instances) } : {},
     var.vpc_connector != null ? { "run.googleapis.com/vpc-access-connector" = var.vpc_connector } : {},
     var.vpc_connector_egress != null ? { "run.googleapis.com/vpc-access-egress" = var.vpc_connector_egress } : {},
+    length(var.cloud_sql_instances) > 0 ? { "run.googleapis.com/cloudsql-instances" = join(",", var.cloud_sql_instances) } : {},
     var.cpu != null ? { "run.googleapis.com/cpu" = var.cpu } : {},
     var.memory != null ? { "run.googleapis.com/memory" = var.memory } : {}
   )
