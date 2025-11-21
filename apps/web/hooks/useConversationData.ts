@@ -33,6 +33,14 @@ const SAM_FALLBACK: Conversation = {
   unreadCount: 0
 };
 
+const ensureSamConversationRecord = async () => {
+  const existing = await db.conversations.get(SAM_FALLBACK.conversationId);
+  if (existing) return existing;
+  const seeded = { ...SAM_FALLBACK, lastActivity: Date.now() };
+  await db.conversations.put(seeded);
+  return seeded;
+};
+
 type ConversationPayload = {
   conversations: Conversation[];
   sessions: Session[];
@@ -80,6 +88,7 @@ export const useConversationData = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    void ensureSamConversationRecord();
     const subscription = liveQuery(fetchConversationPayload).subscribe({
       next: (value: ConversationPayload) => {
         setPayload(value);
