@@ -33,11 +33,12 @@ const getUserIdentity = async (userId: string): Promise<UserIdentity> => {
 };
 
 const isProd = env.nodeEnv === 'production';
+const sameSiteMode: 'lax' | 'none' = isProd ? 'none' : 'lax';
 
 const cookieConfig = (maxAge: number) => ({
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: isProd,
+  sameSite: sameSiteMode,
+  secure: isProd || sameSiteMode === 'none',
   maxAge,
   ...(env.cookieDomain ? { domain: env.cookieDomain } : {})
 });
