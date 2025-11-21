@@ -4,7 +4,7 @@
 - Firebase auth migration is complete end-to-end (frontend session bridge + backend cookie issuance) and powering all sessions.
 - Jest open-handle warnings resolved through Redis teardown logic and WebSocket cleanup helpers.
 - Cloud Run API now deploys against the new Cloud SQL Postgres instance via Secret Manager–backed env vars; latest revision `humanchat-api-00011-v94` passes `/health` checks.
-- Local `.env` matches production secrets to keep migrations/tests aligned while Supabase is being phased out.
+- Local `.env` matches production secrets now that Supabase has been fully removed in favor of Cloud SQL.
 
 ## Backend Highlights
 - Express-based API with Firebase-authenticated sessions, Redis-backed WebSocket signaling, and Stripe integrations.
@@ -21,12 +21,12 @@
 - Scripts folder contains deploy helpers, migration runners, and environment verification utilities.
 
 ## Infrastructure Roadmap
-- Terraform currently provisions Vercel (frontend), Railway (API/ws), Supabase, Upstash Redis, and Cloudflare DNS; Cloud SQL + Cloud Run are being introduced alongside Secret Manager.
+- Terraform currently provisions Vercel (frontend), Railway (API/ws), Upstash Redis, and Cloudflare DNS; Cloud SQL + Cloud Run are being introduced alongside Secret Manager.
 - `scripts/deploy-cloud-run.sh` and `docs/environment.md` cover deploying to Cloud Run with `--add-cloudsql-instances` and `--set-secrets` for Firebase + Postgres credentials; manual `gcloud run services update` has been validated.
 - Remaining work: encode Cloud SQL, Cloud Run, and Secret Manager resources in Terraform, grant workload identity permissions, and prep DNS cutover toward Google Cloud endpoints once traffic parity is confirmed.
 
 ## Next Steps
 1. Promote the new Cloud SQL-backed Cloud Run revision by exercising authenticated endpoints, watching logs, and validating migrations.
-2. Encode Cloud SQL/Cloud Run/Secret Manager resources plus IAM bindings in Terraform, then remove the legacy Railway + Supabase dependencies when parity is proven.
+2. Encode Cloud SQL/Cloud Run/Secret Manager resources plus IAM bindings in Terraform, then remove the legacy Railway dependencies when parity is proven.
 3. Wire the Cloud Run deploy script into CI/CD (GitHub Actions) using workload identity; add regression tests (health + smoke flows) post-deploy.
 4. Update monitoring/alerts (Cloud Logging + uptime checks) and document the DNS cutover plan before routing production traffic away from Railway.

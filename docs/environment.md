@@ -45,7 +45,7 @@ Use this guide to configure production, staging, and local environments for Huma
 3. Create the connection-string secret:
 	- `postgresql://postgres:<password>@/postgres?host=/cloudsql/<instance>` → `cloudsql-database-url`.
 4. When deploying Cloud Run, pass `CLOUD_SQL_INSTANCES=<instance>` and set `SET_SECRETS="DATABASE_URL=cloudsql-database-url:latest,..."` so the service mounts the connector and reads the secret directly.
-5. Keep Supabase credentials only for local development; production should exclusively reference the Cloud SQL secrets above.
+5. All environments (local, staging, production) use the same Cloud SQL connection secrets; Supabase is no longer part of the stack.
 
 ## Promotion Flow
 - Update staging environment first, run smoke tests.

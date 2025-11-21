@@ -10,7 +10,6 @@ This doc complements `docs/environment.md`, `docs/monitoring.md`, and the Terraf
 See `docs/environment.md` for the master list. Provider-specific highlights:
 - `VERCEL_TOKEN`, `VERCEL_TEAM`
 - `GCP_PROJECT`, `GOOGLE_APPLICATION_CREDENTIALS` (service-account JSON for Cloud Run deploys)
-- `SUPABASE_TOKEN`
 - Secret Manager entries: `cloudsql-database-url`, `cloudsql-db-password`
 - `CLOUDFLARE_TOKEN`, `CLOUDFLARE_ZONE_ID`
 - `UPSTASH_EMAIL`, `UPSTASH_API_KEY`
@@ -22,7 +21,7 @@ See `docs/environment.md` for the master list. Provider-specific highlights:
 2. On `main` success:
    - `scripts/deploy-web.sh` → Vercel production deploy.
    - `scripts/deploy-api.sh` (Cloud Run) builds/pushes the Docker image and deploys the HTTP/WebSocket service.
-   - `scripts/migrate.sh` runs against Supabase using the same credentials as the Cloud Run service.
+   - `scripts/migrate.sh` (or `npm run db:migrate` in Cloud Shell) runs against Cloud SQL using the same credentials as the Cloud Run service.
 3. Notify Slack channel once health checks pass.
 
 ## Terraform Workflow
@@ -49,7 +48,7 @@ Use `SET_SECRETS` to mix Cloud SQL (`DATABASE_URL`) with other sensitive values.
 ## Rollback Procedures
 - **Frontend**: `vercel rollback --to <deployment-id>` or select previous build in dashboard.
 - **API/WS**: `gcloud run services list` → `gcloud run services update-traffic humanchat-api --to-revisions <rev>=100`.
-- **Database**: Restore from latest Supabase snapshot (see `docs/backup-restore.md`). Update `DATABASE_URL` secrets, redeploy API.
+- **Database**: Restore from the latest Cloud SQL backup (see `docs/backup-restore.md`). Update `DATABASE_URL` secrets, redeploy API.
 - **Feature flags**: Toggle via config service (future) or env vars.
 
 ## Post-Deploy Verification
