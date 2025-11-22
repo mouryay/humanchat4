@@ -6,10 +6,12 @@ export const env = {
   apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:4000',
   appUrl: process.env.APP_URL ?? 'http://localhost:3000',
   databaseUrl: process.env.DATABASE_URL ?? 'postgresql://localhost:5432/humanchat',
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '24h',
-  supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET,
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+  firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   cookieDomain: process.env.COOKIE_DOMAIN,
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? 'sk_test_placeholder',
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
@@ -27,5 +29,6 @@ export const env = {
   smtpPass: process.env.SMTP_PASS,
   smtpFrom: process.env.SMTP_FROM ?? 'Sam <sam@humanchat.com>',
   geminiApiKey: process.env.GEMINI_API_KEY,
-  geminiModel: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash'
+  geminiModel: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash',
+  postgresCryptoKey: process.env.POSTGRES_CRYPTO_KEY ?? 'change-me'
 };

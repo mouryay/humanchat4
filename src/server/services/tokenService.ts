@@ -33,11 +33,12 @@ const getUserIdentity = async (userId: string): Promise<UserIdentity> => {
 };
 
 const isProd = env.nodeEnv === 'production';
+const sameSiteMode: 'lax' | 'none' = isProd ? 'none' : 'lax';
 
 const cookieConfig = (maxAge: number) => ({
   httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: isProd,
+  sameSite: sameSiteMode,
+  secure: isProd || sameSiteMode === 'none',
   maxAge,
   ...(env.cookieDomain ? { domain: env.cookieDomain } : {})
 });
@@ -64,6 +65,10 @@ const getSessionByToken = async (token: string): Promise<SessionTokenRow | null>
   return result.rows[0] ?? null;
 };
 
+export const getSessionByRefreshToken = async (token: string): Promise<SessionTokenRow | null> => {
+  return getSessionByToken(token);
+};
+
 const refreshSession = async (token: string): Promise<SessionTokenRow> => {
   const session = await getSessionByToken(token);
   if (!session) {
@@ -82,6 +87,10 @@ const refreshSession = async (token: string): Promise<SessionTokenRow> => {
     [lifetimeDays, hashToken(token)]
   );
   return session;
+};
+
+export const renewSessionWithRefreshToken = async (token: string): Promise<SessionTokenRow> => {
+  return refreshSession(token);
 };
 
 export const revokeRefreshToken = async (token: string): Promise<void> => {
@@ -105,14 +114,18 @@ const setRefreshCookie = (res: Response, token: string, maxAge: number): void =>
   res.cookie(REFRESH_COOKIE, token, cookieConfig(maxAge));
 };
 
+export const issueAccessCookie = (res: Response, user: { id: string; email: string; role: UserRole }): void => {
+  const accessToken = signAccessToken({ id: user.id, email: user.email, role: user.role });
+  setAccessCookie(res, accessToken);
+};
+
 export const issueAuthCookies = async (
   res: Response,
   user: { id: string; email: string; role: UserRole },
   rememberMe = false
 ): Promise<void> => {
-  const accessToken = signAccessToken({ id: user.id, email: user.email, role: user.role });
   const refresh = await createRefreshToken(user.id, rememberMe);
-  setAccessCookie(res, accessToken);
+  issueAccessCookie(res, user);
   setRefreshCookie(res, refresh.token, refresh.maxAge);
 };
 

@@ -1,14 +1,24 @@
+terraform {
+  required_providers {
+    vercel = {
+      source  = "vercel/vercel"
+      version = "~> 0.13"
+    }
+  }
+}
+
 variable "project_name" { type = string }
 variable "domain" { type = string }
 variable "vercel_team" { type = string }
+variable "git_repo_slug" { type = string }
 variable "env_variables" { type = map(string) }
 
 resource "vercel_project" "this" {
   name = var.project_name
   framework = "nextjs"
-  git_repository {
+  git_repository = {
     type = "github"
-    repo = var.project_name
+    repo  = var.git_repo_slug
   }
 }
 

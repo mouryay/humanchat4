@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.30"
+    }
+  }
+}
+
 variable "zone_id" { type = string }
 variable "primary_domain" { type = string }
 variable "api_domain" { type = string }
@@ -10,22 +19,25 @@ resource "cloudflare_record" "root" {
   zone_id = var.zone_id
   name    = var.primary_domain
   type    = "CNAME"
-  value   = var.frontend_target
+  content = var.frontend_target
   proxied = true
+  allow_overwrite = true
 }
 
 resource "cloudflare_record" "api" {
   zone_id = var.zone_id
   name    = var.api_domain
   type    = "CNAME"
-  value   = var.api_target
+  content = var.api_target
   proxied = true
+  allow_overwrite = true
 }
 
 resource "cloudflare_record" "ws" {
   zone_id = var.zone_id
   name    = var.ws_domain
   type    = "CNAME"
-  value   = var.ws_target
+  content = var.ws_target
   proxied = true
+  allow_overwrite = true
 }

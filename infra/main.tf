@@ -5,44 +5,58 @@ terraform {
       source  = "vercel/vercel"
       version = "~> 0.13"
     }
-    railway = {
-      source  = "railwayapp/railway"
-      version = "~> 1.9"
-    }
-    supabase = {
-      source  = "supabase/supabase"
-      version = "~> 0.11"
-    }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 4.30"
     }
-    upstash = {
-      source  = "upstash/upstash"
-      version = "~> 0.3"
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.30"
     }
   }
 }
 
 provider "vercel" {
-  token = var.vercel_token
-}
-
-provider "railway" {
-  token = var.railway_token
-}
-
-provider "supabase" {
-  access_token = var.supabase_token
+  api_token = var.vercel_token
 }
 
 provider "cloudflare" {
   api_token = var.cloudflare_token
 }
 
-provider "upstash" {
-  email = var.upstash_email
-  api_key = var.upstash_api_key
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
+data "google_compute_default_service_account" "default" {
+  project = var.gcp_project_id
+}
+
+data "google_project" "current" {
+  project_id = var.gcp_project_id
+}
+
+
+resource "google_compute_network" "main" {
+  name                    = "${var.project_name}-network"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "main" {
+  name          = "${var.project_name}-subnet"
+  ip_cidr_range = "10.100.0.0/28"
+  region        = var.gcp_region
+  network       = google_compute_network.main.id
+}
+
+resource "google_vpc_access_connector" "cloud_run" {
+  name   = "${var.project_name}-connector"
+  region = var.gcp_region
+
+  subnet {
+    name = google_compute_subnetwork.main.name
+  }
 }
 
 module "frontend" {
@@ -50,41 +64,81 @@ module "frontend" {
   project_name  = var.project_name
   domain        = var.primary_domain
   vercel_team   = var.vercel_team
+  git_repo_slug = var.git_repo_slug
   env_variables = var.frontend_env
 }
 
-module "api" {
-  source             = "./modules/railway-service"
-  service_name       = "api"
-  repository_url     = var.repository_url
-  env_variables      = var.backend_env
-  plan               = "standard"
-  min_instances      = 1
-  max_instances      = 3
+module "api_service" {
+  source                = "./modules/cloud-run-service"
+  project_id            = var.gcp_project_id
+  region                = var.gcp_region
+  service_name          = "humanchat-api"
+  image                 = var.api_image
+  env_variables         = merge(var.backend_env, { REDIS_URL = local.redis_url })
+  min_instances         = 1
+  max_instances         = 3
+  vpc_connector         = google_vpc_access_connector.cloud_run.name
+  vpc_connector_egress  = "private-ranges-only"
+  cloud_sql_instances   = var.api_cloud_sql_instances
+  service_account_email = data.google_compute_default_service_account.default.email
 }
 
-module "ws" {
-  source             = "./modules/railway-service"
-  service_name       = "ws"
-  repository_url     = var.repository_url
-  env_variables      = var.ws_env
-  plan               = "standard"
-  min_instances      = 0
-  max_instances      = 5
-}
-
-module "database" {
-  source        = "./modules/supabase"
-  project_name  = "${var.project_name}-db"
-  region        = var.db_region
-  enable_replicas = true
+module "ws_service" {
+  source                = "./modules/cloud-run-service"
+  project_id            = var.gcp_project_id
+  region                = var.gcp_region
+  service_name          = "humanchat-ws"
+  image                 = var.ws_image
+  env_variables         = merge(var.ws_env, { REDIS_URL = local.redis_url })
+  min_instances         = 0
+  max_instances         = 5
+  vpc_connector         = google_vpc_access_connector.cloud_run.name
+  vpc_connector_egress  = "private-ranges-only"
+  cloud_sql_instances   = var.api_cloud_sql_instances
+  service_account_email = data.google_compute_default_service_account.default.email
 }
 
 module "redis" {
-  source      = "./modules/upstash-redis"
-  cluster_name = "${var.project_name}-redis"
-  region       = var.redis_region
-  multiregion  = true
+  source     = "./modules/memorystore-redis"
+  name       = "${var.project_name}-redis"
+  project_id = var.gcp_project_id
+  region     = var.gcp_region
+  network    = google_compute_network.main.id
+}
+
+locals {
+  redis_url = "redis://${module.redis.host}:${module.redis.port}"
+}
+
+resource "google_cloud_run_domain_mapping" "api" {
+  location = var.gcp_region
+  name     = var.api_domain
+
+  metadata {
+    namespace = data.google_project.current.number
+  }
+
+  spec {
+    route_name = module.api_service.name
+  }
+}
+
+resource "google_cloud_run_domain_mapping" "ws" {
+  location = var.gcp_region
+  name     = var.ws_domain
+
+  metadata {
+    namespace = data.google_project.current.number
+  }
+
+  spec {
+    route_name = module.ws_service.name
+  }
+}
+
+locals {
+  api_domain_target = try(trimsuffix(google_cloud_run_domain_mapping.api.status[0].resource_records[0].rrdata, "."), module.api_service.hostname)
+  ws_domain_target  = try(trimsuffix(google_cloud_run_domain_mapping.ws.status[0].resource_records[0].rrdata, "."), module.ws_service.hostname)
 }
 
 module "dns" {
@@ -93,7 +147,19 @@ module "dns" {
   primary_domain  = var.primary_domain
   api_domain      = var.api_domain
   ws_domain       = var.ws_domain
-  frontend_target = module.frontend.hosted_domain
-  api_target      = module.api.hostname
-  ws_target       = module.ws.hostname
+  frontend_target = "cname.vercel-dns.com"
+  api_target      = local.api_domain_target
+  ws_target       = local.ws_domain_target
+}
+
+resource "google_project_iam_member" "cloud_run_cloudsql_client" {
+  project = var.gcp_project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${data.google_compute_default_service_account.default.email}"
+}
+
+resource "google_project_iam_member" "cloud_run_vpcaccess" {
+  project = var.gcp_project_id
+  role    = "roles/vpcaccess.user"
+  member  = "serviceAccount:${data.google_compute_default_service_account.default.email}"
 }

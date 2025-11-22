@@ -37,7 +37,7 @@ const run = async (): Promise<void> => {
       const filenames = entries
         .filter((entry) => entry.isFile() && entry.name.endsWith('.sql'))
         .map((entry) => entry.name)
-        .sort();
+        .sort((a, b) => (a > b ? 1 : -1));
 
       for (const filename of filenames) {
         if (applied.has(filename)) {
