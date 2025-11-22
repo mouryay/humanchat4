@@ -6,7 +6,7 @@ export const env = {
   apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:4000',
   appUrl: process.env.APP_URL ?? 'http://localhost:3000',
   databaseUrl: process.env.DATABASE_URL ?? 'postgresql://localhost:5432/humanchat',
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  redisUrl: process.env.REDIS_URL,
   jwtSecret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '24h',
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
