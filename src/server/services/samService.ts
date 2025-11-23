@@ -102,15 +102,16 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
     type: Parameters<typeof addConversationMessage>[3],
     actions?: Parameters<typeof addConversationMessage>[4]
   ) => {
+    const normalizedSenderId = uuidValidate(senderId) ? senderId : null;
     try {
-      await addConversationMessage(activeConversationId, senderId, content, type, actions);
+      await addConversationMessage(activeConversationId, normalizedSenderId, content, type, actions);
     } catch (error) {
       const isExpectedMissingConversation =
         error instanceof ApiError && (error.code === 'NOT_FOUND' || error.code === 'INVALID_REQUEST');
       if (isExpectedMissingConversation) {
         const conversation = await ensureSamConversation(userId);
         activeConversationId = conversation.id;
-        await addConversationMessage(activeConversationId, senderId, content, type, actions);
+        await addConversationMessage(activeConversationId, normalizedSenderId, content, type, actions);
         logger.info('Recreated missing Sam conversation for user', {
           userId,
           conversationId: activeConversationId

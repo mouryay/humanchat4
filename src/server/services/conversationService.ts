@@ -7,7 +7,7 @@ import { Conversation } from '../types/index.js';
 export interface ConversationMessage {
   id: string;
   conversation_id: string;
-  sender_id: string;
+  sender_id: string | null;
   content: string;
   message_type: 'user_text' | 'sam_response' | 'system_notice';
   created_at: string;
@@ -39,7 +39,7 @@ export const getConversationMessages = async (conversationId: string): Promise<C
 
 export const addConversationMessage = async (
   conversationId: string,
-  senderId: string,
+  senderId: string | null,
   content: string,
   type: ConversationMessage['message_type'],
   actions?: ConversationMessage['actions']
@@ -53,7 +53,7 @@ export const addConversationMessage = async (
   const insert = await query<ConversationMessage>(
     `INSERT INTO messages (conversation_id, sender_id, content, message_type, actions, created_at)
      VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *`,
-    [conversationId, senderId, content, type, actions ?? null]
+    [conversationId, senderId ?? null, content, type, actions ?? null]
   );
 
   await query('UPDATE conversations SET last_activity = NOW() WHERE id = $1', [conversationId]);
