@@ -6,7 +6,8 @@ const appDir = dirname(fileURLToPath(new URL('.', import.meta.url)));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  typedRoutes: true
+  typedRoutes: true,
+  distDir: '../../.next'
 };
 
 export default nextConfig;
