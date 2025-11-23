@@ -50,10 +50,12 @@ export const addConversationMessage = async (
     throw new ApiError(404, 'NOT_FOUND', 'Conversation not found');
   }
 
+  const serializedActions = actions ? JSON.stringify(actions) : null;
+
   const insert = await query<ConversationMessage>(
     `INSERT INTO messages (conversation_id, sender_id, content, message_type, actions, created_at)
-     VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *`,
-    [conversationId, senderId ?? null, content, type, actions ?? null]
+     VALUES ($1,$2,$3,$4,$5::jsonb,NOW()) RETURNING *`,
+    [conversationId, senderId ?? null, content, type, serializedActions]
   );
 
   await query('UPDATE conversations SET last_activity = NOW() WHERE id = $1', [conversationId]);
