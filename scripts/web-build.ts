@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, cpSync, rmSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 
@@ -38,10 +38,35 @@ const child = spawn('next', ['build', 'apps/web'], {
   }
 });
 
+const syncPublicAssets = () => {
+  const sourceDir = resolve(process.cwd(), 'apps/web/public');
+  const targetDir = resolve(process.cwd(), '.next/public');
+  if (!existsSync(sourceDir)) {
+    console.warn('[web:build] No public directory found at apps/web/public');
+    return;
+  }
+  mkdirSync(targetDir, { recursive: true });
+  rmSync(targetDir, { recursive: true, force: true });
+  mkdirSync(targetDir, { recursive: true });
+  cpSync(sourceDir, targetDir, { recursive: true });
+  console.log('[web:build] Synced public assets into .next/public');
+};
+
 child.on('exit', (code, signal) => {
   if (signal) {
     process.exit(1);
     return;
   }
+
+  if (code === 0) {
+    try {
+      syncPublicAssets();
+    } catch (error) {
+      console.error('[web:build] Failed to copy public assets', error);
+      process.exit(1);
+      return;
+    }
+  }
+
   process.exit(code ?? 1);
 });
