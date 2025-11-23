@@ -1,9 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
 import { env } from '../config/env.js';
 import { SamAction, SamProfileSummary, SamResponse } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+
+const CORTEX_API_BASE = 'https://cortex-api-37305898543.us-central1.run.app/api';
 
 export interface ConversationHistoryEntry {
   role: 'user' | 'sam';
@@ -22,6 +23,7 @@ export interface SendToSamInput {
   userMessage: string;
   conversationHistory: ConversationHistoryEntry[];
   userContext?: SamUserContext;
+  sessionId?: string;
 }
 
 const SamProfileSchema = z.object({
@@ -104,83 +106,169 @@ const stripJsonFence = (raw?: string): string => {
     .trim();
 };
 
-const mapHistoryToGemini = (history: ConversationHistoryEntry[]) =>
+const mapHistoryToCortex = (history: ConversationHistoryEntry[]) =>
   history.map((entry) => ({
-    role: entry.role === 'sam' ? 'model' : 'user',
-    parts: [{ text: entry.content }]
+    role: entry.role === 'sam' ? 'assistant' : 'user',
+    content: entry.content
   }));
 
-const getGeminiClient = (): GoogleGenerativeAI | null => {
-  if (!env.geminiApiKey) {
-    return null;
-  }
-
-  return new GoogleGenerativeAI(env.geminiApiKey);
+const getCortexAuthToken = (): string | null => {
+  // This should ideally be stored in env or fetched dynamically
+  // For now using the token from the example
+  return env.cortexApiToken || null;
 };
 
 export const sendToSam = async ({
   userMessage,
   conversationHistory,
-  userContext
-}: SendToSamInput): Promise<SamResponse> => {
-  const geminiClient = getGeminiClient();
-  if (!geminiClient) {
-    logger.warn('Gemini API key missing; returning fallback Sam response.');
+  userContext,
+  sessionId
+}: SendToSamInput): Promise<SamResponse & { sessionId?: string }> => {
+  const authToken = getCortexAuthToken();
+  if (!authToken) {
+    logger.warn('Cortex API token missing; returning fallback Sam response.');
     return buildFallbackResponse('Sam is warming up. Please retry in a moment.');
   }
 
-  const model = geminiClient.getGenerativeModel({
-    model: env.geminiModel,
-    generationConfig,
-    systemInstruction: SYSTEM_PROMPT
-  });
-
   const trimmedHistory = conversationHistory.slice(-12);
+  const contextString = JSON.stringify({
+    conversation_history: trimmedHistory,
+    user_context: userContext ?? {},
+    latest_user_message: userMessage
+  }, null, 2);
+
   try {
-    const historyContents = mapHistoryToGemini(trimmedHistory);
-    const result = await model.generateContent({
-      contents: [
-        ...historyContents,
-        {
-          role: 'user',
-          parts: [
+    // If no sessionId, start a new chat session
+    if (!sessionId) {
+      logger.info('Starting new Cortex chat session');
+      const startResponse = await fetch(`${CORTEX_API_BASE}/chat/start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          messages: [
             {
-              text: `STRUCTURED_CONTEXT:\n${JSON.stringify(
-                {
-                  conversation_history: trimmedHistory,
-                  user_context: userContext ?? {},
-                  latest_user_message: userMessage
-                },
-                null,
-                2
-              )}\n\nREMEMBER: respond with JSON only.`
+              role: 'system',
+              content: SYSTEM_PROMPT
+            },
+            ...mapHistoryToCortex(trimmedHistory),
+            {
+              role: 'user',
+              content: `${userMessage}\n\nCONTEXT:\n${contextString}`
             }
-          ]
-        }
-      ]
-    });
+          ],
+          context: contextString
+        })
+      });
 
-    const rawText = result.response?.text();
-    const sanitized = stripJsonFence(rawText);
-    const parsed = JSON.parse(sanitized || '{}');
-    const validated = SamResponseSchema.safeParse(parsed);
+      if (!startResponse.ok) {
+        const errorText = await startResponse.text();
+        logger.error('Cortex API start error', { 
+          status: startResponse.status, 
+          statusText: startResponse.statusText,
+          error: errorText 
+        });
+        throw new Error(`Cortex API error: ${startResponse.status} ${startResponse.statusText} - ${errorText}`);
+      }
 
-    if (!validated.success) {
-      logger.warn('Sam response failed validation; returning fallback.', validated.error.flatten());
-      return buildFallbackResponse('Sam is reconnecting. Please try again.');
+      const startData = await startResponse.json();
+      logger.info('Cortex chat started', { sessionId: startData.sessionId, rawResponse: JSON.stringify(startData).substring(0, 200) });
+
+      const responseText = startData.text || startData.response || startData.message || '';
+      logger.info('Cortex response text', { responseText: responseText.substring(0, 200) });
+      
+      // Cortex returns plain text, not JSON with structured actions
+      // We need to wrap it in our expected format
+      const response: SamResponse = {
+        text: responseText,
+        actions: [
+          {
+            type: 'follow_up_prompt',
+            prompt: 'What else would you like to know?'
+          }
+        ]
+      };
+
+      logger.info('Sam response generated', { 
+        text: response.text.substring(0, 100), 
+        actionCount: response.actions?.length ?? 0,
+        sessionId: startData.sessionId
+      });
+
+      return {
+        ...response,
+        sessionId: startData.sessionId
+      };
     }
 
+    // Continue existing chat session
+    logger.info('Continuing Cortex chat session', { sessionId });
+    const chatResponse = await fetch(`${CORTEX_API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        sessionId,
+        messages: [
+          {
+            role: 'user',
+            content: `${userMessage}\n\nCONTEXT:\n${contextString}`
+          }
+        ],
+        rag: {
+          enabled: false,
+          topK: null
+        }
+      })
+    });
+
+    if (!chatResponse.ok) {
+      const errorText = await chatResponse.text();
+      logger.error('Cortex API chat error', { 
+        status: chatResponse.status, 
+        statusText: chatResponse.statusText,
+        error: errorText 
+      });
+      throw new Error(`Cortex API error: ${chatResponse.status} ${chatResponse.statusText} - ${errorText}`);
+    }
+
+    const chatData = await chatResponse.json();
+    logger.info('Cortex chat response', { rawResponse: JSON.stringify(chatData).substring(0, 200) });
+    
+    const responseText = chatData.text || chatData.response || chatData.message || '';
+    logger.info('Cortex response text', { responseText: responseText.substring(0, 200) });
+    
+    // Cortex returns plain text, not JSON with structured actions
+    // We need to wrap it in our expected format
+    const response: SamResponse = {
+      text: responseText,
+      actions: [
+        {
+          type: 'follow_up_prompt',
+          prompt: 'What else would you like to know?'
+        }
+      ]
+    };
+
     logger.info('Sam response generated', { 
-      text: validated.data.text.substring(0, 100), 
-      actionCount: validated.data.actions?.length ?? 0 
+      text: response.text.substring(0, 100), 
+      actionCount: response.actions?.length ?? 0,
+      sessionId
     });
 
     return {
-      text: validated.data.text,
-      actions: validated.data.actions ?? []
+      ...response,
+      sessionId
     };
   } catch (error) {
-    logger.error('Gemini request failed', error);
-    return buildFallbackResponse('Sam hit a snag. Give it another try in a few seconds.');
+    logger.error('Cortex request failed', error);
+    return { 
+      ...buildFallbackResponse('Sam hit a snag. Give it another try in a few seconds.'),
+      sessionId
+    };
   }
 };

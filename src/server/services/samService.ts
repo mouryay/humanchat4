@@ -156,19 +156,24 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
   await persistMessage(userId, parsed.message, 'user_text');
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
+  
+  // Use conversation ID as sessionId for Cortex API
+  // The Cortex API will maintain conversation context using this sessionId
   const response =
     intercepted ??
     (await sendToSam({
       userMessage: parsed.message,
       conversationHistory: parsed.conversationHistory,
-      userContext: parsed.userContext
+      userContext: parsed.userContext,
+      sessionId: activeConversationId !== 'sam-concierge' ? activeConversationId : undefined
     }));
 
   const normalizedActions = normalizeSamActions(response.actions);
   await persistMessage('sam', response.text, 'sam_response', normalizedActions);
 
   return {
-    ...response,
-    conversationId: activeConversationId
+    text: response.text,
+    actions: response.actions,
+    conversationId: response.sessionId || activeConversationId
   };
 };
