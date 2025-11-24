@@ -156,33 +156,24 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
   await persistMessage(userId, parsed.message, 'user_text');
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
-  logger.info('Sam concierge dispatching Gemini request', {
-    conversationId: activeConversationId,
-    userId,
-    historyCount: parsed.conversationHistory.length,
-    hasContext: Boolean(parsed.userContext)
-  });
-
+  
+  // Use conversation ID as sessionId for Cortex API
+  // The Cortex API will maintain conversation context using this sessionId
   const response =
     intercepted ??
     (await sendToSam({
       userMessage: parsed.message,
       conversationHistory: parsed.conversationHistory,
-      userContext: parsed.userContext
+      userContext: parsed.userContext,
+      sessionId: activeConversationId !== 'sam-concierge' ? activeConversationId : undefined
     }));
-
-  logger.info('Sam concierge response received', {
-    conversationId: activeConversationId,
-    userId,
-    actionCount: Array.isArray(response.actions) ? response.actions.length : 0,
-    textPreview: response.text?.slice(0, 120) ?? null
-  });
 
   const normalizedActions = normalizeSamActions(response.actions);
   await persistMessage('sam', response.text, 'sam_response', normalizedActions);
 
   return {
-    ...response,
+    text: response.text,
+    actions: response.actions,
     conversationId: activeConversationId
   };
 };

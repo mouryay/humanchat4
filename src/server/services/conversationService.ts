@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { validate as uuidValidate } from 'uuid';
 
 import { query } from '../db/postgres.js';
@@ -23,7 +24,10 @@ const ensureConversationIdIsUuid = (conversationId: string): void => {
 
 export const listConversations = async (userId: string): Promise<Conversation[]> => {
   const result = await query<Conversation>(
-    `SELECT * FROM conversations WHERE $1 = ANY(participants) ORDER BY last_activity DESC`,
+    `SELECT * 
+     FROM conversations 
+     WHERE $1 = ANY(participants)
+     ORDER BY last_activity DESC`,
     [userId]
   );
   return result.rows;
@@ -56,7 +60,7 @@ export const addConversationMessage = async (
   const runInsert = async (actionsJson: string | null) => {
     const inserted = await query<ConversationMessage>(
       `INSERT INTO messages (conversation_id, sender_id, content, message_type, actions, created_at)
-       VALUES ($1,$2,$3,$4,$5::jsonb,NOW()) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5::jsonb, NOW()) RETURNING *`,
       [conversationId, senderId ?? null, content, type, actionsJson]
     );
     await query('UPDATE conversations SET last_activity = NOW() WHERE id = $1', [conversationId]);
@@ -105,11 +109,14 @@ export const ensureSamConversation = async (userId: string): Promise<Conversatio
     return existing;
   }
 
+  const conversationId = crypto.randomUUID();
+  
+  // Insert conversation with participants array
   const insert = await query<Conversation>(
-    `INSERT INTO conversations (type, participants, last_activity)
-     VALUES ('sam', ARRAY[$1::uuid], NOW())
+    `INSERT INTO conversations (id, type, participants, last_activity)
+     VALUES ($1, 'sam', ARRAY[$2]::UUID[], NOW())
      RETURNING *`,
-    [userId]
+    [conversationId, userId]
   );
 
   return insert.rows[0];
