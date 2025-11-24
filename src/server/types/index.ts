@@ -78,7 +78,7 @@ export interface SessionPayment {
 }
 
 export interface Conversation {
-  conversation_id: string;
+  id: string;
   type: ConversationType;
   linked_session_id: string | null;
   last_activity: number; // bigint from database

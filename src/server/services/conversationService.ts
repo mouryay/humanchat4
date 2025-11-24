@@ -24,11 +24,10 @@ const ensureConversationIdIsUuid = (conversationId: string): void => {
 
 export const listConversations = async (userId: string): Promise<Conversation[]> => {
   const result = await query<Conversation>(
-    `SELECT c.* 
-     FROM conversations c
-     JOIN conversation_participants cp ON c.conversation_id = cp.conversation_id
-     WHERE cp.user_id = $1 
-     ORDER BY c.last_activity DESC`,
+    `SELECT * 
+     FROM conversations 
+     WHERE $1 = ANY(participants)
+     ORDER BY last_activity DESC`,
     [userId]
   );
   return result.rows;
@@ -51,7 +50,7 @@ export const addConversationMessage = async (
   actions?: ConversationMessage['actions']
 ): Promise<ConversationMessage> => {
   ensureConversationIdIsUuid(conversationId);
-  const conversation = await query<Conversation>('SELECT * FROM conversations WHERE conversation_id = $1', [conversationId]);
+  const conversation = await query<Conversation>('SELECT * FROM conversations WHERE id = $1', [conversationId]);
   if (!conversation.rows[0]) {
     throw new ApiError(404, 'NOT_FOUND', 'Conversation not found');
   }
@@ -59,13 +58,12 @@ export const addConversationMessage = async (
   const serializedActions = actions ? JSON.stringify(actions) : null;
 
   const runInsert = async (actionsJson: string | null) => {
-    const timestamp = Date.now();
     const inserted = await query<ConversationMessage>(
-      `INSERT INTO messages (conversation_id, sender_id, content, timestamp, type, actions, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6::jsonb,NOW()) RETURNING *`,
-      [conversationId, senderId ?? null, content, timestamp, type, actionsJson]
+      `INSERT INTO messages (conversation_id, sender_id, content, message_type, actions, created_at)
+       VALUES ($1, $2, $3, $4, $5::jsonb, NOW()) RETURNING *`,
+      [conversationId, senderId ?? null, content, type, actionsJson]
     );
-    await query('UPDATE conversations SET last_activity = $1 WHERE conversation_id = $2', [timestamp, conversationId]);
+    await query('UPDATE conversations SET last_activity = NOW() WHERE id = $1', [conversationId]);
     return inserted.rows[0];
   };
 
@@ -94,11 +92,10 @@ export const findSamConversationForUser = async (userId: string): Promise<Conver
   }
 
   const result = await query<Conversation>(
-    `SELECT c.*
-     FROM conversations c
-     JOIN conversation_participants cp ON c.conversation_id = cp.conversation_id
-     WHERE c.type = 'sam' AND cp.user_id = $1
-     ORDER BY c.created_at DESC
+    `SELECT *
+     FROM conversations
+     WHERE type = 'sam' AND $1 = ANY(participants)
+     ORDER BY created_at DESC
      LIMIT 1`,
     [userId]
   );
@@ -113,20 +110,12 @@ export const ensureSamConversation = async (userId: string): Promise<Conversatio
   }
 
   const conversationId = crypto.randomUUID();
-  const timestamp = Date.now();
   
-  // Insert conversation
+  // Insert conversation with participants array
   const insert = await query<Conversation>(
-    `INSERT INTO conversations (conversation_id, type, last_activity)
-     VALUES ($1, 'sam', $2)
+    `INSERT INTO conversations (id, type, participants, last_activity)
+     VALUES ($1, 'sam', ARRAY[$2]::UUID[], NOW())
      RETURNING *`,
-    [conversationId, timestamp]
-  );
-
-  // Insert participant
-  await query(
-    `INSERT INTO conversation_participants (conversation_id, user_id)
-     VALUES ($1, $2)`,
     [conversationId, userId]
   );
 
