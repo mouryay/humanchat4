@@ -66,8 +66,8 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col bg-midnight text-white">
-      <div className="flex flex-wrap items-center gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
+    <main className="flex h-screen min-h-screen flex-col overflow-hidden bg-midnight text-white">
+      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
         <span>Workspace</span>
         {isTablet && (
           <button
@@ -81,19 +81,21 @@ export default function ChatPage() {
         <div className="ml-auto">
           <LogoutButton />
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {!isMobile && (
-          <ConversationSidebar
-            activeConversationId={activeConversationId}
-            onSelectConversation={handleSelectConversation}
-            collapsed={isTablet && sidebarCollapsed}
-          />
+          <div className="flex h-full shrink-0 overflow-hidden">
+            <ConversationSidebar
+              activeConversationId={activeConversationId}
+              onSelectConversation={handleSelectConversation}
+              collapsed={isTablet && sidebarCollapsed}
+            />
+          </div>
         )}
 
         {isMobile ? (
-          <section className="relative flex min-h-screen flex-1 flex-col">
+          <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
             {activeNav === 'discover' && <DiscoverPanel onBookProfile={() => setActiveNav('home')} />}
             {activeNav === 'profile' && <ProfilePanel />}
             {activeNav === 'home' && mobilePane === 'list' && (
@@ -112,7 +114,7 @@ export default function ChatPage() {
             )}
           </section>
         ) : (
-          <section className="flex flex-1 flex-col">
+          <section className="flex flex-1 flex-col overflow-hidden">
             <ConversationView activeConversationId={activeConversationId} onSelectConversation={handleSelectConversation} />
           </section>
         )}
