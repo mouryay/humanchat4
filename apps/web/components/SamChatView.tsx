@@ -85,6 +85,7 @@ export default function SamChatView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState(conversation.conversationId);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     setActiveConversationId(conversation.conversationId);
@@ -127,8 +128,13 @@ export default function SamChatView({
     return conversation.participants.find((participant) => participant !== 'sam') ?? 'user_local';
   }, [conversation.participants]);
 
-  const persistSamMessage = async (content: string, actions?: Action[]) => {
-    await addMessage(activeConversationId, {
+  const persistSamMessage = async (content: string, actions?: Action[], conversationId?: string) => {
+    const targetConversationId = conversationId ?? activeConversationId;
+    if (!targetConversationId) {
+      return;
+    }
+
+    await addMessage(targetConversationId, {
       senderId: 'sam',
       content,
       type: 'sam_response',
@@ -179,6 +185,7 @@ export default function SamChatView({
     setDraft('');
     setSendError(null);
     setThinking(true);
+    let workingConversationId = activeConversationId;
 
     const historyPayload: ConversationHistoryPayload[] = orderedMessages.map((message) => ({
       role: isSamMessage(message) ? 'sam' : 'user',
@@ -200,7 +207,7 @@ export default function SamChatView({
               rate_per_minute: 0
             }));
 
-    await addMessage(activeConversationId, {
+    await addMessage(workingConversationId, {
       senderId: localUserId,
       content: text,
       type: 'user_text',
@@ -209,7 +216,7 @@ export default function SamChatView({
 
     try {
       const response = await sendSamMessage({
-        conversationId: activeConversationId,
+        conversationId: workingConversationId,
         message: text,
         conversationHistory: [...historyPayload, { role: 'user', content: text, timestamp: new Date().toISOString() }],
         userContext: {
@@ -222,15 +229,17 @@ export default function SamChatView({
         }
       });
 
-      if (response.conversationId && response.conversationId !== activeConversationId) {
-        await migrateSamConversation(activeConversationId, response.conversationId);
+      if (response.conversationId && response.conversationId !== workingConversationId) {
+        await migrateSamConversation(workingConversationId, response.conversationId);
+        workingConversationId = response.conversationId;
         setActiveConversationId(response.conversationId);
+        onOpenConversation?.(response.conversationId);
       }
-      await persistSamMessage(response.text ?? 'Sam is thinking...', response.actions);
+      await persistSamMessage(response.text ?? 'Sam is thinking...', response.actions, workingConversationId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to reach Sam right now.';
       setSendError(message);
-      await persistSamMessage('Apologies, I could not send that request. Please try again.');
+      await persistSamMessage('Apologies, I could not send that request. Please try again.', undefined, workingConversationId);
     } finally {
       setThinking(false);
     }
@@ -267,11 +276,17 @@ export default function SamChatView({
           );
         }}
       </VirtualMessageList>
-      <form className={styles.inputBar} onSubmit={handleSubmit}>
+      <form ref={formRef} className={styles.inputBar} onSubmit={handleSubmit}>
         <textarea
           placeholder="Message Sam..."
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault();
+              formRef.current?.requestSubmit();
+            }
+          }}
           disabled={isThinking}
         />
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>

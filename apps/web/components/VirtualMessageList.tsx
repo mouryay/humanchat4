@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Message } from '../../../src/lib/db';
 import type { ReactNode } from 'react';
@@ -28,6 +28,14 @@ export default function VirtualMessageList({ messages, className, registerScroll
     estimateSize: () => 120,
     overscan: 8
   });
+
+  useEffect(() => {
+    if (!parentRef.current || messages.length === 0) {
+      return;
+    }
+
+    virtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+  }, [messages.length, virtualizer]);
 
   return (
     <div ref={handleRef} className={className}>
