@@ -1,29 +1,56 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 
 import LogoutButton from './LogoutButton';
 
 export default function UserSettingsMenu() {
   const [open, setOpen] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHoverTimeout = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+      hoverTimeout.current = null;
+    }
+  };
+
+  const openWithHover = () => {
+    clearHoverTimeout();
+    setOpen(true);
+  };
+
+  const closeWithDelay = () => {
+    clearHoverTimeout();
+    hoverTimeout.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  useEffect(() => () => clearHoverTimeout(), []);
 
   return (
     <div
       className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onFocusCapture={() => setOpen(true)}
+      onMouseEnter={openWithHover}
+      onMouseLeave={closeWithDelay}
+      onFocusCapture={() => {
+        clearHoverTimeout();
+        setOpen(true);
+      }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          clearHoverTimeout();
           setOpen(false);
         }
       }}
     >
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          clearHoverTimeout();
+          setOpen((prev) => !prev);
+        }}
         className="flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-sm text-white transition hover:border-white/40"
       >
         <span className="h-2 w-2 rounded-full bg-aqua" aria-hidden />
