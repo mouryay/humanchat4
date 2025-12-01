@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ConversationCategory } from '../services/profileApi';
 import type { UseProfileDetailsResult } from '../hooks/useProfileDetails';
+import { useSessionStatus } from '../hooks/useSessionStatus';
 
 type AvailabilityState = 'available' | 'busy' | 'offline';
 
@@ -30,12 +31,39 @@ const rateFromInput = (value: string): number | null => {
 
 export default function AccountPreferencesForm({ profileState }: AccountPreferencesFormProps) {
   const { profile, save, saving } = profileState;
-  const [availability, setAvailability] = useState<AvailabilityState>('offline');
+  const [availability, setAvailability] = useState<AvailabilityState>('available');
   const [conversationType, setConversationType] = useState<ConversationCategory>('free');
   const [instantRate, setInstantRate] = useState('');
   const [openToRequests, setOpenToRequests] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusVariant, setStatusVariant] = useState<'success' | 'error' | null>(null);
+  const { isOnline: realtimeOnline, hasActiveSession: realtimeActive, isLoading: statusLoading } = useSessionStatus(profile?.id);
+
+  const readyState = useMemo(() => {
+    if (statusLoading) {
+      return { label: 'Checking…', helper: 'Syncing your live availability.', variant: 'loading' as const };
+    }
+    if (realtimeActive) {
+      return { label: 'In a session', helper: 'Members see you as busy right now.', variant: 'busy' as const };
+    }
+    if (realtimeOnline) {
+      return { label: 'Ready to chat', helper: 'You are discoverable for instant connects.', variant: 'online' as const };
+    }
+    return { label: 'Offline', helper: 'You are hidden until you toggle back on.', variant: 'offline' as const };
+  }, [statusLoading, realtimeActive, realtimeOnline]);
+
+  const readyBadgeClass = useMemo(() => {
+    switch (readyState.variant) {
+      case 'busy':
+        return 'border-amber-400/30 bg-amber-500/10 text-amber-100';
+      case 'online':
+        return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100';
+      case 'loading':
+        return 'border-white/15 bg-white/5 text-white/70';
+      default:
+        return 'border-white/15 bg-white/5 text-white/50';
+    }
+  }, [readyState.variant]);
 
   useEffect(() => {
     if (!profile) {
@@ -102,6 +130,18 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
 
       {profile && (
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold">Ready to chat</p>
+                <p className="text-xs text-white/60">{readyState.helper}</p>
+              </div>
+              <span className={`rounded-full border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] ${readyBadgeClass}`}>
+                {readyState.label}
+              </span>
+            </div>
+          </div>
+
           <div>
             <div className="flex items-center justify-between">
               <div>

@@ -11,6 +11,41 @@ import VirtualMessageList from './VirtualMessageList';
 import { notifyNewMessage } from '../utils/notifications';
 import { SAM_CONCIERGE_ID, SAM_FALLBACK_CONVERSATION } from '../hooks/useConversationData';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+interface DirectoryUserRecord {
+  id: string;
+  name?: string | null;
+  headline?: string | null;
+  instant_rate_per_minute?: number | null;
+  is_online?: boolean;
+  has_active_session?: boolean;
+}
+
+const extractDirectoryUsers = (payload: unknown): DirectoryUserRecord[] => {
+  if (!payload || typeof payload !== 'object') {
+    return [];
+  }
+  const root = payload as Record<string, unknown> & { data?: Record<string, unknown> };
+  const bag = (root.data ?? root) as Record<string, unknown>;
+  const users = bag.users;
+  if (Array.isArray(users)) {
+    return users as DirectoryUserRecord[];
+  }
+  return [];
+};
+
+const mapDirectoryUser = (user: DirectoryUserRecord): SamShowcaseProfile => {
+  const rate = typeof user.instant_rate_per_minute === 'number' ? user.instant_rate_per_minute : Number(user.instant_rate_per_minute) || 0;
+  return {
+    name: user.name ?? 'Human',
+    headline: user.headline ?? 'HumanChat expert',
+    expertise: [],
+    rate_per_minute: rate,
+    status: user.has_active_session ? 'booked' : user.is_online ? 'available' : 'away'
+  };
+};
+
 interface SamChatViewProps {
   conversation: Conversation;
   messages: Message[];
@@ -86,11 +121,16 @@ export default function SamChatView({
   const [isThinking, setThinking] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState(conversation.conversationId);
+  const [onlineProfiles, setOnlineProfiles] = useState<SamShowcaseProfile[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autoScrollRef = useRef(true);
   const detachAutoScrollListener = useRef<(() => void) | null>(null);
+
+  const localUserId = useMemo(() => {
+    return conversation.participants.find((participant) => participant !== 'sam') ?? 'user_local';
+  }, [conversation.participants]);
 
   const keepInputFocused = useCallback(() => {
     requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
@@ -119,6 +159,82 @@ export default function SamChatView({
 
     return Array.from(collected.values());
   }, [orderedMessages]);
+
+  const fallbackProfiles = useMemo(() => {
+    return conversation.participants
+      .filter((participant) => participant !== 'sam' && participant !== localUserId)
+      .map((name) => ({
+        name,
+        headline: 'HumanChat expert',
+        status: 'available' as const,
+        expertise: [],
+        rate_per_minute: 0
+      }));
+  }, [conversation.participants, localUserId]);
+
+  const loadOnlineProfiles = useCallback(async (): Promise<SamShowcaseProfile[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/search?online=true`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to load online members');
+      }
+      const payload = await response.json();
+      const directoryUsers = extractDirectoryUsers(payload);
+      return directoryUsers
+        .filter((user) => Boolean(user.id) && user.id !== localUserId)
+        .map((user) => mapDirectoryUser(user));
+    } catch (error) {
+      console.warn('Unable to load online experts', error);
+      return [];
+    }
+  }, [localUserId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrateOnlineProfiles = async () => {
+      const profiles = await loadOnlineProfiles();
+      if (!cancelled) {
+        setOnlineProfiles(profiles);
+      }
+    };
+
+    void hydrateOnlineProfiles();
+    const interval = window.setInterval(() => {
+      void hydrateOnlineProfiles();
+    }, 60000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [loadOnlineProfiles]);
+
+  const buildAvailableProfiles = useCallback(
+    (overrideOnline?: SamShowcaseProfile[]) => {
+      const registry = new Map<string, SamShowcaseProfile>();
+      const register = (profile?: SamShowcaseProfile) => {
+        if (!profile) return;
+        const key = profile.name?.toLowerCase() ?? `profile-${registry.size}`;
+        if (!registry.has(key)) {
+          registry.set(key, profile);
+        }
+      };
+
+      knownProfiles.forEach(register);
+      (overrideOnline ?? onlineProfiles).forEach(register);
+
+      if (registry.size === 0) {
+        fallbackProfiles.forEach(register);
+      }
+
+      return registry.size > 0 ? Array.from(registry.values()) : fallbackProfiles;
+    },
+    [knownProfiles, onlineProfiles, fallbackProfiles]
+  );
 
   const handleContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -164,10 +280,6 @@ export default function SamChatView({
   useEffect(() => {
     keepInputFocused();
   }, [keepInputFocused]);
-
-  const localUserId = useMemo(() => {
-    return conversation.participants.find((participant) => participant !== 'sam') ?? 'user_local';
-  }, [conversation.participants]);
 
   const persistSamMessage = async (content: string, actions?: Action[], conversationId?: string) => {
     const targetConversationId = conversationId ?? activeConversationId;
@@ -240,18 +352,15 @@ export default function SamChatView({
     }));
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const availableProfiles: SamShowcaseProfile[] =
-      knownProfiles.length > 0
-        ? knownProfiles
-        : conversation.participants
-            .filter((participant) => participant !== 'sam')
-            .map((name) => ({
-              name,
-              headline: 'HumanChat expert',
-              status: 'available' as const,
-              expertise: [],
-              rate_per_minute: 0
-            }));
+    let availableProfiles = buildAvailableProfiles();
+    const hasDirectoryProfiles = knownProfiles.length > 0 || onlineProfiles.length > 0;
+    if (!hasDirectoryProfiles) {
+      const refreshed = await loadOnlineProfiles();
+      if (refreshed.length > 0) {
+        setOnlineProfiles(refreshed);
+        availableProfiles = buildAvailableProfiles(refreshed);
+      }
+    }
 
     await addMessage(workingConversationId, {
       senderId: localUserId,
