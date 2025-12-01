@@ -4,7 +4,12 @@ export type ErrorCode =
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'CONFLICT'
-  | 'SERVER_ERROR';
+  | 'SERVER_ERROR'
+  | 'SESSION_ACTIVE'
+  | 'TARGET_OFFLINE'
+  | 'TARGET_BUSY'
+  | 'REQUEST_REQUIRED'
+  | 'REQUESTER_BUSY';
 
 export class ApiError extends Error {
   public status: number;
