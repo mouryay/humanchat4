@@ -138,7 +138,7 @@ export default function SettingsPage() {
     }
     try {
       await saveConnection({
-        conversationType,
+        conversationType: connectionType,
         instantRatePerMinute: connectionType === 'paid' ? Number(trimmedRate) : null,
         charityId: connectionType === 'charity' ? selectedCharity : null,
         donationPreference: acceptTips

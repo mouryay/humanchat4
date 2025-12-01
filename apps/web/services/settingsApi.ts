@@ -46,11 +46,21 @@ const normalizeSettingsPayload = (payload: unknown): SettingsResponsePayload => 
   const data = (root.data as Record<string, unknown>) ?? root;
   const settingsSource = (data.settings as Record<string, unknown>) ?? data;
 
+  const coerceNumber = (value: unknown): number | null => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
   const settings: UserSettingsRecord = {
     isOnline: Boolean(settingsSource.is_online ?? settingsSource.isOnline ?? false),
     conversationType: (settingsSource.conversation_type ?? settingsSource.conversationType ?? 'free') as ConnectionType,
-    instantRatePerMinute:
-      settingsSource.instant_rate_per_minute ?? settingsSource.instantRatePerMinute ?? null,
+    instantRatePerMinute: coerceNumber(settingsSource.instant_rate_per_minute ?? settingsSource.instantRatePerMinute ?? null),
     charityId: (settingsSource.charity_id ?? settingsSource.charityId ?? null) as string | null,
     donationPreference: Boolean(settingsSource.donation_preference ?? settingsSource.donationPreference ?? false),
     calendarConnected: Boolean(settingsSource.calendar_connected ?? settingsSource.calendarConnected ?? false),
@@ -90,8 +100,12 @@ export const patchConnectionSettings = async (input: ConnectionPayload): Promise
     conversation_type: input.conversationType,
     donation_preference: input.donationPreference
   };
-  if (input.instantRatePerMinute !== undefined) {
-    body.instant_rate_per_minute = input.instantRatePerMinute;
+  const normalizedInstantRate =
+    typeof input.instantRatePerMinute === 'number' && Number.isFinite(input.instantRatePerMinute)
+      ? input.instantRatePerMinute
+      : undefined;
+  if (input.conversationType === 'paid' && normalizedInstantRate !== undefined) {
+    body.instant_rate_per_minute = normalizedInstantRate;
   }
   if (input.charityId !== undefined) {
     body.charity_id = input.charityId;

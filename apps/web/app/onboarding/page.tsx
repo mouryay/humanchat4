@@ -114,7 +114,7 @@ export default function OnboardingPage() {
         return;
       }
       await saveConnection({
-        conversationType,
+        conversationType: connectionType,
         instantRatePerMinute: connectionType === 'paid' ? numericRate : null,
         charityId: connectionType === 'charity' ? selectedCharity : null,
         donationPreference: acceptTips
