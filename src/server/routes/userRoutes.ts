@@ -43,7 +43,7 @@ const updateSchema = z.object({
   headline: z.string().optional(),
   bio: z.string().optional(),
   conversation_type: z.enum(['free', 'paid', 'charity']).optional(),
-  instant_rate_per_minute: z.number().optional(),
+  instant_rate_per_minute: z.number().nullable().optional(),
   scheduled_rates: z.record(z.string(), z.number()).optional(),
   is_online: z.boolean().optional(),
   has_active_session: z.boolean().optional()
