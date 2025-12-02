@@ -86,6 +86,10 @@ export const useProfileDetails = (): UseProfileDetailsResult => {
         const next = await updateUserProfile(user.id, updates);
         setProfile(next);
         setError(null);
+        if ('name' in updates && typeof window !== 'undefined') {
+          setUser((prev) => (prev ? { ...prev, name: next.name } : prev));
+          window.dispatchEvent(new CustomEvent(AUTH_UPDATED_EVENT));
+        }
         return next;
       } catch (err) {
         const detail = err instanceof Error ? err.message : 'Unable to save profile changes.';
