@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { compressImageFile } from '../utils/media';
 import { initializeNotifications } from '../utils/notifications';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { sessionStatusManager } from '../services/sessionStatusManager';
 
 const AVATAR_KEY = 'humanchat.profile.avatar';
 const CONTRAST_KEY = 'humanchat.contrast';
 const FONT_KEY = 'humanchat.fontScale';
 
 export default function ProfilePanel() {
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [avatar, setAvatar] = useState<string | null>(null);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'enabled' | 'blocked'>('idle');
   const [contrast, setContrast] = useState<'normal' | 'high'>('normal');
@@ -18,17 +20,66 @@ export default function ProfilePanel() {
   const { canInstall, promptInstall, hasInstalled } = useInstallPrompt();
 
   useEffect(() => {
-    const storedAvatar = window.localStorage.getItem(AVATAR_KEY);
-    if (storedAvatar) setAvatar(storedAvatar);
-    const storedContrast = (window.localStorage.getItem(CONTRAST_KEY) as 'normal' | 'high' | null) ?? 'normal';
-    setContrast(storedContrast);
-    document.documentElement.dataset.contrast = storedContrast === 'high' ? 'high' : 'normal';
-    const storedFont = Number(window.localStorage.getItem(FONT_KEY)) || 1;
-    setFontScale(storedFont);
-    document.documentElement.style.setProperty('--font-scale', storedFont.toString());
+    const unsubscribe = sessionStatusManager.onCurrentUserChange((next) => {
+      setCurrentUserId(next);
+    });
+    return () => unsubscribe();
   }, []);
 
+  const readScopedItem = useCallback(
+    (key: string): string | null => {
+      if (typeof window === 'undefined' || !currentUserId) {
+        return null;
+      }
+      return window.localStorage.getItem(`${key}:${currentUserId}`);
+    },
+    [currentUserId]
+  );
+
+  const writeScopedItem = useCallback(
+    (key: string, value: string | null) => {
+      if (typeof window === 'undefined' || !currentUserId) {
+        return;
+      }
+      const scoped = `${key}:${currentUserId}`;
+      if (value === null) {
+        window.localStorage.removeItem(scoped);
+        return;
+      }
+      window.localStorage.setItem(scoped, value);
+    },
+    [currentUserId]
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!currentUserId) {
+      setAvatar(null);
+      setContrast('normal');
+      document.documentElement.dataset.contrast = 'normal';
+      setFontScale(1);
+      document.documentElement.style.setProperty('--font-scale', '1');
+      return;
+    }
+
+    const storedAvatar = readScopedItem(AVATAR_KEY);
+    setAvatar(storedAvatar);
+
+    const storedContrast = (readScopedItem(CONTRAST_KEY) as 'normal' | 'high' | null) ?? 'normal';
+    setContrast(storedContrast);
+    document.documentElement.dataset.contrast = storedContrast === 'high' ? 'high' : 'normal';
+
+    const storedFont = Number(readScopedItem(FONT_KEY));
+    const fontValue = Number.isFinite(storedFont) && storedFont > 0 ? storedFont : 1;
+    setFontScale(fontValue);
+    document.documentElement.style.setProperty('--font-scale', fontValue.toString());
+  }, [currentUserId, readScopedItem]);
+
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!currentUserId) return;
     const file = event.target.files?.[0];
     if (!file) return;
     const compressed = await compressImageFile(file);
@@ -37,7 +88,7 @@ export default function ProfilePanel() {
       const dataUrl = reader.result?.toString() ?? null;
       if (dataUrl) {
         setAvatar(dataUrl);
-        window.localStorage.setItem(AVATAR_KEY, dataUrl);
+        writeScopedItem(AVATAR_KEY, dataUrl);
       }
     };
     reader.readAsDataURL(compressed);
@@ -49,16 +100,18 @@ export default function ProfilePanel() {
   };
 
   const handleContrastToggle = () => {
+    if (!currentUserId) return;
     const next = contrast === 'high' ? 'normal' : 'high';
     setContrast(next);
     document.documentElement.dataset.contrast = next === 'high' ? 'high' : 'normal';
-    window.localStorage.setItem(CONTRAST_KEY, next);
+    writeScopedItem(CONTRAST_KEY, next);
   };
 
   const handleFontScale = (value: number) => {
+    if (!currentUserId) return;
     setFontScale(value);
     document.documentElement.style.setProperty('--font-scale', value.toString());
-    window.localStorage.setItem(FONT_KEY, value.toString());
+    writeScopedItem(FONT_KEY, value.toString());
   };
 
   return (
