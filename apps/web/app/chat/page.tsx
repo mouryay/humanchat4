@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import clsx from 'clsx';
 import ConversationSidebar from '../../components/ConversationSidebar';
 import ConversationView from '../../components/ConversationView';
 import MobileBottomNav, { type MobileNavRoute } from '../../components/MobileBottomNav';
@@ -95,9 +96,22 @@ export default function ChatPage() {
         )}
 
         {isMobile ? (
-          <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-            {activeNav === 'discover' && <DiscoverPanel onBookProfile={() => setActiveNav('home')} />}
-            {activeNav === 'profile' && <ProfilePanel />}
+          <section
+            className={clsx('relative flex min-h-0 flex-1 flex-col', {
+              'overflow-hidden': !(activeNav === 'discover' || activeNav === 'profile'),
+              'overflow-y-auto': activeNav === 'discover' || activeNav === 'profile'
+            })}
+          >
+            {activeNav === 'discover' && (
+              <div className="flex flex-1">
+                <DiscoverPanel onBookProfile={() => setActiveNav('home')} />
+              </div>
+            )}
+            {activeNav === 'profile' && (
+              <div className="flex flex-1">
+                <ProfilePanel />
+              </div>
+            )}
             {activeNav === 'home' && mobilePane === 'list' && (
               <ConversationSidebar
                 activeConversationId={activeConversationId}

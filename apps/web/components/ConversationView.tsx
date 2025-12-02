@@ -129,7 +129,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
           <div className={styles.subtitle}>{summary.subtitle}</div>
         </div>
         {conversation && (
-          <div className={styles.subtitle}>
+          <div className={styles.metadata}>
             Last activity • {new Date(conversation.lastActivity).toLocaleTimeString()}
           </div>
         )}

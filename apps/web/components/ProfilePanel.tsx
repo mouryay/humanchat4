@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import clsx from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 import { compressImageFile } from '../utils/media';
 import { initializeNotifications } from '../utils/notifications';
@@ -11,13 +12,22 @@ const AVATAR_KEY = 'humanchat.profile.avatar';
 const CONTRAST_KEY = 'humanchat.contrast';
 const FONT_KEY = 'humanchat.fontScale';
 
-export default function ProfilePanel() {
+interface ProfilePanelProps {
+  variant?: 'full' | 'card';
+}
+
+export default function ProfilePanel({ variant = 'full' }: ProfilePanelProps = {}) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [avatar, setAvatar] = useState<string | null>(null);
   const [notificationStatus, setNotificationStatus] = useState<'idle' | 'enabled' | 'blocked'>('idle');
   const [contrast, setContrast] = useState<'normal' | 'high'>('normal');
   const [fontScale, setFontScale] = useState(1);
   const { canInstall, promptInstall, hasInstalled } = useInstallPrompt();
+  const isSignedIn = Boolean(currentUserId);
+  const containerClass = clsx('flex flex-col gap-6 text-white', {
+    'min-h-[calc(100vh-64px)] bg-gradient-to-b from-black/70 to-black/40 px-4 pb-24 pt-6': variant === 'full',
+    'rounded-3xl border border-white/10 bg-white/5 p-6': variant === 'card'
+  });
 
   useEffect(() => {
     const unsubscribe = sessionStatusManager.onCurrentUserChange((next) => {
@@ -115,7 +125,7 @@ export default function ProfilePanel() {
   };
 
   return (
-    <section className="flex min-h-[calc(100vh-64px)] flex-col gap-6 bg-gradient-to-b from-black/70 to-black/40 px-4 pb-24 pt-6 text-white">
+    <section className={containerClass}>
       <div className="flex items-center gap-4">
         <div className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20">
           {avatar ? (
@@ -132,16 +142,23 @@ export default function ProfilePanel() {
         </div>
       </div>
 
+      {!isSignedIn && (
+        <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
+          Sign in to personalize your avatar, notifications, and display preferences.
+        </p>
+      )}
+
       <label className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
         <span className="text-white/80">Upload avatar</span>
-        <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-white" />
+        <input type="file" accept="image/*" onChange={handleAvatarChange} className="text-white" disabled={!isSignedIn} />
         <span className="text-xs text-white/60">Images are compressed client-side for performance.</span>
       </label>
 
       <button
         type="button"
-        className="rounded-2xl border border-white/15 bg-gradient-to-r from-indigoGlow/60 to-aqua/40 px-4 py-3 text-left text-sm font-semibold text-white"
+        className="rounded-2xl border border-white/15 bg-gradient-to-r from-indigoGlow/60 to-aqua/40 px-4 py-3 text-left text-sm font-semibold text-white disabled:opacity-50"
         onClick={handleNotificationEnable}
+        disabled={!isSignedIn}
       >
         Enable push notifications
         <div className="text-xs font-normal text-white/70">
@@ -151,7 +168,7 @@ export default function ProfilePanel() {
 
       <button
         type="button"
-        disabled={!canInstall || hasInstalled}
+        disabled={!isSignedIn || !canInstall || hasInstalled}
         onClick={() => promptInstall()}
         className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white/90 disabled:opacity-50"
       >
@@ -164,7 +181,8 @@ export default function ProfilePanel() {
           <button
             type="button"
             onClick={handleContrastToggle}
-            className="min-h-[44px] rounded-full border border-white/20 px-4 text-sm font-semibold"
+            className="min-h-[44px] rounded-full border border-white/20 px-4 text-sm font-semibold disabled:opacity-50"
+            disabled={!isSignedIn}
           >
             {contrast === 'high' ? 'Disable' : 'Enable'}
           </button>
@@ -186,6 +204,7 @@ export default function ProfilePanel() {
           onChange={(event) => handleFontScale(Number(event.target.value))}
           className="w-full"
           aria-label="Adjust font scale"
+          disabled={!isSignedIn}
         />
       </label>
     </section>

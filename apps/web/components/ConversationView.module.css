@@ -57,6 +57,11 @@
   color: rgba(148, 163, 184, 0.8);
 }
 
+.metadata {
+  font-size: 13px;
+  color: rgba(148, 163, 184, 0.8);
+}
+
 .viewArea {
   flex: 1;
   min-height: 0;
@@ -309,6 +314,19 @@
   100% {
     opacity: 0.3;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .metadata {
+    width: 100%;
+    font-size: 12px;
   }
 }
 

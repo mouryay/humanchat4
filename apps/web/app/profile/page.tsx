@@ -21,7 +21,7 @@ export default function AccountPage() {
       </header>
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
         <div className="flex flex-col gap-8">
-          <ProfilePanel />
+          <ProfilePanel variant="card" />
           <AccountIdentityForm profileState={profileState} />
           <AccountPreferencesForm profileState={profileState} />
           <ProfileDetailsSummary profileState={profileState} />
