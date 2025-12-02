@@ -4,6 +4,7 @@ import UserSettingsMenu from '../../components/UserSettingsMenu';
 import ProfilePanel from '../../components/ProfilePanel';
 import ProfileDetailsSummary from '../../components/ProfileDetailsSummary';
 import AccountPreferencesForm from '../../components/AccountPreferencesForm';
+import AccountIdentityForm from '../../components/AccountIdentityForm';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
 
 export default function AccountPage() {
@@ -21,6 +22,7 @@ export default function AccountPage() {
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
         <div className="flex flex-col gap-8">
           <ProfilePanel />
+          <AccountIdentityForm profileState={profileState} />
           <AccountPreferencesForm profileState={profileState} />
           <ProfileDetailsSummary profileState={profileState} />
         </div>

@@ -131,6 +131,7 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
 });
 
 export interface ProfileUpdateInput {
+  name?: string;
   headline?: string | null;
   bio?: string | null;
   conversationType?: ConversationCategory;
@@ -149,6 +150,10 @@ export const fetchUserProfile = async (id: string): Promise<UserProfile> => {
 
 export const updateUserProfile = async (id: string, updates: ProfileUpdateInput): Promise<UserProfile> => {
   const payload: Record<string, unknown> = {};
+  if ('name' in updates) {
+    const trimmedName = updates.name?.trim();
+    payload.name = trimmedName;
+  }
   if ('headline' in updates) {
     payload.headline = updates.headline ?? null;
   }

@@ -41,6 +41,7 @@ router.get('/:id', authenticate, authenticatedLimiter, async (req, res, next) =>
 });
 
 const updateSchema = z.object({
+  name: z.string().min(2).max(80).optional(),
   headline: z.string().optional(),
   bio: z.string().optional(),
   conversation_type: z.enum(['free', 'paid', 'charity']).optional(),
