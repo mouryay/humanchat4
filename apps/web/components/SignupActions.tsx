@@ -7,7 +7,11 @@ import { firebaseAuth } from '../lib/firebaseClient';
 
 export default function SignupActions() {
   const auth = firebaseAuth;
-  const googleProvider = useMemo(() => new GoogleAuthProvider(), []);
+  const googleProvider = useMemo(() => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return provider;
+  }, []);
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
