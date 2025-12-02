@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { Conversation, Session, Action, ProfileSummary, SamShowcaseProfile } from '../../../src/lib/db';
 import styles from './ConversationView.module.css';
 import ProfileCard from './ProfileCard';
@@ -13,6 +14,7 @@ interface ActionRendererProps {
   onConnectNow?: (profile: ProfileSummary) => void;
   onBookTime?: (profile: ProfileSummary) => void;
   connectingProfileId?: string | null;
+  directoryProfiles?: ProfileSummary[];
 }
 
 const formatRate = (rate?: number) => (rate ? `$${rate.toFixed(2)}/min` : '');
@@ -96,9 +98,21 @@ export default function ActionRenderer({
   onSelectSlot,
   onConnectNow,
   onBookTime,
-  connectingProfileId
+  connectingProfileId,
+  directoryProfiles
 }: ActionRendererProps) {
   if (!action) return null;
+
+  const profileDirectory = useMemo(() => {
+    const map = new Map<string, ProfileSummary>();
+    (directoryProfiles ?? []).forEach((profile) => {
+      if (!profile?.name) {
+        return;
+      }
+      map.set(profile.name.trim().toLowerCase(), profile);
+    });
+    return map;
+  }, [directoryProfiles]);
 
   switch (action.type || action.actionType) {
     case 'show_profiles': {
@@ -124,9 +138,22 @@ export default function ActionRenderer({
 
       return (
         <div className={styles.profileScroller}>
-          {showcaseProfiles.map((profile, index) => (
-            <ShowcaseProfile key={`${profile.name}-${index}`} profile={profile} />
-          ))}
+          {showcaseProfiles.map((profile, index) => {
+            const normalizedName = profile.name?.trim().toLowerCase() ?? '';
+            const hydrated = normalizedName ? profileDirectory.get(normalizedName) : undefined;
+            if (hydrated) {
+              return (
+                <ProfileCard
+                  key={hydrated.userId ?? `${normalizedName}-${index}`}
+                  profile={hydrated}
+                  onConnectNow={onConnectNow}
+                  onBookTime={onBookTime}
+                  isConnecting={connectingProfileId === hydrated.userId}
+                />
+              );
+            }
+            return <ShowcaseProfile key={`${profile.name}-${index}`} profile={profile} />;
+          })}
         </div>
       );
     }

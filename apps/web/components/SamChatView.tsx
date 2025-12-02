@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Action, Conversation, Message, Session, ProfileSummary, SamShowcaseProfile } from '../../../src/lib/db';
+import type { Action, Conversation, Message, Session, ProfileSummary, SamShowcaseProfile, ScheduledRate } from '../../../src/lib/db';
 import { addMessage, db } from '../../../src/lib/db';
 import { sendSamMessage, type ConversationHistoryPayload } from '../utils/samAPI';
 import styles from './ConversationView.module.css';
@@ -17,9 +17,23 @@ interface DirectoryUserRecord {
   id: string;
   name?: string | null;
   headline?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  conversation_type?: 'free' | 'paid' | 'charity';
+  donation_preference?: 'on' | 'off' | null;
+  charity_name?: string | null;
+  charity_id?: string | null;
   instant_rate_per_minute?: number | null;
+  scheduled_rates?: Record<string, number> | null;
   is_online?: boolean;
   has_active_session?: boolean;
+  managed?: boolean;
+  manager_id?: string | null;
+  manager_display_name?: string | null;
+  display_mode?: 'normal' | 'by_request' | 'confidential' | null;
+  confidential_rate?: boolean | null;
+  presence_state?: 'active' | 'idle' | 'offline' | null;
+  last_seen_at?: string | null;
 }
 
 const extractDirectoryUsers = (payload: unknown): DirectoryUserRecord[] => {
@@ -35,14 +49,48 @@ const extractDirectoryUsers = (payload: unknown): DirectoryUserRecord[] => {
   return [];
 };
 
-const mapDirectoryUser = (user: DirectoryUserRecord): SamShowcaseProfile => {
-  const rate = typeof user.instant_rate_per_minute === 'number' ? user.instant_rate_per_minute : Number(user.instant_rate_per_minute) || 0;
+const toScheduledRateArray = (rates?: Record<string, number> | null): ScheduledRate[] => {
+  if (!rates) {
+    return [];
+  }
+  return Object.entries(rates)
+    .map(([duration, price]) => ({ durationMinutes: Number(duration), price }))
+    .filter((entry) => Number.isFinite(entry.durationMinutes) && Number.isFinite(entry.price) && entry.durationMinutes > 0 && entry.price > 0)
+    .sort((a, b) => a.durationMinutes - b.durationMinutes);
+};
+
+const mapDirectoryUser = (user: DirectoryUserRecord): ProfileSummary => {
   return {
+    userId: user.id,
     name: user.name ?? 'Human',
-    headline: user.headline ?? 'HumanChat expert',
-    expertise: [],
-    rate_per_minute: rate,
-    status: user.has_active_session ? 'booked' : user.is_online ? 'available' : 'away'
+    avatarUrl: user.avatar_url ?? undefined,
+    headline: user.headline ?? undefined,
+    bio: user.bio ?? undefined,
+    conversationType: user.conversation_type ?? 'free',
+    instantRatePerMinute: user.instant_rate_per_minute ?? undefined,
+    scheduledRates: toScheduledRateArray(user.scheduled_rates ?? null),
+    isOnline: Boolean(user.is_online),
+    hasActiveSession: Boolean(user.has_active_session),
+    presenceState: user.presence_state ?? (user.is_online ? 'active' : 'offline'),
+    lastSeenAt: user.last_seen_at ? Date.parse(user.last_seen_at) : undefined,
+    donationPreference: user.donation_preference ?? undefined,
+    charityName: user.charity_name ?? undefined,
+    charityId: user.charity_id ?? undefined,
+    managed: Boolean(user.managed),
+    managerId: user.manager_id ?? undefined,
+    managerName: user.manager_display_name ?? undefined,
+    displayMode: user.display_mode ?? undefined,
+    confidentialRate: user.confidential_rate ?? undefined
+  };
+};
+
+const profileSummaryToShowcase = (profile: ProfileSummary): SamShowcaseProfile => {
+  return {
+    name: profile.name ?? 'Human',
+    headline: profile.headline ?? 'HumanChat expert',
+    expertise: profile.scheduledRates?.map((slot) => `${slot.durationMinutes} min`) ?? [],
+    rate_per_minute: profile.instantRatePerMinute ?? 0,
+    status: profile.hasActiveSession ? 'booked' : profile.isOnline ? 'available' : 'away'
   };
 };
 
@@ -121,7 +169,7 @@ export default function SamChatView({
   const [isThinking, setThinking] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState(conversation.conversationId);
-  const [onlineProfiles, setOnlineProfiles] = useState<SamShowcaseProfile[]>([]);
+  const [onlineProfiles, setOnlineProfiles] = useState<ProfileSummary[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -172,7 +220,7 @@ export default function SamChatView({
       }));
   }, [conversation.participants, localUserId]);
 
-  const loadOnlineProfiles = useCallback(async (): Promise<SamShowcaseProfile[]> => {
+  const loadOnlineProfiles = useCallback(async (): Promise<ProfileSummary[]> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/search?online=true`, {
         method: 'GET',
@@ -214,9 +262,9 @@ export default function SamChatView({
   }, [loadOnlineProfiles]);
 
   const buildAvailableProfiles = useCallback(
-    (overrideOnline?: SamShowcaseProfile[]) => {
+    (overrideOnline?: ProfileSummary[]) => {
       const registry = new Map<string, SamShowcaseProfile>();
-      const register = (profile?: SamShowcaseProfile) => {
+      const register = (profile?: SamShowcaseProfile | null) => {
         if (!profile) return;
         const key = profile.name?.toLowerCase() ?? `profile-${registry.size}`;
         if (!registry.has(key)) {
@@ -225,7 +273,7 @@ export default function SamChatView({
       };
 
       knownProfiles.forEach(register);
-      (overrideOnline ?? onlineProfiles).forEach(register);
+      (overrideOnline ?? onlineProfiles).forEach((profile) => register(profileSummaryToShowcase(profile)));
 
       if (registry.size === 0) {
         fallbackProfiles.forEach(register);
@@ -423,7 +471,8 @@ export default function SamChatView({
                       onSelectSlot={handleSlotSelection}
                       onConnectNow={onConnectNow}
                       onBookTime={onBookTime}
-                        connectingProfileId={connectingProfileId}
+                      connectingProfileId={connectingProfileId}
+                      directoryProfiles={onlineProfiles}
                     />
                   ))}
                 </div>
