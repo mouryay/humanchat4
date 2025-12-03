@@ -3,6 +3,7 @@ import { addConversationMessage, ensureHumanConversation } from './conversationS
 import { createSessionRecord, getSessionById } from './sessionService.js';
 import { getUserById } from './userService.js';
 import type { Conversation, PaymentMode, Session, User } from '../types/index.js';
+import { logger } from '../utils/logger.js';
 
 const INSTANT_SESSION_MINUTES = 30;
 
@@ -53,44 +54,63 @@ export const initiateInstantConnection = async (
   requesterId: string,
   targetUserId: string
 ): Promise<{ conversation: Conversation; session: Session }> => {
-  if (requesterId === targetUserId) {
-    throw new ApiError(400, 'INVALID_REQUEST', 'You cannot start a session with yourself.');
+  logger.info('Instant connection requested', { requesterId, targetUserId });
+
+  try {
+    if (requesterId === targetUserId) {
+      throw new ApiError(400, 'INVALID_REQUEST', 'You cannot start a session with yourself.');
+    }
+
+    const [requester, target] = await Promise.all([getUserById(requesterId), getUserById(targetUserId)]);
+    assertConnectable(requester, target);
+
+    const conversation = await ensureHumanConversation(requesterId, targetUserId);
+    await ensureConversationIsAvailable(conversation);
+
+    const paymentMode = derivePaymentMode(target);
+    const now = new Date();
+    const startTime = now.toISOString();
+    const ratePerMinute = target.instant_rate_per_minute ?? 0;
+    const agreedPrice = paymentMode === 'free' ? 0 : Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
+
+    const session = await createSessionRecord({
+      host_user_id: targetUserId,
+      guest_user_id: requesterId,
+      conversation_id: conversation.id,
+      type: 'instant',
+      start_time: startTime,
+      duration_minutes: INSTANT_SESSION_MINUTES,
+      agreed_price: agreedPrice,
+      payment_mode: paymentMode
+    });
+
+    const notice = `${requester.name ?? 'A member'} is connecting with ${target.name ?? 'their contact'} now.`;
+    await addConversationMessage(conversation.id, null, notice, 'system_notice');
+
+    const hydratedConversation: Conversation = {
+      ...conversation,
+      linked_session_id: session.id,
+      last_activity: session.updated_at ?? now.toISOString()
+    };
+
+    logger.info('Instant connection created', {
+      requesterId,
+      targetUserId,
+      conversationId: hydratedConversation.id,
+      sessionId: session.id,
+      paymentMode
+    });
+
+    return {
+      conversation: hydratedConversation,
+      session
+    };
+  } catch (error) {
+    logger.error('Instant connection failed', {
+      requesterId,
+      targetUserId,
+      message: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
   }
-
-  const [requester, target] = await Promise.all([getUserById(requesterId), getUserById(targetUserId)]);
-  assertConnectable(requester, target);
-
-  const conversation = await ensureHumanConversation(requesterId, targetUserId);
-  await ensureConversationIsAvailable(conversation);
-
-  const paymentMode = derivePaymentMode(target);
-  const now = new Date();
-  const startTime = now.toISOString();
-  const ratePerMinute = target.instant_rate_per_minute ?? 0;
-  const agreedPrice = paymentMode === 'free' ? 0 : Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
-
-  const session = await createSessionRecord({
-    host_user_id: targetUserId,
-    guest_user_id: requesterId,
-    conversation_id: conversation.id,
-    type: 'instant',
-    start_time: startTime,
-    duration_minutes: INSTANT_SESSION_MINUTES,
-    agreed_price: agreedPrice,
-    payment_mode: paymentMode
-  });
-
-  const notice = `${requester.name ?? 'A member'} is connecting with ${target.name ?? 'their contact'} now.`;
-  await addConversationMessage(conversation.id, null, notice, 'system_notice');
-
-  const hydratedConversation: Conversation = {
-    ...conversation,
-    linked_session_id: session.id,
-    last_activity: session.updated_at ?? now.toISOString()
-  };
-
-  return {
-    conversation: hydratedConversation,
-    session
-  };
 };

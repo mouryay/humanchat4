@@ -41,13 +41,40 @@ interface ConnectResponse {
   session: SessionRecord;
 }
 
+interface ApiErrorPayload {
+  success?: boolean;
+  error?: {
+    code?: string;
+    message?: string;
+    details?: unknown;
+  };
+}
+
+const CONNECT_ERROR_COPY: Record<string, string> = {
+  TARGET_OFFLINE: 'That member is offline right now. Try again soon.',
+  TARGET_BUSY: 'That member is already in a session. Give them a minute and retry.',
+  REQUESTER_BUSY: 'You already have a live session. Wrap it up before starting a new one.',
+  REQUEST_REQUIRED: 'This profile needs a managed request so their team can coordinate the chat.'
+};
+
 const handleResponse = async (response: Response): Promise<ConnectResponse> => {
   const fallback = 'Unable to start a live session right now.';
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new Error(detail || fallback);
+  const rawBody = await response.text();
+  let payload: { data?: ConnectResponse } & ApiErrorPayload | null = null;
+  if (rawBody) {
+    try {
+      payload = JSON.parse(rawBody) as { data?: ConnectResponse } & ApiErrorPayload;
+    } catch {
+      payload = null;
+    }
   }
-  const payload = (await response.json().catch(() => ({}))) as { data?: ConnectResponse };
+
+  if (!response.ok) {
+    const errorCode = payload?.error?.code;
+    const friendly = (errorCode && CONNECT_ERROR_COPY[errorCode]) || payload?.error?.message || rawBody || fallback;
+    throw new Error(friendly);
+  }
+
   if (!payload?.data?.conversation || !payload?.data?.session) {
     throw new Error(fallback);
   }
