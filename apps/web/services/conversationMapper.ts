@@ -63,7 +63,7 @@ export const mapConversationRecord = (
   conversationId: record.id,
   type: record.type,
   participants,
-  linkedSessionId,
+  linkedSessionId: linkedSessionId ?? undefined,
   lastActivity: toTimestamp(record.last_activity),
   unreadCount: 0
 });
@@ -88,7 +88,7 @@ export const mapSessionRecord = (record: SessionRecord, profile?: ProfileSummary
   charityId: profile?.charityId ?? record.charity_id ?? undefined,
   charityStripeAccountId: record.charity_stripe_account_id ?? undefined,
   confidentialRate: profile?.confidentialRate ?? record.confidential_rate ?? undefined,
-  representativeName: record.representative_name ?? null,
+  representativeName: record.representative_name ?? undefined,
   displayMode: record.display_mode ?? profile?.displayMode ?? undefined
 });
 

@@ -45,7 +45,7 @@ export default function InstantInvitePanel({ invite, currentUserId }: InstantInv
   const isTarget = invite.targetUserId === currentUserId;
   const isPending = invite.status === 'pending';
 
-  const handleAction = async (nextAction: PendingAction, handler: () => Promise<void>) => {
+  const handleAction = async (nextAction: PendingAction, handler: () => Promise<unknown>) => {
     setAction(nextAction);
     setError(null);
     try {
