@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import PWAInitializer from '../components/PWAInitializer';
 import FirebaseSessionBridge from '../components/FirebaseSessionBridge';
 import IdentityInitializer from '../components/IdentityInitializer';
+import InstantInviteListener from '../components/InstantInviteListener';
 
 export const metadata = {
   title: 'HumanChat — Talk to Anyone, About Anything',
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <PWAInitializer />
         <FirebaseSessionBridge />
         <IdentityInitializer />
+        <InstantInviteListener />
         {children}
       </body>
     </html>

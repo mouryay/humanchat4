@@ -9,6 +9,7 @@ import {
   addConversationMessage
 } from '../services/conversationService.js';
 import { initiateInstantConnection } from '../services/connectionService.js';
+import { acceptInstantInvite, cancelInstantInvite, declineInstantInvite } from '../services/instantInviteService.js';
 
 const router = Router();
 
@@ -30,6 +31,38 @@ router.post('/connect', authenticate, authenticatedLimiter, async (req, res, nex
     const payload = connectSchema.parse(req.body ?? {});
     const result = await initiateInstantConnection(req.user!.id, payload.target_user_id);
     success(res, result, 201);
+  } catch (error) {
+    next(error);
+  }
+});
+
+const inviteIdSchema = z.string().uuid();
+
+router.post('/invites/:inviteId/accept', authenticate, authenticatedLimiter, async (req, res, next) => {
+  try {
+    const inviteId = inviteIdSchema.parse(req.params.inviteId);
+    const result = await acceptInstantInvite(inviteId, req.user!.id);
+    success(res, result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/invites/:inviteId/decline', authenticate, authenticatedLimiter, async (req, res, next) => {
+  try {
+    const inviteId = inviteIdSchema.parse(req.params.inviteId);
+    const invite = await declineInstantInvite(inviteId, req.user!.id);
+    success(res, { invite });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/invites/:inviteId/cancel', authenticate, authenticatedLimiter, async (req, res, next) => {
+  try {
+    const inviteId = inviteIdSchema.parse(req.params.inviteId);
+    const invite = await cancelInstantInvite(inviteId, req.user!.id);
+    success(res, { invite });
   } catch (error) {
     next(error);
   }

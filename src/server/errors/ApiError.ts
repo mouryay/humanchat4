@@ -10,7 +10,9 @@ export type ErrorCode =
   | 'TARGET_OFFLINE'
   | 'TARGET_BUSY'
   | 'REQUEST_REQUIRED'
-  | 'REQUESTER_BUSY';
+  | 'REQUESTER_BUSY'
+  | 'INVITE_EXPIRED'
+  | 'INVITE_CONSUMED';
 
 export class ApiError extends Error {
   public status: number;

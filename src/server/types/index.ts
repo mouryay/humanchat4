@@ -3,6 +3,7 @@ export type ConversationCategory = 'free' | 'paid' | 'charity';
 export type SessionType = 'instant' | 'scheduled';
 export type SessionStatus = 'pending' | 'in_progress' | 'complete';
 export type PaymentMode = 'free' | 'paid' | 'charity';
+export type InstantInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
 
 export type UserRole = 'user' | 'admin' | 'manager';
 
@@ -86,6 +87,21 @@ export interface Conversation {
   linked_session_id: string | null;
   last_activity: string;
   created_at: string;
+}
+
+export interface InstantInvite {
+  id: string;
+  conversation_id: string;
+  requester_user_id: string;
+  target_user_id: string;
+  status: InstantInviteStatus;
+  expires_at: string;
+  accepted_at?: string | null;
+  declined_at?: string | null;
+  cancelled_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CalendarConnection {

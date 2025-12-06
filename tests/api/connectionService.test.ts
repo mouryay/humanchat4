@@ -125,6 +125,10 @@ describe('initiateInstantConnection', () => {
 
     const result = await initiateInstantConnection('guest-1', 'host-1');
 
+    expect(result.flow).toBe('session');
+    if (result.flow !== 'session') {
+      throw new Error('Expected session flow when reusing existing session');
+    }
     expect(result.session).toEqual(existingSession);
     expect(result.conversation.linked_session_id).toBe('session-id');
     expect(mockedCreateSessionRecord).not.toHaveBeenCalled();
@@ -156,6 +160,10 @@ describe('initiateInstantConnection', () => {
 
     expect(mockedUpdateSessionStatus).toHaveBeenCalledWith('stale-session', 'complete');
     expect(mockedCreateSessionRecord).toHaveBeenCalled();
+    expect(result.flow).toBe('session');
+    if (result.flow !== 'session') {
+      throw new Error('Expected session flow after creating new session');
+    }
     expect(result.session.id).toBe('fresh-session');
   });
 

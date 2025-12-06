@@ -2,8 +2,9 @@ import { ApiError } from '../errors/ApiError.js';
 import { addConversationMessage, ensureHumanConversation } from './conversationService.js';
 import { createSessionRecord, getSessionById, updateSessionStatus } from './sessionService.js';
 import { getUserById } from './userService.js';
-import type { Conversation, PaymentMode, Session, User } from '../types/index.js';
+import type { Conversation, InstantInvite, PaymentMode, Session, User } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { createInstantInvite } from './instantInviteService.js';
 
 const INSTANT_SESSION_MINUTES = 30;
 const STALE_PENDING_MINUTES = 10;
@@ -120,10 +121,14 @@ const assertConnectable = (requester: User, target: User): void => {
   }
 };
 
+type InstantConnectionResult =
+  | { flow: 'session'; conversation: Conversation; session: Session }
+  | { flow: 'invite'; conversation: Conversation; invite: InstantInvite };
+
 export const initiateInstantConnection = async (
   requesterId: string,
   targetUserId: string
-): Promise<{ conversation: Conversation; session: Session }> => {
+): Promise<InstantConnectionResult> => {
   logger.info('Instant connection requested', { requesterId, targetUserId });
 
   try {
@@ -145,6 +150,7 @@ export const initiateInstantConnection = async (
       };
 
       return {
+        flow: 'session',
         conversation: hydratedConversation,
         session: existingSession
       };
@@ -155,6 +161,27 @@ export const initiateInstantConnection = async (
     const startTime = now.toISOString();
     const ratePerMinute = target.instant_rate_per_minute ?? 0;
     const agreedPrice = paymentMode === 'free' ? 0 : Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
+
+    if (paymentMode === 'free') {
+      const invite = await createInstantInvite(conversation, requester, target);
+      const hydratedConversation: Conversation = {
+        ...conversation,
+        last_activity: now.toISOString()
+      };
+
+      logger.info('Instant invite created for free flow', {
+        requesterId,
+        targetUserId,
+        conversationId: hydratedConversation.id,
+        inviteId: invite.id
+      });
+
+      return {
+        flow: 'invite',
+        conversation: hydratedConversation,
+        invite
+      };
+    }
 
     const session = await createSessionRecord({
       host_user_id: targetUserId,
@@ -185,6 +212,7 @@ export const initiateInstantConnection = async (
     });
 
     return {
+      flow: 'session',
       conversation: hydratedConversation,
       session
     };

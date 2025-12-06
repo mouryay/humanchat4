@@ -25,7 +25,7 @@ type ScrollBinding = {
 };
 
 export default function ConversationView({ activeConversationId, onSelectConversation, isMobile, onBack }: ConversationViewProps) {
-  const { conversation, session, messages, loading, error } = useConversationDetail(activeConversationId);
+  const { conversation, session, invite, messages, loading, error } = useConversationDetail(activeConversationId);
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const bindingRef = useRef<ScrollBinding>({ node: null });
   const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
@@ -163,6 +163,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
               <SessionView
                 conversation={conversation}
                 session={session}
+                invite={invite}
                 messages={messages}
                 registerScrollContainer={registerScrollContainer}
               />

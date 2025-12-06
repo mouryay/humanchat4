@@ -5,6 +5,9 @@ import conversationRoutes from '../../src/server/routes/conversationRoutes';
 import { errorHandler } from '../../src/server/middleware/errorHandler';
 
 const initiateInstantConnectionMock = jest.fn();
+const acceptInstantInviteMock = jest.fn();
+const declineInstantInviteMock = jest.fn();
+const cancelInstantInviteMock = jest.fn();
 const listConversationsMock = jest.fn();
 const getConversationMessagesMock = jest.fn();
 const addConversationMessageMock = jest.fn();
@@ -32,6 +35,12 @@ jest.mock('../../src/server/services/connectionService', () => ({
   initiateInstantConnection: (...args: unknown[]) => initiateInstantConnectionMock(...args)
 }));
 
+jest.mock('../../src/server/services/instantInviteService', () => ({
+  acceptInstantInvite: (...args: unknown[]) => acceptInstantInviteMock(...args),
+  declineInstantInvite: (...args: unknown[]) => declineInstantInviteMock(...args),
+  cancelInstantInvite: (...args: unknown[]) => cancelInstantInviteMock(...args)
+}));
+
 const buildApp = () => {
   const app = express();
   app.use(express.json());
@@ -48,6 +57,7 @@ describe('conversationRoutes /connect', () => {
 
   it('initiates an instant connection for the authenticated user', async () => {
     initiateInstantConnectionMock.mockResolvedValueOnce({
+      flow: 'session',
       conversation: { id: 'conv-1' },
       session: { id: 'sess-1' }
     });
@@ -64,7 +74,7 @@ describe('conversationRoutes /connect', () => {
     }
     expect(response.status).toBe(201);
     expect(initiateInstantConnectionMock).toHaveBeenCalledWith('user-123', '43000000-0000-4000-8000-000000000001');
-    expect(response.body?.data).toEqual({ conversation: { id: 'conv-1' }, session: { id: 'sess-1' } });
+    expect(response.body?.data).toEqual({ flow: 'session', conversation: { id: 'conv-1' }, session: { id: 'sess-1' } });
   });
 
   it('validates the connect payload', async () => {
@@ -77,5 +87,35 @@ describe('conversationRoutes /connect', () => {
     }
     expect(response.status).toBe(400);
     expect(initiateInstantConnectionMock).not.toHaveBeenCalled();
+  });
+
+  it('accepts an invite for the authenticated user', async () => {
+    acceptInstantInviteMock.mockResolvedValueOnce({ invite: { id: 'invite-1' }, session: { id: 'sess-2' } });
+    const app = buildApp();
+    const response = await request(app).post('/api/conversations/invites/43000000-0000-4000-8000-000000000002/accept');
+
+    expect(response.status).toBe(200);
+    expect(acceptInstantInviteMock).toHaveBeenCalledWith('43000000-0000-4000-8000-000000000002', 'user-123');
+    expect(response.body?.data).toEqual({ invite: { id: 'invite-1' }, session: { id: 'sess-2' } });
+  });
+
+  it('declines an invite for the authenticated user', async () => {
+    declineInstantInviteMock.mockResolvedValueOnce({ id: 'invite-3' });
+    const app = buildApp();
+    const response = await request(app).post('/api/conversations/invites/43000000-0000-4000-8000-000000000003/decline');
+
+    expect(response.status).toBe(200);
+    expect(response.body?.data).toEqual({ invite: { id: 'invite-3' } });
+    expect(declineInstantInviteMock).toHaveBeenCalledWith('43000000-0000-4000-8000-000000000003', 'user-123');
+  });
+
+  it('cancels an invite for the authenticated user', async () => {
+    cancelInstantInviteMock.mockResolvedValueOnce({ id: 'invite-4' });
+    const app = buildApp();
+    const response = await request(app).post('/api/conversations/invites/43000000-0000-4000-8000-000000000004/cancel');
+
+    expect(response.status).toBe(200);
+    expect(response.body?.data).toEqual({ invite: { id: 'invite-4' } });
+    expect(cancelInstantInviteMock).toHaveBeenCalledWith('43000000-0000-4000-8000-000000000004', 'user-123');
   });
 });

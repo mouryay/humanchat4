@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Conversation, Message, Session } from '../../../src/lib/db';
+import type { Conversation, InstantInvite, Message, Session } from '../../../src/lib/db';
 import styles from './ConversationView.module.css';
 import VideoArea, { type CallEndSummary } from './VideoArea';
 import ChatArea from './ChatArea';
@@ -10,10 +10,12 @@ import DonationModal from './DonationModal';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 import VirtualMessageList from './VirtualMessageList';
 import MessageBubble from './MessageBubble';
+import InstantInvitePanel from './InstantInvitePanel';
 
 interface SessionViewProps {
   conversation: Conversation;
   session: Session | null;
+  invite?: InstantInvite | null;
   messages: Message[];
   registerScrollContainer: (node: HTMLDivElement | null) => void;
 }
@@ -31,7 +33,7 @@ const formatCountdown = (target: number) => {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 };
 
-export default function SessionView({ conversation, session, messages, registerScrollContainer }: SessionViewProps) {
+export default function SessionView({ conversation, session, invite, messages, registerScrollContainer }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
@@ -55,6 +57,19 @@ export default function SessionView({ conversation, session, messages, registerS
     const peer = conversation.participants.find((participant) => participant !== currentUserId);
     return peer ?? 'Session participant';
   }, [conversation.participants, currentUserId]);
+
+  if (!session && invite) {
+    return (
+      <div className={styles.sessionShell}>
+        <InstantInvitePanel invite={invite} currentUserId={currentUserId} />
+        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
+          {(message) => (
+            <MessageBubble message={message} variant={isUserMessage(message, conversation) ? 'user' : 'sam'} />
+          )}
+        </VirtualMessageList>
+      </div>
+    );
+  }
 
   if (isScheduled) {
     return (
