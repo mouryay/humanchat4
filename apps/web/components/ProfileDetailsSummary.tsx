@@ -50,7 +50,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
   };
 
   return (
-    <section className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-2xl">
+    <section className="flex flex-col gap-6 rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Public profile</p>
         <div className="flex flex-wrap items-center gap-3">
@@ -75,7 +75,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
 
       {!loading && profile && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm text-white/60">Your identity</p>
             <div className="mt-2 flex flex-col gap-1">
               <p className="text-xl font-semibold text-white">{profile.name}</p>
@@ -86,7 +86,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm font-semibold text-white">Conversation type</p>
               <p className="text-xs text-white/60">Determines the badge Sam shows before your name.</p>
               <div className="mt-3 rounded-2xl border border-white/15 bg-white/5 p-4">
@@ -98,7 +98,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-sm font-semibold text-white">Instant availability</p>
               <p className="text-xs text-white/60">Shown on the Connect button Sam renders.</p>
               <p className="mt-3 text-lg font-semibold text-white">{formatCurrency(profile.instantRatePerMinute)}</p>
@@ -107,7 +107,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-white">Scheduled rates</p>

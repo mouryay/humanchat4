@@ -293,6 +293,12 @@
   color: rgba(226, 232, 240, 0.9);
 }
 
+.inviteLinkButton {
+  background: transparent;
+  color: rgba(226, 232, 240, 0.85);
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+}
+
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

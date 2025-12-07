@@ -26,7 +26,7 @@ export default function ProfilePanel({ variant = 'full' }: ProfilePanelProps = {
   const isSignedIn = Boolean(currentUserId);
   const containerClass = clsx('flex flex-col gap-6 text-white', {
     'min-h-[calc(100vh-64px)] bg-gradient-to-b from-black/70 to-black/40 px-4 pb-24 pt-6': variant === 'full',
-    'rounded-3xl border border-white/10 bg-white/5 p-6': variant === 'card'
+    'rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl': variant === 'card'
   });
 
   useEffect(() => {

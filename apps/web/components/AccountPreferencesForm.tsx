@@ -117,7 +117,7 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
   };
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-2xl">
+    <section className="rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Account preferences</p>
         <h2 className="text-2xl font-semibold">Control what members see</h2>
@@ -125,12 +125,12 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
       </header>
 
       {!profile && (
-        <p className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">Sign in to edit your account preferences.</p>
+        <p className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">Sign in to edit your account preferences.</p>
       )}
 
       {profile && (
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold">Ready to chat</p>
@@ -155,10 +155,10 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
                 <button
                   key={option.value}
                   type="button"
-                  className={`rounded-2xl border bg-black/30 p-4 text-left text-sm transition ${
+                  className={`rounded-2xl border bg-white/5 p-4 text-left text-sm transition ${
                     availability === option.value
-                      ? 'border-aqua/50 bg-aqua/10 text-white'
-                      : 'border-white/10 text-white/70 hover:border-white/30'
+                      ? 'border-aqua/60 bg-aqua/10 text-white'
+                      : 'border-white/15 text-white/70 hover:border-white/30'
                   }`}
                   onClick={() => setAvailability(option.value)}
                 >
@@ -170,15 +170,15 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
             <p className="mt-3 text-xs text-white/50">{availabilityCopy}</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-semibold">Conversation type</p>
             <p className="text-xs text-white/60">Choose whether your instant connects are free, paid, or charity-focused.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {(['free', 'paid', 'charity'] as ConversationCategory[]).map((type) => (
                 <label
                   key={type}
-                  className={`flex cursor-pointer flex-col gap-2 rounded-2xl border px-4 py-3 text-sm ${
-                    conversationType === type ? 'border-aqua/60 bg-aqua/10 text-white' : 'border-white/15 text-white/70'
+                  className={`flex cursor-pointer flex-col gap-2 rounded-2xl border px-4 py-3 text-sm transition ${
+                    conversationType === type ? 'border-aqua/60 bg-aqua/10 text-white' : 'border-white/15 text-white/70 hover:border-white/30'
                   }`}
                 >
                   <input
@@ -204,13 +204,13 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
                   value={instantRate}
                   onChange={(event) => setInstantRate(event.target.value)}
                   placeholder="3.00"
-                  className="mt-2 w-full rounded-2xl border border-white/15 bg-black/60 px-4 py-3 text-white focus:border-aqua/60"
+                  className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-white focus:border-aqua/60"
                 />
               </label>
             )}
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Open to chat requests</p>

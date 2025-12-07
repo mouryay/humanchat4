@@ -54,7 +54,7 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
   };
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-2xl">
+    <section className="rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
       <header className="flex flex-col gap-1">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Identity</p>
         <h2 className="text-2xl font-semibold">Name & contact details</h2>
@@ -73,7 +73,7 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Your name"
-              className="rounded-2xl border border-white/15 bg-black/60 px-4 py-3 text-base text-white focus:border-aqua/60"
+              className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white focus:border-aqua/60"
               maxLength={80}
             />
           </label>

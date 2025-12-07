@@ -43,6 +43,16 @@ export default function ChatPage() {
     }
   }, [shouldOpenSam, samConversationId, isMobile]);
 
+  useEffect(() => {
+    if (activeConversationId || shouldOpenSam) {
+      return;
+    }
+    const firstConversationId = conversations[0]?.conversation.conversationId;
+    if (firstConversationId) {
+      setActiveConversationId(firstConversationId);
+    }
+  }, [activeConversationId, conversations, shouldOpenSam]);
+
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
     if (isMobile) {

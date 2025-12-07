@@ -69,6 +69,15 @@ export default function ConversationView({ activeConversationId, onSelectConvers
     };
   }, []);
 
+  const scrollToLatest = useCallback(() => {
+    const node = bindingRef.current.node;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' });
+    if (activeConversationId) {
+      scrollPositions.current.set(activeConversationId, node.scrollHeight);
+    }
+  }, [activeConversationId]);
+
   const summary = useMemo(() => {
     if (!activeConversationId) {
       return {
@@ -166,6 +175,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
                 invite={invite}
                 messages={messages}
                 registerScrollContainer={registerScrollContainer}
+                onScrollToLatest={scrollToLatest}
               />
             )}
           </div>

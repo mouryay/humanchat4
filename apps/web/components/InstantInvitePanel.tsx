@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { InstantInvite } from '../../../src/lib/db';
 import { acceptInstantInvite, cancelInstantInvite, declineInstantInvite } from '../services/instantInviteApi';
 import styles from './ConversationView.module.css';
@@ -44,6 +44,7 @@ export default function InstantInvitePanel({ invite, currentUserId }: InstantInv
   const isRequester = invite.requesterUserId === currentUserId;
   const isTarget = invite.targetUserId === currentUserId;
   const isPending = invite.status === 'pending';
+  const primaryButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleAction = async (nextAction: PendingAction, handler: () => Promise<unknown>) => {
     setAction(nextAction);
@@ -58,40 +59,66 @@ export default function InstantInvitePanel({ invite, currentUserId }: InstantInv
     }
   };
 
+  const { primaryCta, secondaryCta } = useMemo(() => {
+    if (!isPending) {
+      return { primaryCta: null, secondaryCta: null };
+    }
+
+    if (isTarget) {
+      return {
+        primaryCta: {
+          label: action === 'accept' ? 'Connecting…' : 'Accept & Join',
+          onClick: () => handleAction('accept', () => acceptInstantInvite(invite.inviteId))
+        },
+        secondaryCta: {
+          label: action === 'decline' ? 'Declining…' : 'Not ready right now',
+          onClick: () => handleAction('decline', () => declineInstantInvite(invite.inviteId))
+        }
+      };
+    }
+
+    if (isRequester) {
+      return {
+        primaryCta: {
+          label: action === 'cancel' ? 'Cancelling…' : 'Cancel request',
+          onClick: () => handleAction('cancel', () => cancelInstantInvite(invite.inviteId))
+        },
+        secondaryCta: null
+      };
+    }
+
+    return { primaryCta: null, secondaryCta: null };
+  }, [isPending, isTarget, isRequester, action, invite.inviteId]);
+
+  useEffect(() => {
+    if (isPending && primaryCta) {
+      primaryButtonRef.current?.focus();
+    }
+  }, [isPending, primaryCta]);
+
   return (
     <div className={styles.invitePanel}>
       <div className={styles.inviteMessage}>{getInviteMessage(invite, currentUserId)}</div>
       {error && <div className={styles.error}>{error}</div>}
-      {isPending && (
+      {primaryCta && (
         <div className={styles.inviteActions}>
-          {isTarget && (
+          <button
+            ref={primaryButtonRef}
+            type="button"
+            className={`${styles.inviteActionButton} ${styles.inviteActionPrimary}`}
+            disabled={action !== null}
+            onClick={primaryCta.onClick}
+          >
+            {primaryCta.label}
+          </button>
+          {secondaryCta && (
             <button
               type="button"
-              className={`${styles.inviteActionButton} ${styles.inviteActionPrimary}`}
+              className={`${styles.inviteActionButton} ${styles.inviteLinkButton}`}
               disabled={action !== null}
-              onClick={() => handleAction('accept', () => acceptInstantInvite(invite.inviteId))}
+              onClick={secondaryCta.onClick}
             >
-              {action === 'accept' ? 'Connecting…' : 'Accept & Join'}
-            </button>
-          )}
-          {isTarget && (
-            <button
-              type="button"
-              className={`${styles.inviteActionButton} ${styles.inviteActionSecondary}`}
-              disabled={action !== null}
-              onClick={() => handleAction('decline', () => declineInstantInvite(invite.inviteId))}
-            >
-              {action === 'decline' ? 'Declining…' : 'Decline'}
-            </button>
-          )}
-          {isRequester && (
-            <button
-              type="button"
-              className={`${styles.inviteActionButton} ${styles.inviteActionSecondary}`}
-              disabled={action !== null}
-              onClick={() => handleAction('cancel', () => cancelInstantInvite(invite.inviteId))}
-            >
-              {action === 'cancel' ? 'Cancelling…' : 'Cancel Request'}
+              {secondaryCta.label}
             </button>
           )}
         </div>

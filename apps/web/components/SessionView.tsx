@@ -18,6 +18,7 @@ interface SessionViewProps {
   invite?: InstantInvite | null;
   messages: Message[];
   registerScrollContainer: (node: HTMLDivElement | null) => void;
+  onScrollToLatest?: () => void;
 }
 
 const isUserMessage = (message: Message, conversation: Conversation) => {
@@ -33,7 +34,7 @@ const formatCountdown = (target: number) => {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 };
 
-export default function SessionView({ conversation, session, invite, messages, registerScrollContainer }: SessionViewProps) {
+export default function SessionView({ conversation, session, invite, messages, registerScrollContainer, onScrollToLatest }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
@@ -108,6 +109,7 @@ export default function SessionView({ conversation, session, invite, messages, r
   const handleDismissSummary = () => {
     setCallSummary(null);
     setShowDonationModal(false);
+    onScrollToLatest?.();
   };
 
   const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && !callSummary.confidentialRate && showDonationModal && session);
