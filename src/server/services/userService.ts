@@ -5,6 +5,7 @@ import { User } from '../types/index.js';
 import type { PresenceState } from './presenceService.js';
 
 const HUMAN_FALLBACK = 'Human';
+const ONLINE_TTL_SECONDS = 120;
 
 const normalizeProfileCopy = (value?: string | null): string => {
   const trimmed = value?.trim();
@@ -53,6 +54,10 @@ export const searchUsers = async (q: string, online?: boolean): Promise<User[]> 
   if (online !== undefined) {
     params.push(online);
     where += ` AND is_online = $${params.length}`;
+    if (online) {
+      params.push(`${ONLINE_TTL_SECONDS} seconds`);
+      where += ` AND last_seen_at IS NOT NULL AND last_seen_at > NOW() - ($${params.length}::interval) AND presence_state <> 'offline'`;
+    }
   }
 
   const sql = `SELECT * FROM users ${where} ORDER BY is_online DESC, name ASC LIMIT 50`;

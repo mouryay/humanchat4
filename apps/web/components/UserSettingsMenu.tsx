@@ -5,9 +5,13 @@ import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 
 import LogoutButton from './LogoutButton';
+import type { AuthUser } from '../services/authApi';
+import { fetchCurrentUser } from '../services/authApi';
+import { AUTH_UPDATED_EVENT } from '../constants/events';
 
 export default function UserSettingsMenu() {
   const [open, setOpen] = useState(false);
+  const [identity, setIdentity] = useState<AuthUser | null>(null);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearHoverTimeout = () => {
@@ -27,7 +31,40 @@ export default function UserSettingsMenu() {
     hoverTimeout.current = setTimeout(() => setOpen(false), 150);
   };
 
-  useEffect(() => () => clearHoverTimeout(), []);
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrateIdentity = async () => {
+      try {
+        const user = await fetchCurrentUser();
+        if (!cancelled) {
+          setIdentity(user);
+        }
+      } catch {
+        if (!cancelled) {
+          setIdentity(null);
+        }
+      }
+    };
+
+    void hydrateIdentity();
+
+    const handleAuthChange = () => {
+      void hydrateIdentity();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener(AUTH_UPDATED_EVENT, handleAuthChange);
+    }
+
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(AUTH_UPDATED_EVENT, handleAuthChange);
+      }
+      clearHoverTimeout();
+    };
+  }, []);
 
   return (
     <div
@@ -62,6 +99,16 @@ export default function UserSettingsMenu() {
           open ? 'visible translate-y-0 opacity-100' : 'invisible translate-y-1 opacity-0'
         )}
       >
+        <div className="mb-1 rounded-xl bg-white/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.35em] text-white/70">
+          {identity ? (
+            <span>
+              Logged in as <span className="text-white">{identity.name}</span>
+            </span>
+          ) : (
+            'Not signed in'
+          )}
+        </div>
+        {identity?.email && <p className="px-3 text-xs text-white/60">{identity.email}</p>}
         <Link
           href="/profile"
           className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"

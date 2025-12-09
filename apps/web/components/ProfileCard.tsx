@@ -29,9 +29,20 @@ interface ProfileCardProps {
 export default function ProfileCard({ profile, onConnectNow, onBookTime, isConnecting }: ProfileCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const canConnect = Boolean(profile.isOnline && !profile.hasActiveSession);
-  const tooltip = profile.hasActiveSession ? 'Currently in a call' : undefined;
   const managedConfidential = Boolean(profile.managed && profile.confidentialRate);
+  const canInstantConnect = Boolean(profile.isOnline && !profile.hasActiveSession && !managedConfidential);
+  const tooltip = (() => {
+    if (managedConfidential) {
+      return 'This profile routes through a manager. Use Schedule.';
+    }
+    if (profile.hasActiveSession) {
+      return 'Currently in a call';
+    }
+    if (!profile.isOnline) {
+      return 'Offline right now';
+    }
+    return undefined;
+  })();
   const headlineCopy = ensureHumanCopy(profile.headline);
   const bioCopy = ensureHumanCopy(profile.bio);
   const hasCustomBio = hasCustomCopy(profile.bio);
@@ -51,7 +62,7 @@ export default function ProfileCard({ profile, onConnectNow, onBookTime, isConne
     return null;
   }, [managedConfidential, profile.conversationType, profile.donationPreference, profile.instantRatePerMinute, profile.name, profile.charityName]);
 
-  const secondaryLabel = managedConfidential ? 'Send Request' : 'Book Time';
+  const secondaryLabel = managedConfidential ? 'Send Request' : 'Schedule';
   const secondaryClass = managedConfidential ? styles.requestButton : styles.secondaryButton;
 
   return (
@@ -100,19 +111,17 @@ export default function ProfileCard({ profile, onConnectNow, onBookTime, isConne
       {contributionBlurb && <p className={styles.sessionBlurb}>{contributionBlurb}</p>}
 
       <div className={styles.actions}>
-        {!managedConfidential && (
-          <div className={styles.tooltip}>
-            <button
-              className={styles.primaryButton}
-              type="button"
-              disabled={!canConnect || Boolean(isConnecting)}
-              onClick={() => canConnect && !isConnecting && onConnectNow?.(profile)}
-            >
-              {isConnecting ? 'Connecting…' : 'Connect Now'}
-            </button>
-            {tooltip && <span className={styles.tooltipText}>{tooltip}</span>}
-          </div>
-        )}
+        <div className={styles.tooltip}>
+          <button
+            className={styles.primaryButton}
+            type="button"
+            disabled={!canInstantConnect || Boolean(isConnecting)}
+            onClick={() => canInstantConnect && !isConnecting && onConnectNow?.(profile)}
+          >
+            {isConnecting ? 'Connecting…' : 'Connect Now'}
+          </button>
+          {tooltip && <span className={styles.tooltipText}>{tooltip}</span>}
+        </div>
         <button className={secondaryClass} type="button" onClick={() => onBookTime?.(profile)}>
           {secondaryLabel}
         </button>

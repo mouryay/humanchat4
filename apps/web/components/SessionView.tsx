@@ -39,6 +39,7 @@ export default function SessionView({ conversation, session, invite, messages, r
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
   const [showDonationModal, setShowDonationModal] = useState(false);
+  const [callMode, setCallMode] = useState<'video' | 'audio' | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -58,6 +59,12 @@ export default function SessionView({ conversation, session, invite, messages, r
     const peer = conversation.participants.find((participant) => participant !== currentUserId);
     return peer ?? 'Session participant';
   }, [conversation.participants, currentUserId]);
+
+  useEffect(() => {
+    setCallMode(null);
+    setCallSummary(null);
+    setShowDonationModal(false);
+  }, [conversation.conversationId]);
 
   if (!session && invite) {
     return (
@@ -104,6 +111,7 @@ export default function SessionView({ conversation, session, invite, messages, r
   const handleCallEnd = (summary: CallEndSummary) => {
     setCallSummary({ ...summary, peerName: peerLabel });
     setShowDonationModal(false);
+    setCallMode(null);
   };
 
   const handleDismissSummary = () => {
@@ -113,12 +121,49 @@ export default function SessionView({ conversation, session, invite, messages, r
   };
 
   const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && !callSummary.confidentialRate && showDonationModal && session);
+  const canLaunchCall = Boolean(session && currentUserId);
+  const callActive = Boolean(callMode && canLaunchCall);
+
+  const handleLaunchCall = (mode: 'video' | 'audio') => {
+    if (!canLaunchCall) return;
+    setShowDonationModal(false);
+    setCallSummary(null);
+    setCallMode(mode);
+  };
 
   return (
-    <div className={styles.sessionShell}>
-      <div className={styles.videoSection}>
-        <VideoArea session={session} currentUserId={currentUserId} onCallEnd={handleCallEnd} />
+    <div className={styles.humanView}>
+      <div className={styles.callLauncher}>
+        <div>
+          <p className={styles.callLauncherTitle}>{callActive ? `Live ${callMode === 'audio' ? 'audio' : 'video'} call with ${peerLabel}` : `Chat with ${peerLabel}`}</p>
+          <p className={styles.callLauncherSub}>
+            {callActive ? 'Keep the text thread open while you are on the call. End the session any time.' : 'Use the buttons to start a video or audio session when both of you are ready. The chat stays open the entire time.'}
+          </p>
+        </div>
+        <div className={styles.callButtons}>
+          <button
+            type="button"
+            className={styles.callButtonPrimary}
+            onClick={() => handleLaunchCall('video')}
+            disabled={!canLaunchCall || callActive}
+          >
+            Start video call
+          </button>
+          <button
+            type="button"
+            className={styles.callButtonSecondary}
+            onClick={() => handleLaunchCall('audio')}
+            disabled={!canLaunchCall || callActive}
+          >
+            Start audio call
+          </button>
+        </div>
       </div>
+      {callActive && session && currentUserId && (
+        <div className={styles.callSurface}>
+          <VideoArea session={session} currentUserId={currentUserId} onCallEnd={handleCallEnd} mediaMode={callMode ?? 'video'} />
+        </div>
+      )}
       <div className={styles.chatSection}>
         <ChatArea conversation={conversation} messages={messages} registerScrollContainer={registerScrollContainer} currentUserId={currentUserId} />
       </div>

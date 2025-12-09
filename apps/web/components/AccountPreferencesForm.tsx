@@ -121,7 +121,10 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Account preferences</p>
         <h2 className="text-2xl font-semibold">Control what members see</h2>
-        <p className="text-sm text-white/70">Availability, pricing, and chat request options are live as soon as you save.</p>
+        <p className="text-sm text-white/70">
+          Every member can host or request chats — by default you're free and open to instant requests. Tweak the knobs below if you need a different
+          setup.
+        </p>
       </header>
 
       {!profile && (
@@ -172,7 +175,7 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-semibold">Conversation type</p>
-            <p className="text-xs text-white/60">Choose whether your instant connects are free, paid, or charity-focused.</p>
+                <p className="text-xs text-white/60">Choose whether your instant connects are free, paid, or charity-focused. Everyone starts in Free mode.</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {(['free', 'paid', 'charity'] as ConversationCategory[]).map((type) => (
                 <label
@@ -214,7 +217,7 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Open to chat requests</p>
-                <p className="text-xs text-white/60">Turn this off to require members to request access before Sam connects them.</p>
+                <p className="text-xs text-white/60">Stay on (default) to let anyone ping you instantly. Turn it off if you need Sam to collect approval first.</p>
               </div>
               <button
                 type="button"
