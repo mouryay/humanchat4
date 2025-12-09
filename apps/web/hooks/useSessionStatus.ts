@@ -25,7 +25,14 @@ const derivePresenceState = (status?: Pick<SessionStatus, 'presenceState' | 'isO
 };
 
 export const useSessionStatus = (userId?: string | null) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(sessionStatusManager.getCurrentUserId()));
   const [state, setState] = useState<SessionStatusState>({ ...initialState, isLoading: Boolean(userId) });
+
+  useEffect(() => {
+    return sessionStatusManager.onCurrentUserChange((currentUserId) => {
+      setIsAuthenticated(Boolean(currentUserId));
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +40,14 @@ export const useSessionStatus = (userId?: string | null) => {
 
     if (!userId) {
       setState({ ...initialState, isLoading: false });
+      return () => {
+        cancelled = true;
+        unsubscribe?.();
+      };
+    }
+
+    if (!isAuthenticated) {
+      setState({ ...initialState, isLoading: Boolean(userId) });
       return () => {
         cancelled = true;
         unsubscribe?.();
@@ -73,7 +88,7 @@ export const useSessionStatus = (userId?: string | null) => {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [userId]);
+  }, [userId, isAuthenticated]);
 
   return state;
 };
