@@ -51,10 +51,20 @@ const handleResponse = async (response: Response): Promise<ConnectResponse> => {
     throw new Error(friendly);
   }
 
-  if (!payload?.data?.conversation || !payload?.data?.session) {
+  const data = payload?.data;
+  if (!data?.conversation) {
     throw new Error(fallback);
   }
-  return payload.data;
+
+  if (data.flow === 'session' && !data.session) {
+    throw new Error(fallback);
+  }
+
+  if (data.flow === 'invite' && !data.invite) {
+    throw new Error('Waiting for their team to accept before joining you.');
+  }
+
+  return data;
 };
 
 export const connectNow = async (profile: ProfileSummary, currentUserId: string): Promise<string> => {
