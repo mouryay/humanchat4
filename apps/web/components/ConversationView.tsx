@@ -35,6 +35,7 @@ export default function ConversationView({ activeConversationId, onSelectConvers
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    setCurrentUserId(sessionStatusManager.getCurrentUserId());
     return sessionStatusManager.onCurrentUserChange((userId) => setCurrentUserId(userId));
   }, []);
 
