@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Conversation, Session, Action, ProfileSummary, SamShowcaseProfile } from '../../../src/lib/db';
 import { toPrefetchedStatus } from '../utils/profilePresence';
 import styles from './ConversationView.module.css';
 import ProfileCard from './ProfileCard';
 import StatusBadge from './StatusBadge';
+import { searchProfiles } from '../services/profileApi';
 
 interface ActionRendererProps {
   action: Action;
@@ -43,8 +44,109 @@ const isSessionProposal = (
   return 'host' in payload && 'guest' in payload;
 };
 
-const ShowcaseProfile = ({ profile }: { profile: SamShowcaseProfile }) => {
+interface ShowcaseProfileTileProps {
+  profile: SamShowcaseProfile;
+  directoryByName: Map<string, ProfileSummary>;
+  disableLiveStatus: boolean;
+  onConnectNow?: (profile: ProfileSummary) => void;
+  onBookTime?: (profile: ProfileSummary) => void;
+  connectingProfileId?: string | null;
+}
+
+const ShowcaseProfileTile = ({
+  profile,
+  directoryByName,
+  disableLiveStatus,
+  onConnectNow,
+  onBookTime,
+  connectingProfileId
+}: ShowcaseProfileTileProps) => {
+  const normalizedName = profile.name?.trim().toLowerCase() ?? '';
+  const [resolvedProfile, setResolvedProfile] = useState<ProfileSummary | null>(() => {
+    return normalizedName ? directoryByName.get(normalizedName) ?? null : null;
+  });
+  const [pendingAction, setPendingAction] = useState<'connect' | 'schedule' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resolvedProfile || !normalizedName) {
+      return;
+    }
+    const cached = directoryByName.get(normalizedName);
+    if (cached) {
+      setResolvedProfile(cached);
+    }
+  }, [directoryByName, normalizedName, resolvedProfile]);
+
+  const resolveProfile = useCallback(async (): Promise<ProfileSummary> => {
+    if (resolvedProfile) {
+      return resolvedProfile;
+    }
+    const trimmedName = profile.name?.trim();
+    if (!trimmedName) {
+      throw new Error('Unable to identify that member.');
+    }
+
+    const [onlineMatch] = await searchProfiles(trimmedName, { onlineOnly: true });
+    if (onlineMatch) {
+      setResolvedProfile(onlineMatch);
+      return onlineMatch;
+    }
+
+    const [anyMatch] = await searchProfiles(trimmedName);
+    if (anyMatch) {
+      setResolvedProfile(anyMatch);
+      return anyMatch;
+    }
+
+    throw new Error('This member is unavailable right now.');
+  }, [profile.name, resolvedProfile]);
+
+  const handleAction = useCallback(
+    async (mode: 'connect' | 'schedule') => {
+      if (pendingAction) {
+        return;
+      }
+      if (mode === 'connect' && !onConnectNow) {
+        return;
+      }
+      if (mode === 'schedule' && !onBookTime) {
+        return;
+      }
+      setPendingAction(mode);
+      setError(null);
+      try {
+        const hydrated = await resolveProfile();
+        if (mode === 'connect') {
+          onConnectNow?.(hydrated);
+        } else {
+          onBookTime?.(hydrated);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unable to reach that member right now.');
+      } finally {
+        setPendingAction(null);
+      }
+    },
+    [onBookTime, onConnectNow, pendingAction, resolveProfile]
+  );
+
+  if (resolvedProfile) {
+    return (
+      <ProfileCard
+        profile={resolvedProfile}
+        onConnectNow={onConnectNow}
+        onBookTime={onBookTime}
+        isConnecting={connectingProfileId === resolvedProfile.userId}
+        disableLiveStatus={disableLiveStatus}
+        prefetchedStatus={disableLiveStatus ? toPrefetchedStatus(resolvedProfile) ?? undefined : undefined}
+      />
+    );
+  }
+
   const presenceState = profile.status === 'away' ? 'idle' : 'active';
+  const isAvailable = profile.status === 'available';
+
   return (
     <div className={styles.profileCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
@@ -64,6 +166,31 @@ const ShowcaseProfile = ({ profile }: { profile: SamShowcaseProfile }) => {
         hasActiveSession={profile.status === 'booked'}
         presenceState={presenceState}
       />
+      {(onConnectNow || onBookTime) && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+          {onConnectNow && (
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={!isAvailable || pendingAction === 'connect'}
+              onClick={() => handleAction('connect')}
+            >
+              {pendingAction === 'connect' ? 'Loading…' : 'Connect Now'}
+            </button>
+          )}
+          {onBookTime && (
+            <button
+              className={styles.secondaryButton}
+              type="button"
+              disabled={pendingAction === 'schedule'}
+              onClick={() => handleAction('schedule')}
+            >
+              {pendingAction === 'schedule' ? 'Loading…' : 'Schedule'}
+            </button>
+          )}
+        </div>
+      )}
+      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 };
@@ -211,24 +338,17 @@ export default function ActionRenderer({
       if (filteredShowcaseProfiles.length > 0) {
         return (
           <div className={styles.profileScroller}>
-            {filteredShowcaseProfiles.map((profile, index) => {
-              const normalizedName = profile.name?.trim().toLowerCase() ?? '';
-              const hydrated = normalizedName ? profileDirectory.get(normalizedName) : undefined;
-              if (hydrated) {
-                return (
-                  <ProfileCard
-                    key={hydrated.userId ?? `${normalizedName}-${index}`}
-                    profile={hydrated}
-                    onConnectNow={onConnectNow}
-                    onBookTime={onBookTime}
-                    isConnecting={connectingProfileId === hydrated.userId}
-                    disableLiveStatus={disableLiveStatus}
-                    prefetchedStatus={disableLiveStatus ? toPrefetchedStatus(hydrated) : undefined}
-                  />
-                );
-              }
-              return <ShowcaseProfile key={`${profile.name}-${index}`} profile={profile} />;
-            })}
+            {filteredShowcaseProfiles.map((profile, index) => (
+              <ShowcaseProfileTile
+                key={`${profile.name ?? 'profile'}-${index}`}
+                profile={profile}
+                directoryByName={profileDirectory}
+                disableLiveStatus={disableLiveStatus}
+                onConnectNow={onConnectNow}
+                onBookTime={onBookTime}
+                connectingProfileId={connectingProfileId}
+              />
+            ))}
           </div>
         );
       }
