@@ -24,6 +24,8 @@ const HEARTBEAT_INTERVAL = 45 * 1000;
 const IDLE_THRESHOLD = 60 * 1000;
 const RETRY_LIMIT = 3;
 const RETRY_BASE_DELAY = 1000;
+const STATUS_BATCH_INTERVAL = 25;
+const MAX_PARALLEL_STATUS_FETCHES = 4;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? API_BASE_URL.replace(/^http(s?):/, 'ws$1:');
@@ -52,8 +54,13 @@ class SessionStatusManager {
   private presenceState: PresenceState = 'offline';
   private lastPresencePush = 0;
   private activityListenersAttached = false;
+  private pendingStatusRequests = new Map<string, Array<{ resolve: (value: StatusObject) => void; reject: (reason?: unknown) => void }>>();
+  private queuedStatusChecks = new Set<string>();
+  private statusBatchTimer: ReturnType<typeof setTimeout> | null = null;
+  private isProcessingStatusQueue = false;
+  private identityHydrated = false;
   private readonly activityHandler = () => {
-    if (!this.currentUserId) {
+    if (!this.currentUserId || !this.identityHydrated) {
       return;
     }
     this.lastActivity = Date.now();
@@ -62,7 +69,7 @@ class SessionStatusManager {
     }
   };
   private readonly visibilityHandler = () => {
-    if (!this.currentUserId) {
+    if (!this.currentUserId || !this.identityHydrated) {
       return;
     }
     if (document.visibilityState === 'hidden') {
@@ -73,7 +80,7 @@ class SessionStatusManager {
     }
   };
   private readonly beforeUnloadHandler = () => {
-    if (!this.currentUserId || typeof navigator.sendBeacon !== 'function') {
+    if (!this.currentUserId || !this.identityHydrated || typeof navigator.sendBeacon !== 'function') {
       return;
     }
     try {
@@ -101,12 +108,15 @@ class SessionStatusManager {
       void this.pushPresence('offline', previousUserId);
     }
     this.currentUserId = userId;
+    this.identityHydrated = true;
     if (userId) {
       this.attachPresenceTracking();
       this.activityHandler();
       void this.pushPresence('active');
+      this.startHeartbeat();
     } else {
       this.presenceState = 'offline';
+      this.stopHeartbeat();
     }
     this.currentUserSubscribers.forEach((listener) => {
       try {
@@ -160,8 +170,7 @@ class SessionStatusManager {
       return cached;
     }
 
-    const status = await this.fetchStatus(userId);
-    return status ?? defaultStatus(userId);
+    return this.enqueueStatusFetch(userId);
   }
 
   public async syncStatusWithBackend(): Promise<void> {
@@ -195,6 +204,61 @@ class SessionStatusManager {
         this.subscribers.delete(userId);
       }
     };
+  }
+
+  private enqueueStatusFetch(userId: string): Promise<StatusObject> {
+    return new Promise<StatusObject>((resolve, reject) => {
+      const pending = this.pendingStatusRequests.get(userId) ?? [];
+      pending.push({ resolve, reject });
+      this.pendingStatusRequests.set(userId, pending);
+      this.queuedStatusChecks.add(userId);
+      this.scheduleStatusBatch();
+    });
+  }
+
+  private scheduleStatusBatch(): void {
+    if (this.statusBatchTimer) {
+      return;
+    }
+    this.statusBatchTimer = setTimeout(() => {
+      this.statusBatchTimer = null;
+      void this.processStatusQueue();
+    }, STATUS_BATCH_INTERVAL);
+  }
+
+  private async processStatusQueue(): Promise<void> {
+    if (this.isProcessingStatusQueue) {
+      return;
+    }
+    this.isProcessingStatusQueue = true;
+    try {
+      const userIds = Array.from(this.queuedStatusChecks);
+      this.queuedStatusChecks.clear();
+      while (userIds.length > 0) {
+        const chunk = userIds.splice(0, MAX_PARALLEL_STATUS_FETCHES);
+        await Promise.all(chunk.map((userId) => this.resolveQueuedStatus(userId)));
+      }
+    } finally {
+      this.isProcessingStatusQueue = false;
+      if (this.queuedStatusChecks.size > 0) {
+        this.scheduleStatusBatch();
+      }
+    }
+  }
+
+  private async resolveQueuedStatus(userId: string): Promise<void> {
+    const pending = this.pendingStatusRequests.get(userId);
+    if (!pending || pending.length === 0) {
+      return;
+    }
+    this.pendingStatusRequests.delete(userId);
+    try {
+      const status = (await this.fetchStatus(userId)) ?? defaultStatus(userId);
+      pending.forEach(({ resolve }) => resolve(status));
+    } catch (error) {
+      const normalizedError = error instanceof Error ? error : new Error(String(error));
+      pending.forEach(({ reject }) => reject(normalizedError));
+    }
   }
 
   private async fetchStatus(userId: string): Promise<StatusObject | undefined> {
@@ -328,17 +392,16 @@ class SessionStatusManager {
     window.addEventListener('focus', this.activityHandler);
     document.addEventListener('visibilitychange', this.visibilityHandler);
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
-    this.startHeartbeat();
     this.activityListenersAttached = true;
   }
 
   private startHeartbeat(): void {
-    if (this.heartbeatTimer) {
+    if (this.heartbeatTimer || !this.identityHydrated || !this.currentUserId) {
       return;
     }
     void this.pushPresence('active');
     this.heartbeatTimer = setInterval(() => {
-      if (!this.currentUserId) {
+      if (!this.currentUserId || !this.identityHydrated) {
         return;
       }
       const idle = Date.now() - this.lastActivity > IDLE_THRESHOLD;
@@ -347,9 +410,20 @@ class SessionStatusManager {
     }, HEARTBEAT_INTERVAL);
   }
 
+  private stopHeartbeat(): void {
+    if (!this.heartbeatTimer) {
+      return;
+    }
+    clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = null;
+  }
+
   private async pushPresence(state: PresenceState, targetUserId?: string): Promise<void> {
     const userId = targetUserId ?? this.currentUserId;
     if (!userId) {
+      return;
+    }
+    if (!this.identityHydrated && !targetUserId) {
       return;
     }
     const now = Date.now();

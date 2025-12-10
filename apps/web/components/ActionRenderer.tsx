@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { Conversation, Session, Action, ProfileSummary, SamShowcaseProfile } from '../../../src/lib/db';
+import { toPrefetchedStatus } from '../utils/profilePresence';
 import styles from './ConversationView.module.css';
 import ProfileCard from './ProfileCard';
 import StatusBadge from './StatusBadge';
@@ -148,6 +149,7 @@ export default function ActionRenderer({
       const legacyProfiles = visibleProfiles.filter(isLegacyProfile) as ProfileSummary[];
       const showcaseProfiles = visibleProfiles.filter((profile) => !isLegacyProfile(profile)) as SamShowcaseProfile[];
       const enforceOnlineOnly = (directoryProfiles?.length ?? 0) > 0;
+      const disableLiveStatus = enforceOnlineOnly;
       const hydratedLegacyProfiles = legacyProfiles
         .map((profile) => {
           const normalizedName = profile.name?.trim().toLowerCase() ?? '';
@@ -198,6 +200,8 @@ export default function ActionRenderer({
                 onConnectNow={onConnectNow}
                 onBookTime={onBookTime}
                 isConnecting={connectingProfileId === profile.userId}
+                disableLiveStatus={disableLiveStatus}
+                prefetchedStatus={disableLiveStatus ? toPrefetchedStatus(profile) : undefined}
               />
             ))}
           </div>
@@ -218,6 +222,8 @@ export default function ActionRenderer({
                     onConnectNow={onConnectNow}
                     onBookTime={onBookTime}
                     isConnecting={connectingProfileId === hydrated.userId}
+                    disableLiveStatus={disableLiveStatus}
+                    prefetchedStatus={disableLiveStatus ? toPrefetchedStatus(hydrated) : undefined}
                   />
                 );
               }
