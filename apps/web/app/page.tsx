@@ -19,59 +19,64 @@ export const metadata: Metadata = {
   }
 };
 
+const sections = [
+  {
+    title: 'Sam',
+    description: 'Chat with the concierge and route every request instantly.',
+    actions: [{ label: 'Open Sam', href: '/chat?focus=sam' }]
+  },
+  {
+    title: 'Humans',
+    description: 'Jump straight into live humans who can help right now.',
+    actions: [{ label: 'Browse Humans', href: '/chat?focus=humans' }]
+  },
+  {
+    title: 'Account Settings',
+    description: 'Adjust details, notifications, and payment info without hunting menus.',
+    actions: [
+      { label: 'User Settings', href: '/settings' },
+      { label: 'Profile Tab', href: '/settings?tab=profile' }
+    ]
+  }
+];
+
 export default function LandingPage() {
   return (
-    <div className="bg-midnight text-white">
-      <header className="relative overflow-hidden border-b border-white/10 bg-radial-fade">
-        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-indigoGlow/20 to-transparent blur-3xl" />
-        <div className="mx-auto flex min-h-[80vh] max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6">
-          <nav className="flex items-center justify-between rounded-full border border-white/10 bg-black/30 px-6 py-3 text-sm text-white/80 backdrop-blur">
-            <Link href="/" className="font-display text-lg text-white">
-              HumanChat
-            </Link>
-            <div className="hidden gap-6 sm:flex">
-              <a href="/chat" className="transition hover:text-white">
-                Workspace
-              </a>
-              <a href="/signup" className="transition hover:text-white">
-                Hosts
-              </a>
-            </div>
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-full border border-white/30 px-4 py-1 text-white transition hover:border-white"
-            >
-              Login/Signup
-            </Link>
-          </nav>
-          <div className="flex flex-1 flex-col items-start justify-center gap-10 pb-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-white/70">Human-first conversations</p>
-          <h1 className="max-w-3xl font-display text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
-            Talk to Anyone, About Anything
-          </h1>
-          <p className="max-w-2xl text-lg text-slate-200">
-            HumanChat pairs Sam—the AI concierge who understands your goals—with real people who can help. Share your
-            expertise or tap into someone else’s brilliance in seconds.
-          </p>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/chat?focus=sam"
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-8 py-3 font-semibold text-midnight shadow-lg shadow-indigoGlow/30 transition hover:scale-105"
-            >
-              Start Chatting
-            </Link>
-            <Link
-              href="/chat"
-              className="inline-flex items-center justify-center rounded-full border border-white/30 px-8 py-3 text-sm font-semibold text-white transition hover:border-white hover:bg-white/5"
-            >
-              Explore the workspace
-            </Link>
-          </div>
-          </div>
-        </div>
+    <div className="flex min-h-screen flex-col overflow-hidden bg-midnight text-white">
+      <header className="flex flex-none items-center justify-between border-b border-white/10 px-5 py-4 text-xs text-white/70 sm:text-sm">
+        <Link href="/" className="font-display text-lg text-white">
+          HumanChat
+        </Link>
+        <span className="hidden sm:block">Direct access to Sam, humans, and settings. Nothing else.</span>
       </header>
 
-      <main />
+      <main className="flex flex-1 items-stretch justify-center px-4 py-4">
+        <section className="grid h-full w-full max-w-5xl grid-cols-1 grid-rows-3 gap-3 md:grid-cols-3 md:grid-rows-1">
+          {sections.map((section) => (
+            <article
+              key={section.title}
+              className="flex h-full flex-col rounded-2xl border border-white/15 bg-white/5 p-5 shadow-[0_10px_30px_rgba(2,6,23,0.6)]"
+            >
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">{section.title}</p>
+                <h2 className="mt-2 font-display text-2xl text-white">{section.title}</h2>
+                <p className="mt-2 text-sm text-white/75">{section.description}</p>
+              </div>
+              <div className="mt-auto flex flex-col gap-3 pt-5">
+                {section.actions.map((action) => (
+                  <Link
+                    key={`${section.title}-${action.label}`}
+                    href={action.href}
+                    className="inline-flex items-center justify-center rounded-xl border border-white/25 px-3 py-2 text-sm font-semibold text-white transition hover:border-white"
+                  >
+                    {action.label}
+                  </Link>
+                ))}
+              </div>
+            </article>
+          ))}
+        </section>
+      </main>
     </div>
   );
 }

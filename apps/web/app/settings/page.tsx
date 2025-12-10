@@ -1,10 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import LogoutButton from '../../components/LogoutButton';
 import type { ConnectionType } from '../../services/settingsApi';
 import { useSettings, AVAILABILITY_PROMPT_KEY, AVAILABILITY_STORAGE_KEY } from '../../hooks/useSettings';
+import ProfilePanel from '../../components/ProfilePanel';
+import ProfileDetailsSummary from '../../components/ProfileDetailsSummary';
+import AccountPreferencesForm from '../../components/AccountPreferencesForm';
+import AccountIdentityForm from '../../components/AccountIdentityForm';
+import { useProfileDetails } from '../../hooks/useProfileDetails';
 
 const fallbackCharities = [
   { id: 'climate-action', name: 'Climate Action Network' },
@@ -21,6 +26,7 @@ const formatCurrency = (value: string): string => {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const settingsState = useSettings();
   const {
     settings,
@@ -40,6 +46,16 @@ export default function SettingsPage() {
     refresh
   } = settingsState;
 
+  type SettingsTab = 'connections' | 'profile';
+  const deriveTab = (value: string | null): SettingsTab => (value === 'profile' ? 'profile' : 'connections');
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => deriveTab(searchParams.get('tab')));
+  const profileState = useProfileDetails();
+
+  const tabs: Array<{ id: SettingsTab; label: string; blurb: string }> = [
+    { id: 'connections', label: 'Availability & Connections', blurb: 'Control how members reach you.' },
+    { id: 'profile', label: 'Profile & Identity', blurb: 'Update who you are and what you share.' }
+  ];
+
   const [connectionType, setConnectionType] = useState<ConnectionType>('free');
   const [instantRate, setInstantRate] = useState('');
   const [selectedCharity, setSelectedCharity] = useState<string | null>(null);
@@ -48,6 +64,10 @@ export default function SettingsPage() {
   const [availabilityNotice, setAvailabilityNotice] = useState<string | null>(null);
   const [promptToReenable, setPromptToReenable] = useState(false);
   const [integrationsMessage, setIntegrationsMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(deriveTab(searchParams.get('tab')));
+  }, [searchParams]);
 
   useEffect(() => {
     if (!settings) return;
@@ -129,6 +149,18 @@ export default function SettingsPage() {
     void updateAvailability(!settings.isOnline);
   };
 
+  const handleTabChange = (tab: SettingsTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'profile') {
+      params.set('tab', 'profile');
+    } else {
+      params.delete('tab');
+    }
+    const query = params.toString();
+    router.replace(query ? `/settings?${query}` : '/settings');
+  };
+
   const handleSaveConnection = async () => {
     if (!settings) return;
     setConnectionMessage(null);
@@ -193,15 +225,40 @@ export default function SettingsPage() {
   return (
     <main className="min-h-screen bg-midnight text-white">
       <header className="border-b border-white/10 px-6 py-6">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-4">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-white/50">Settings</p>
             <h1 className="text-3xl font-semibold">Control how members reach you</h1>
           </div>
+          <div className="flex flex-wrap gap-3">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] ${
+                  activeTab === tab.id ? 'border-white text-white' : 'border-white/20 text-white/60 hover:border-white/40'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-white/60">{tabs.find((tab) => tab.id === activeTab)?.blurb}</p>
         </div>
       </header>
 
-      <section className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10">
+      {activeTab === 'profile' ? (
+        <section className="mx-auto w-full max-w-4xl px-4 py-10">
+          <div className="flex flex-col gap-8">
+            <ProfilePanel variant="card" />
+            <AccountIdentityForm profileState={profileState} />
+            <AccountPreferencesForm profileState={profileState} />
+            <ProfileDetailsSummary profileState={profileState} />
+          </div>
+        </section>
+      ) : (
+        <section className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
           <header className="mb-4 flex items-center justify-between">
             <div>
@@ -432,7 +489,8 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
-      </section>
+        </section>
+      )}
     </main>
   );
 }
