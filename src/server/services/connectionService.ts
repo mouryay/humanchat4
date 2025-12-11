@@ -113,9 +113,6 @@ const assertConnectable = (requester: User, target: User): void => {
   if (target.has_active_session) {
     throw new ApiError(409, 'TARGET_BUSY', `${target.name ?? 'That member'} is already in a session.`);
   }
-  if (target.managed && target.confidential_rate) {
-    throw new ApiError(422, 'REQUEST_REQUIRED', `${target.name ?? 'That member'} requires a managed request.`);
-  }
   if (requester.has_active_session) {
     throw new ApiError(409, 'REQUESTER_BUSY', 'You are already in a session.');
   }

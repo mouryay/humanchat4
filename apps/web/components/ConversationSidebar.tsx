@@ -6,17 +6,17 @@ import ConversationListItem from './ConversationListItem';
 import styles from './ConversationSidebar.module.css';
 import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
-import { deleteConversationCascade, type ManagedRequest } from '../../../src/lib/db';
+import { deleteConversationCascade, type ChatRequest } from '../../../src/lib/db';
 
 interface ConversationSidebarProps {
   activeConversationId?: string;
   onSelectConversation?: (conversationId: string) => void;
   collapsed?: boolean;
-  requests?: ManagedRequest[];
+  requests?: ChatRequest[];
   requestProfiles?: Record<string, { name?: string; headline?: string | null; avatarUrl?: string | null }>;
   requestLoading?: boolean;
   requestError?: string | null;
-  onRequestAction?: (requestId: string, status: ManagedRequest['status']) => Promise<unknown> | void;
+  onRequestAction?: (requestId: string, status: ChatRequest['status']) => Promise<unknown> | void;
   requestActionPendingId?: string | null;
 }
 
@@ -202,7 +202,7 @@ export default function ConversationSidebar({
                 className={clsx(styles.tab, humanView === 'pending' && styles.tabActive)}
                 onClick={() => setHumanView('pending')}
               >
-                Pending <span className={styles.tabCount}>{pendingRequests.length}</span>
+                Requests <span className={styles.tabCount}>{pendingRequests.length}</span>
               </button>
             </div>
           </div>
@@ -240,8 +240,8 @@ export default function ConversationSidebar({
 
               {pendingRequests.length === 0 && !requestLoading ? (
                 <div className={styles.emptyState}>
-                  <strong>No pending humans.</strong>
-                  <p style={{ marginTop: '8px', marginBottom: 0 }}>You will see invites here the moment someone reaches out.</p>
+                  <strong>No one is in line.</strong>
+                  <p style={{ marginTop: '8px', marginBottom: 0 }}>You will see requests here the moment someone taps your card.</p>
                 </div>
               ) : (
                 <ul className={clsx(styles.list, styles.requestList)}>
@@ -257,7 +257,7 @@ export default function ConversationSidebar({
                       .join('') || 'RQ';
                     const isUpdating = requestActionPendingId === request.requestId;
 
-                    const handleAction = (status: ManagedRequest['status']) => {
+                    const handleAction = (status: ChatRequest['status']) => {
                       if (!onRequestAction) {
                         return;
                       }

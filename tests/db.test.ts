@@ -14,7 +14,7 @@ import {
   getRequestsByRequester,
   getInstantInviteById,
   getLatestInviteForConversation,
-  saveManagedRequest,
+  saveChatRequest,
   incrementUnread,
   saveSetting,
   saveInstantInvite,
@@ -147,9 +147,9 @@ describe('Dexie helper functions', () => {
     expect(conversations[1].conversationId).toBe('c1');
   });
 
-  it('persists managed connection requests', async () => {
+  it('persists chat connection requests', async () => {
     const now = Date.now();
-    await saveManagedRequest({
+    await saveChatRequest({
       requestId: 'req-1',
       requesterId: 'guest-1',
       targetUserId: 'talent-9',

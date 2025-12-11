@@ -7,7 +7,7 @@ import {
   AdminUserFilters,
   getAdminOverviewMetrics,
   listAdminAnnouncements,
-  listPendingManagedRequests,
+  listPendingChatRequests,
   listRecentSessions,
   listRequestedPeopleForAdmin,
   listUsersForAdmin,
@@ -83,7 +83,7 @@ router.get('/sessions', async (req, res, next) => {
 
 router.get('/requests', async (_req, res, next) => {
   try {
-    const requests = await listPendingManagedRequests();
+    const requests = await listPendingChatRequests();
     success(res, { requests });
   } catch (error) {
     next(error);

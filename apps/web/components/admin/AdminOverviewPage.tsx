@@ -58,7 +58,7 @@ export default function AdminOverviewPage() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total users" value={metrics.totals.users} sublabel={`Admins: ${metrics.totals.admins}`} />
-        <StatCard label="Managed" value={metrics.totals.managed} sublabel={`${metrics.requests.pending} pending requests`} />
+        <StatCard label="Request-only" value={metrics.totals.managed} sublabel={`${metrics.requests.pending} pending requests`} />
         <StatCard label="Active sessions" value={metrics.sessions.active} sublabel={`${metrics.sessions.pending} pending`} />
         <StatCard label="Revenue (7d)" value={`$${metrics.revenue.last7Days.toLocaleString()}`} sublabel={`Today $${metrics.revenue.today}`} />
       </div>

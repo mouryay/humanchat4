@@ -62,6 +62,50 @@ Response:
 }
 ```
 
+### Chat Requests
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/api/requests` | Send a request to an online human. Rejects if they are offline or already in a session. |
+| GET | `/api/requests` | Inbox for the authenticated host — includes pending and recently handled requests. |
+| PATCH | `/api/requests/:id/status` | Target (or admin) updates a request to `approved` or `declined`. Approvals provision/return the conversation immediately. |
+
+Behavior notes:
+- Requesters can only target other users; the API blocks self-requests and busy/offline hosts.
+- The target (or an admin) is the only party allowed to approve/decline.
+- When `status` becomes `approved`, the response contains the hydrated conversation so the client can create the local thread right away.
+
+#### Example: Approve a request
+```http
+PATCH /api/requests/req_123/status
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "status": "approved" }
+```
+Response:
+```json
+{
+  "request": {
+    "id": "req_123",
+    "requester_user_id": "user_a",
+    "target_user_id": "user_b",
+    "status": "approved"
+  },
+  "conversation": {
+    "id": "conv_789",
+    "type": "human",
+    "participants": ["user_a", "user_b"],
+    "participant_display_map": {
+      "user_a": "Casey",
+      "user_b": "River"
+    },
+    "last_activity": "2024-05-31T19:12:04.000Z"
+  }
+}
+```
+
+Clients should upsert the conversation (if provided) and then open it so both sides land directly in the chat thread.
+
 ### Sessions & Booking
 | Method | Path | Description |
 | POST | `/api/sessions` | Create scheduled session (booking). |

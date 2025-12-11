@@ -40,8 +40,8 @@ export default function AdminRequestsPage() {
   const handleStatusChange = async (id: string, status: AdminRequestSummary['status']) => {
     setUpdatingId(id);
     try {
-      const updated = await updateRequestStatus(id, status);
-      setRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status: updated.status } : request)));
+      const { request } = await updateRequestStatus(id, status);
+      setRequests((prev) => prev.map((entry) => (entry.id === id ? { ...entry, status: request.status } : entry)));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update request');
@@ -57,7 +57,7 @@ export default function AdminRequestsPage() {
         <p className="text-white/60">Track concierge requests and requested names.</p>
       </div>
       <div className="rounded-3xl border border-white/10 bg-white/5">
-        <div className="border-b border-white/10 px-6 py-4 text-sm text-white/70">Pending managed requests</div>
+        <div className="border-b border-white/10 px-6 py-4 text-sm text-white/70">Requests awaiting review</div>
         {loading ? (
           <div className="p-6 text-white/70">Loading requests…</div>
         ) : (

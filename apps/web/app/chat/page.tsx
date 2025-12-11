@@ -8,7 +8,7 @@ import MobileBottomNav, { type MobileNavRoute } from '../../components/MobileBot
 import ProfilePanel from '../../components/ProfilePanel';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { useConversationData } from '../../hooks/useConversationData';
-import { useManagedRequests } from '../../hooks/useManagedRequests';
+import { useChatRequests } from '../../hooks/useChatRequests';
 import { fetchUserProfile, type UserProfile } from '../../services/profileApi';
 
 export default function ChatPage() {
@@ -25,7 +25,7 @@ export default function ChatPage() {
     error: requestsError,
     updateStatus,
     updatingId
-  } = useManagedRequests();
+  } = useChatRequests();
   const fetchedRequestersRef = useRef<Set<string>>(new Set());
   const [requesterProfiles, setRequesterProfiles] = useState<Record<string, Pick<UserProfile, 'name' | 'headline' | 'avatarUrl'>>>(
     {}
@@ -135,10 +135,18 @@ export default function ChatPage() {
   }, [requests]);
 
   const handleRequestAction = useCallback(
-    (requestId: string, status: 'pending' | 'approved' | 'declined') => {
-      return updateStatus(requestId, status);
+    async (requestId: string, status: 'pending' | 'approved' | 'declined') => {
+      const result = await updateStatus(requestId, status);
+      if (status === 'approved' && result.conversation) {
+        setActiveConversationId(result.conversation.conversationId);
+        if (isMobile) {
+          setMobilePane('conversation');
+          setActiveNav('home');
+        }
+      }
+      return result;
     },
-    [updateStatus]
+    [isMobile, updateStatus]
   );
 
   return (

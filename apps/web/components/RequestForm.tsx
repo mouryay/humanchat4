@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Conversation, ProfileSummary } from '../../../src/lib/db';
-import { addMessage, saveManagedRequest } from '../../../src/lib/db';
+import { addMessage, saveChatRequest } from '../../../src/lib/db';
 import { submitConnectionRequest } from '../services/requestApi';
 import styles from './RequestForm.module.css';
 
@@ -91,7 +91,7 @@ export default function RequestForm({ open, profile, conversation, onClose }: Re
         preferredTime: preferredTime.trim() || undefined,
         budgetRange: budgetRange.trim() || undefined
       });
-      await saveManagedRequest(local);
+      await saveChatRequest(local);
       const repName = local.representativeName ?? profile.managerName ?? 'their representative';
       setAckRepName(repName);
       await persistSamReceipt(repName).catch((err) => {
@@ -115,10 +115,10 @@ export default function RequestForm({ open, profile, conversation, onClose }: Re
       <div className={styles.modal}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <img src={getAvatar(profile)} alt={profile.name ?? 'Managed profile'} className={styles.avatar} />
+            <img src={getAvatar(profile)} alt={profile.name ? `${profile.name}'s avatar` : 'Profile avatar'} className={styles.avatar} />
             <div>
               <div className={styles.title}>{profile.name}</div>
-              <div className={styles.subtitle}>Managed request</div>
+              <div className={styles.subtitle}>Private request</div>
             </div>
           </div>
           <button type="button" className={styles.closeButton} onClick={closeWithReset}>

@@ -7,7 +7,7 @@ const personas = [
   {
     title: 'Hosts & experts',
     items: [
-      'List instant, scheduled, and managed rates in one place.',
+      'List instant, scheduled, and private-request rates in one place.',
       'Stay discoverable to teams who are already working with Sam.',
       'Let HumanChat handle payments, notes, and follow ups.'
     ]
@@ -48,7 +48,7 @@ const steps = [
 const faqs = [
   {
     q: 'Is there a cost to join?',
-    a: 'Signing up is free. We only collect fees when you charge for sessions or ask Sam to manage a paid introduction.'
+    a: 'Signing up is free. We only collect fees when you charge for sessions or ask Sam to route a paid introduction.'
   },
   {
     q: 'Can my team co-host sessions?',
@@ -77,7 +77,7 @@ const actions = [
 
 export const metadata: Metadata = {
   title: 'Join HumanChat — Host or Request Sessions',
-  description: 'Create a HumanChat profile, bring your team, or request Sam-managed sessions in minutes.'
+  description: 'Create a HumanChat profile, bring your team, or request Sam-introduced sessions in minutes.'
 };
 
 const Card = ({

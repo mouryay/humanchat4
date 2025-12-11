@@ -99,6 +99,35 @@ components:
           type: string
           enum: [normal, by_request, confidential]
           nullable: true
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [sam, human]
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        participant_display_map:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+        linked_session_id:
+          type: string
+          format: uuid
+          nullable: true
+        last_activity:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
     RequestedPerson:
       type: object
       properties:
@@ -527,6 +556,7 @@ paths:
     post:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
+      summary: Create a chat request targeting another online user.
       requestBody:
         required: true
         content:
@@ -548,7 +578,7 @@ paths:
                   nullable: true
       responses:
         '201':
-          description: Request created
+          description: Request created and queued for the target user's inbox.
           content:
             application/json:
               schema:
@@ -559,9 +589,10 @@ paths:
     get:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
+      summary: List chat requests targeting the authenticated user.
       responses:
         '200':
-          description: Request list
+          description: Pending and recently handled requests for this user.
           content:
             application/json:
               schema:
@@ -575,6 +606,7 @@ paths:
     patch:
       security: [{ bearerAuth: [] }]
       tags: [Requests]
+      summary: Update a request's status. Approvals provision a conversation immediately.
       requestBody:
         required: true
         content:
@@ -588,7 +620,7 @@ paths:
                   enum: [pending, approved, declined]
       responses:
         '200':
-          description: Updated
+          description: Updated request (conversations are included on approvals).
           content:
             application/json:
               schema:
@@ -596,48 +628,52 @@ paths:
                 properties:
                   request:
                     $ref: '#/components/schemas/Request'
-    /api/requested-people:
-      get:
-        security: [{ bearerAuth: [] }]
-        tags: [RequestedPeople]
-        parameters:
-          - in: query
-            name: status
-            schema:
-              type: string
-              enum: [pending, contacted, declined, onboarded]
-        responses:
-          '200':
-            description: Requested people list
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    people:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/RequestedPerson'
-    /api/requested-people/log:
-      post:
-        security: [{ bearerAuth: [] }]
-        tags: [RequestedPeople]
-        requestBody:
-          required: true
+                  conversation:
+                    $ref: '#/components/schemas/Conversation'
+                    nullable: true
+                    description: Present only when an approval returns a conversation to open immediately.
+  /api/requested-people:
+    get:
+      security: [{ bearerAuth: [] }]
+      tags: [RequestedPeople]
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, contacted, declined, onboarded]
+      responses:
+        '200':
+          description: Requested people list
           content:
             application/json:
               schema:
                 type: object
-                required: [requestedName, searchQuery]
                 properties:
-                  requestedName:
-                    type: string
-                  searchQuery:
-                    type: string
-        responses:
-          '201':
-            description: Logged
-            content:
+                  people:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RequestedPerson'
+  /api/requested-people/log:
+    post:
+      security: [{ bearerAuth: [] }]
+      tags: [RequestedPeople]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requestedName, searchQuery]
+              properties:
+                requestedName:
+                  type: string
+                searchQuery:
+                  type: string
+      responses:
+        '201':
+          description: Logged
+          content:
               application/json:
                 schema:
                   type: object

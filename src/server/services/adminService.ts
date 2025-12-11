@@ -317,7 +317,7 @@ export interface AdminRequestSummary extends Request {
   requester_name: string;
 }
 
-export const listPendingManagedRequests = async (): Promise<AdminRequestSummary[]> => {
+export const listPendingChatRequests = async (): Promise<AdminRequestSummary[]> => {
   const result = await query<AdminRequestRow>(
     `SELECT r.*, target.name AS target_name, requester.name AS requester_name
      FROM requests r

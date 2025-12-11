@@ -167,7 +167,7 @@ export interface Setting {
   value: unknown;
 }
 
-export interface ManagedRequest {
+export interface ChatRequest {
   requestId: string;
   requesterId: string;
   targetUserId: string;
@@ -203,7 +203,7 @@ export type BootstrapPayload = {
   conversations?: Conversation[];
   messages?: Message[];
   sessions?: Session[];
-  requests?: ManagedRequest[];
+  requests?: ChatRequest[];
   invites?: InstantInvite[];
 };
 
@@ -275,7 +275,7 @@ class HumanChatDB extends Dexie {
   messages!: Table<Message, number>;
   sessions!: Table<Session, string>;
   settings!: Table<Setting, string>;
-  requests!: Table<ManagedRequest, string>;
+  requests!: Table<ChatRequest, string>;
   instantInvites!: Table<InstantInvite, string>;
 
   constructor() {
@@ -557,11 +557,11 @@ export const deleteConversationCascade = async (conversationId: string): Promise
  * Persists a managed connection request for concierge workflows.
  * @param request - Managed request payload to store.
  */
-export const saveManagedRequest = async (request: ManagedRequest): Promise<void> => {
+export const saveChatRequest = async (request: ChatRequest): Promise<void> => {
   try {
     await db.requests.put(request);
   } catch (error) {
-    throw toDbError('save managed request', error);
+    throw toDbError('save chat request', error);
   }
 };
 
@@ -569,7 +569,7 @@ export const saveManagedRequest = async (request: ManagedRequest): Promise<void>
  * Lists managed requests assigned to a specific manager.
  * @param managerId - Manager identifier.
  */
-export const getRequestsByManager = async (managerId: string): Promise<ManagedRequest[]> => {
+export const getRequestsByManager = async (managerId: string): Promise<ChatRequest[]> => {
   try {
     const rows = await db.requests.where('managerId').equals(managerId).toArray();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
@@ -582,7 +582,7 @@ export const getRequestsByManager = async (managerId: string): Promise<ManagedRe
  * Lists managed requests submitted by a requester.
  * @param requesterId - Requester identifier.
  */
-export const getRequestsByRequester = async (requesterId: string): Promise<ManagedRequest[]> => {
+export const getRequestsByRequester = async (requesterId: string): Promise<ChatRequest[]> => {
   try {
     const rows = await db.requests.where('requesterId').equals(requesterId).toArray();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
@@ -595,7 +595,7 @@ export const getRequestsByRequester = async (requesterId: string): Promise<Manag
  * Lists requests targeting a specific expert/host.
  * @param targetUserId - Target identifier.
  */
-export const getRequestsForTarget = async (targetUserId: string): Promise<ManagedRequest[]> => {
+export const getRequestsForTarget = async (targetUserId: string): Promise<ChatRequest[]> => {
   try {
     const rows = await db.requests.where('targetUserId').equals(targetUserId).toArray();
     return rows.sort((a, b) => b.createdAt - a.createdAt);

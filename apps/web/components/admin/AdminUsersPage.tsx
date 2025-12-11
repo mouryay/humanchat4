@@ -46,7 +46,7 @@ export default function AdminUsersPage() {
     };
   }, [searchQuery, roleFilter]);
 
-  const managedShare = useMemo(() => {
+  const requestOnlyShare = useMemo(() => {
     if (!users.length) return 0;
     return Math.round((users.filter((user) => user.managed).length / users.length) * 100);
   }, [users]);
@@ -60,12 +60,12 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleManagedToggle = async (userId: string, managed: boolean) => {
+  const handleRequestOnlyToggle = async (userId: string, managed: boolean) => {
     try {
       const updated = await updateAdminUser(userId, { managed });
       setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, managed: updated.managed } : user)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to update managed flag');
+      setError(err instanceof Error ? err.message : 'Unable to update request-only flag');
     }
   };
 
@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white">People</h1>
-          <p className="text-white/60">Manage host access, roles, and managed rosters.</p>
+          <p className="text-white/60">Manage host access, roles, and request-only rosters.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <input
@@ -105,7 +105,7 @@ export default function AdminUsersPage() {
       <div className="rounded-3xl border border-white/10 bg-white/5">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-6 py-4 text-sm text-white/70">
           <p>Showing {users.length} people</p>
-          <p>Managed share · {managedShare}%</p>
+          <p>Request-only share · {requestOnlyShare}%</p>
         </div>
         {loading ? (
           <div className="p-6 text-white/70">Loading users…</div>
@@ -116,7 +116,7 @@ export default function AdminUsersPage() {
                 <tr className="text-white/60">
                   <th className="px-6 py-3">Person</th>
                   <th className="px-6 py-3">Role</th>
-                  <th className="px-6 py-3">Managed</th>
+                  <th className="px-6 py-3">Request-only</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Created</th>
                 </tr>
@@ -148,7 +148,7 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-3">
                       <button
                         type="button"
-                        onClick={() => handleManagedToggle(user.id, !user.managed)}
+                        onClick={() => handleRequestOnlyToggle(user.id, !user.managed)}
                         className={clsx(
                           'inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest',
                           user.managed
@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
                             : 'border-white/30 text-white/60 hover:border-white/50'
                         )}
                       >
-                        {user.managed ? 'Managed' : 'Individual'}
+                        {user.managed ? 'Request-only' : 'Direct'}
                       </button>
                     </td>
                     <td className="px-6 py-3 text-xs">

@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { ManagedRequest } from '../../../src/lib/db';
+import type { ChatRequest } from '../../../src/lib/db';
 import styles from './RequestCenter.module.css';
 
 interface RequestCenterProps {
   open: boolean;
-  requests: ManagedRequest[];
+  requests: ChatRequest[];
   loading: boolean;
   error: string | null;
   updatingId: string | null;
   onClose: () => void;
   onRefresh: () => void;
-  onUpdateStatus: (requestId: string, status: ManagedRequest['status']) => Promise<unknown>;
+  onUpdateStatus: (requestId: string, status: ChatRequest['status']) => Promise<unknown>;
 }
 
 const formatRelativeTime = (timestamp: number): string => {
@@ -48,17 +48,17 @@ export default function RequestCenter({
     return null;
   }
 
-  const handleAction = async (requestId: string, status: ManagedRequest['status']) => {
+  const handleAction = async (requestId: string, status: ChatRequest['status']) => {
     await onUpdateStatus(requestId, status);
   };
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Managed request center">
+    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Chat request center">
       <aside className={styles.drawer}>
         <header className={styles.header}>
           <div>
-            <p className={styles.kicker}>Managed queue</p>
-            <h2 className={styles.title}>Requests waiting on you</h2>
+            <p className={styles.kicker}>Hand-raise queue</p>
+            <h2 className={styles.title}>People waiting on you</h2>
           </div>
           <div className={styles.headerActions}>
             <button type="button" className={styles.ghostButton} onClick={onRefresh} disabled={loading}>
@@ -71,8 +71,8 @@ export default function RequestCenter({
         </header>
         {error && <div className={styles.errorBanner}>{error}</div>}
         <div className={styles.list}>
-          {loading && !requests.length && <div className={styles.placeholder}>Loading requests…</div>}
-          {!loading && !requests.length && <div className={styles.placeholder}>Nothing queued right now.</div>}
+          {loading && !requests.length && <div className={styles.placeholder}>Checking for new requests…</div>}
+          {!loading && !requests.length && <div className={styles.placeholder}>Nobody is waiting on you.</div>}
           {requests.map((request) => {
             const isPending = request.status === 'pending';
             return (

@@ -1,8 +1,9 @@
-import type { ManagedRequest } from '../../../src/lib/db';
+import type { ChatRequest, Conversation } from '../../../src/lib/db';
+import { mapConversationRecord, type ConversationRecord } from './conversationMapper';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-export interface ManagedRequestPayload {
+export interface ChatRequestPayload {
   id: string;
   requester_user_id: string;
   target_user_id: string;
@@ -22,7 +23,12 @@ export interface CreateConnectionRequestInput {
   budgetRange?: string;
 }
 
-const toCamelRequest = (request: ManagedRequestPayload): ManagedRequest => ({
+export interface UpdateRequestResult {
+  request: ChatRequest;
+  conversation?: Conversation;
+}
+
+const toCamelRequest = (request: ChatRequestPayload): ChatRequest => ({
   requestId: request.id,
   requesterId: request.requester_user_id,
   targetUserId: request.target_user_id,
@@ -35,7 +41,12 @@ const toCamelRequest = (request: ManagedRequestPayload): ManagedRequest => ({
   createdAt: Date.parse(request.created_at)
 });
 
-export const fetchManagedRequests = async (): Promise<ManagedRequest[]> => {
+const toConversation = (record: ConversationRecord): Conversation => {
+  const participants = Array.isArray(record.participants) ? record.participants : [];
+  return mapConversationRecord(record, participants, record.linked_session_id ?? null);
+};
+
+export const fetchChatRequests = async (): Promise<ChatRequest[]> => {
   const response = await fetch(`${API_BASE_URL}/api/requests`, {
     method: 'GET',
     credentials: 'include'
@@ -47,7 +58,7 @@ export const fetchManagedRequests = async (): Promise<ManagedRequest[]> => {
   }
 
   const payload = await response.json();
-  const rows = (payload?.requests ?? []) as ManagedRequestPayload[];
+  const rows = (payload?.requests ?? []) as ChatRequestPayload[];
   return rows.map((row) => toCamelRequest(row));
 };
 
@@ -74,15 +85,15 @@ export const submitConnectionRequest = async (input: CreateConnectionRequestInpu
     throw new Error('Malformed request response.');
   }
   return {
-    api: payload.request as ManagedRequestPayload,
-    local: toCamelRequest(payload.request as ManagedRequestPayload)
+    api: payload.request as ChatRequestPayload,
+    local: toCamelRequest(payload.request as ChatRequestPayload)
   };
 };
 
 export const updateRequestStatus = async (
   requestId: string,
-  status: ManagedRequestPayload['status']
-): Promise<ManagedRequest> => {
+  status: ChatRequestPayload['status']
+): Promise<UpdateRequestResult> => {
   const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}/status`, {
     method: 'PATCH',
     credentials: 'include',
@@ -96,9 +107,16 @@ export const updateRequestStatus = async (
   }
 
   const payload = await response.json();
-  const request = payload?.request as ManagedRequestPayload | undefined;
+  const request = payload?.request as ChatRequestPayload | undefined;
   if (!request) {
     throw new Error('Malformed request status response.');
   }
-  return toCamelRequest(request);
+  const result: UpdateRequestResult = {
+    request: toCamelRequest(request)
+  };
+  const conversationPayload = payload?.conversation as ConversationRecord | undefined;
+  if (conversationPayload) {
+    result.conversation = toConversation(conversationPayload);
+  }
+  return result;
 };

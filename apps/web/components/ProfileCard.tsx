@@ -59,7 +59,7 @@ export default function ProfileCard({
   const canInstantConnect = Boolean(isOnline && !hasActiveSession && !managedConfidential);
   const tooltip = (() => {
     if (managedConfidential) {
-      return 'This profile routes through a manager. Use Schedule.';
+      return 'This profile handles chats via private requests. Use Schedule.';
     }
     if (hasActiveSession) {
       return 'Currently in a call';
@@ -74,7 +74,7 @@ export default function ProfileCard({
   const hasCustomBio = hasCustomCopy(profile.bio);
   const contributionBlurb = useMemo(() => {
     if (managedConfidential) {
-      return `${profile.name ?? 'This talent'} works through a representative. Send a request and their team will coordinate the details.`;
+      return `${profile.name ?? 'This talent'} keeps these chats private. Send a request and their team will coordinate the details.`;
     }
     if (profile.conversationType === 'charity' && profile.instantRatePerMinute) {
       return `${profile.name} charges $${profile.instantRatePerMinute.toFixed(2)}/min — all proceeds go to ${profile.charityName ?? 'their charity partner'}.`;

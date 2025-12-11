@@ -52,7 +52,7 @@ export default function AdminAnnouncementsPage() {
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Shipping new managed booking wizard…"
+          placeholder="Shipping new request workflow…"
           className="w-full rounded-2xl border border-white/20 bg-transparent px-4 py-3 text-white placeholder:text-white/40 focus:border-white"
           rows={4}
         />

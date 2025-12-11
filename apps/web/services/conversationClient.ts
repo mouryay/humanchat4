@@ -30,7 +30,7 @@ const CONNECT_ERROR_COPY: Record<string, string> = {
   TARGET_OFFLINE: 'That member is offline right now. Try again soon.',
   TARGET_BUSY: 'That member is already in a session. Give them a minute and retry.',
   REQUESTER_BUSY: 'You already have a live session. Wrap it up before starting a new one.',
-  REQUEST_REQUIRED: 'This profile needs a managed request so their team can coordinate the chat.'
+  REQUEST_REQUIRED: 'This profile needs a private request so their team can coordinate the chat.'
 };
 
 const handleResponse = async (response: Response): Promise<ConnectResponse> => {

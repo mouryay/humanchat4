@@ -1,6 +1,7 @@
 import { query } from '../db/postgres.js';
 import { ApiError } from '../errors/ApiError.js';
-import { Request, UserRole } from '../types/index.js';
+import { Request, UserRole, type Conversation } from '../types/index.js';
+import { ensureHumanConversation, attachParticipantLabels } from './conversationService.js';
 
 export interface CreateRequestInput {
   requester_user_id: string;
@@ -11,11 +12,14 @@ export interface CreateRequestInput {
 }
 
 export const createRequest = async (input: CreateRequestInput): Promise<Request> => {
-  const targetUser = await query<{ managed: boolean; confidential_rate: boolean | null; manager_user_id: string | null; representative_name: string | null }>(
-    `SELECT u.managed, u.confidential_rate, u.manager_id AS manager_user_id, m.name AS representative_name
-     FROM users u
-     LEFT JOIN users m ON u.manager_id = m.id
-     WHERE u.id = $1`,
+  if (input.requester_user_id === input.target_user_id) {
+    throw new ApiError(400, 'INVALID_REQUEST', 'You cannot send a request to yourself.');
+  }
+
+  const targetUser = await query<{ name: string | null; is_online: boolean; has_active_session: boolean }>(
+    `SELECT name, is_online, has_active_session
+       FROM users
+      WHERE id = $1`,
     [input.target_user_id]
   );
 
@@ -23,22 +27,18 @@ export const createRequest = async (input: CreateRequestInput): Promise<Request>
   if (!target) {
     throw new ApiError(404, 'NOT_FOUND', 'Target user not found');
   }
-  if (!target.managed || !target.confidential_rate) {
-    throw new ApiError(422, 'INVALID_REQUEST', 'This profile does not accept managed requests.');
+  const displayName = target.name ?? 'That member';
+  if (!target.is_online) {
+    throw new ApiError(409, 'TARGET_OFFLINE', `${displayName} is offline right now.`);
+  }
+  if (target.has_active_session) {
+    throw new ApiError(409, 'TARGET_BUSY', `${displayName} is already in another chat.`);
   }
 
   const insert = await query<Request>(
     `INSERT INTO requests (requester_user_id, target_user_id, manager_user_id, representative_name, message, preferred_time, budget_range, status, created_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',NOW()) RETURNING *`,
-    [
-      input.requester_user_id,
-      input.target_user_id,
-      target.manager_user_id,
-      target.representative_name,
-      input.message,
-      input.preferred_time ?? null,
-      input.budget_range ?? null
-    ]
+     VALUES ($1,$2,NULL,NULL,$3,$4,$5,'pending',NOW()) RETURNING *`,
+    [input.requester_user_id, input.target_user_id, input.message, input.preferred_time ?? null, input.budget_range ?? null]
   );
   return insert.rows[0];
 };
@@ -46,10 +46,9 @@ export const createRequest = async (input: CreateRequestInput): Promise<Request>
 export const listRequests = async (managerId: string): Promise<Request[]> => {
   const result = await query<Request>(
     `SELECT r.*
-     FROM requests r
-     JOIN users u ON r.target_user_id = u.id
-     WHERE u.manager_id = $1
-     ORDER BY r.created_at DESC`,
+       FROM requests r
+      WHERE r.target_user_id = $1
+      ORDER BY r.created_at DESC`,
     [managerId]
   );
   return result.rows;
@@ -72,7 +71,16 @@ const assertActorCanUpdate = (request: Request, actor: RequestActor): void => {
   throw new ApiError(403, 'FORBIDDEN', 'You do not have permission to update this request.');
 };
 
-export const updateRequestStatus = async (requestId: string, status: Request['status'], actor: RequestActor): Promise<Request> => {
+export interface UpdateRequestResult {
+  request: Request;
+  conversation?: Conversation;
+}
+
+export const updateRequestStatus = async (
+  requestId: string,
+  status: Request['status'],
+  actor: RequestActor
+): Promise<UpdateRequestResult> => {
   const existing = await query<Request>('SELECT * FROM requests WHERE id = $1', [requestId]);
   const request = existing.rows[0];
   if (!request) {
@@ -80,7 +88,17 @@ export const updateRequestStatus = async (requestId: string, status: Request['st
   }
 
   assertActorCanUpdate(request, actor);
-
   const result = await query<Request>('UPDATE requests SET status = $2 WHERE id = $1 RETURNING *', [requestId, status]);
-  return result.rows[0];
+  const updated = result.rows[0];
+
+  if (status !== 'approved') {
+    return { request: updated };
+  }
+
+  const conversation = await ensureHumanConversation(updated.requester_user_id, updated.target_user_id);
+  const hydrated = await attachParticipantLabels(conversation);
+  return {
+    request: updated,
+    conversation: hydrated
+  };
 };
