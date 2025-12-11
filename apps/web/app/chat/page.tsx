@@ -6,7 +6,6 @@ import ConversationSidebar from '../../components/ConversationSidebar';
 import ConversationView from '../../components/ConversationView';
 import MobileBottomNav, { type MobileNavRoute } from '../../components/MobileBottomNav';
 import ProfilePanel from '../../components/ProfilePanel';
-import UserSettingsMenu from '../../components/UserSettingsMenu';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { useConversationData } from '../../hooks/useConversationData';
 import { useManagedRequests } from '../../hooks/useManagedRequests';
@@ -155,9 +154,6 @@ export default function ChatPage() {
             {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           </button>
         )}
-        <div className="ml-auto">
-          <UserSettingsMenu />
-        </div>
       </header>
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
