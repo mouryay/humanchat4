@@ -8,6 +8,7 @@ import YAML from 'yamljs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import routes from './routes/index.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import { env } from './config/env.js';
 import { authenticatedLimiter } from './middleware/rateLimit.js';
@@ -79,7 +80,53 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 
 app.use('/api/webhooks', webhookRoutes);
 app.use(express.json({ limit: '1mb' }));
+app.use('/api/settings', authenticatedLimiter, settingsRoutes);
 app.use('/api', authenticatedLimiter, routes);
+
+type RouterLayer = {
+  route?: { path: string; methods: Record<string, boolean> };
+  name?: string;
+  handle?: { stack?: RouterLayer[] };
+  path?: string;
+};
+
+const collectRoutes = (): string[] => {
+  const stack = (app as typeof app & { _router?: { stack?: RouterLayer[] } })._router?.stack;
+  if (!stack) {
+    return [];
+  }
+
+  const routes: string[] = [];
+  const walk = (layers: RouterLayer[], prefix: string) => {
+    layers.forEach((layer) => {
+      if (layer.route?.path) {
+        const methods = Object.keys(layer.route.methods)
+          .filter((method) => layer.route?.methods[method])
+          .map((method) => method.toUpperCase())
+          .join(',');
+        routes.push(`${methods} ${prefix}${layer.route.path}`);
+        return;
+      }
+      if (layer.name === 'router' && layer.handle?.stack) {
+        walk(layer.handle.stack, `${prefix}${layer.path ?? ''}`);
+      }
+    });
+  };
+
+  walk(stack, '');
+  return routes;
+};
+
+const routeMap = collectRoutes();
+if (routeMap.length > 0) {
+  console.info('[RouteMap]', routeMap);
+}
+
+if (process.env.EXPOSE_ROUTE_MAP === '1') {
+  app.get('/api/__debug/routes', (_req, res) => {
+    res.json({ routes: collectRoutes() });
+  });
+}
 app.use(errorHandler);
 
 export default app;
