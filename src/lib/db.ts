@@ -533,6 +533,27 @@ export const clearUnread = async (conversationId: string): Promise<void> => {
 };
 
 /**
+ * Removes a conversation and all related Dexie records in a single transaction.
+ * @param conversationId - Conversation identifier to remove.
+ */
+export const deleteConversationCascade = async (conversationId: string): Promise<void> => {
+  try {
+    await db.transaction('rw', db.conversations, db.messages, db.sessions, db.instantInvites, async () => {
+      const existing = await db.conversations.get(conversationId);
+      if (!existing) {
+        return;
+      }
+      await db.messages.where('conversationId').equals(conversationId).delete();
+      await db.sessions.where('conversationId').equals(conversationId).delete();
+      await db.instantInvites.where('conversationId').equals(conversationId).delete();
+      await db.conversations.delete(conversationId);
+    });
+  } catch (error) {
+    throw toDbError('delete conversation', error);
+  }
+};
+
+/**
  * Persists a managed connection request for concierge workflows.
  * @param request - Managed request payload to store.
  */

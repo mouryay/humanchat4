@@ -4,9 +4,9 @@ import clsx from 'clsx';
 import { useMemo, useRef, useState } from 'react';
 import ConversationListItem from './ConversationListItem';
 import styles from './ConversationSidebar.module.css';
-import { useConversationData } from '../hooks/useConversationData';
+import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
-import type { ManagedRequest } from '../../../src/lib/db';
+import { deleteConversationCascade, type ManagedRequest } from '../../../src/lib/db';
 
 interface ConversationSidebarProps {
   activeConversationId?: string;
@@ -43,6 +43,9 @@ export default function ConversationSidebar({
   const { archive, unarchive, isArchived } = useArchivedConversations();
   const [pullHint, setPullHint] = useState<'idle' | 'ready' | 'refreshing'>('idle');
   const [humanView, setHumanView] = useState<'active' | 'pending'>('active');
+  const [deleteCandidate, setDeleteCandidate] = useState<ConversationListEntry | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<number>(0);
   const pulling = useRef(false);
@@ -68,6 +71,45 @@ export default function ConversationSidebar({
   const samEntry = conversations[0];
   const humanEntries = conversations.slice(1).filter((entry) => !isArchived(entry.conversation.conversationId));
   const archivedEntries = conversations.slice(1).filter((entry) => isArchived(entry.conversation.conversationId));
+
+  const handleDeleteRequest = (conversationId: string) => {
+    const target = conversations.find((entry) => entry.conversation.conversationId === conversationId);
+    if (!target || target.conversation.type === 'sam') {
+      return;
+    }
+    setDeleteCandidate(target);
+    setDeleteError(null);
+  };
+
+  const handleCancelDelete = () => {
+    if (deletingId) {
+      return;
+    }
+    setDeleteCandidate(null);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteCandidate) {
+      return;
+    }
+    const targetId = deleteCandidate.conversation.conversationId;
+    setDeletingId(targetId);
+    setDeleteError(null);
+    try {
+      await deleteConversationCascade(targetId);
+      unarchive(targetId);
+      if (activeConversationId === targetId) {
+        onSelectConversation?.(samEntry?.conversation.conversationId ?? SAM_CONCIERGE_ID);
+      }
+      setDeleteCandidate(null);
+    } catch (deleteErr) {
+      const message = deleteErr instanceof Error ? deleteErr.message : 'Failed to delete conversation. Please try again.';
+      setDeleteError(message);
+    } finally {
+      setDeletingId((prev) => (prev === targetId ? null : prev));
+    }
+  };
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     if (!scrollerRef.current) return;
@@ -175,6 +217,8 @@ export default function ConversationSidebar({
                     isActive={activeConversationId === entry.conversation.conversationId}
                     onSelect={handleSelect}
                     onArchive={archive}
+                    onDelete={handleDeleteRequest}
+                    deletePending={deletingId === entry.conversation.conversationId}
                     showMetadata={!collapsed}
                   />
                 ))}
@@ -292,6 +336,8 @@ export default function ConversationSidebar({
                     onSelect={handleSelect}
                     showMetadata={!collapsed}
                     disableGestures
+                    onDelete={handleDeleteRequest}
+                    deletePending={deletingId === entry.conversation.conversationId}
                   />
                   <button type="button" className={styles.unarchiveButton} onClick={() => unarchive(entry.conversation.conversationId)}>
                     Unarchive
@@ -302,6 +348,35 @@ export default function ConversationSidebar({
           </div>
         )}
       </div>
+      {deleteCandidate && (
+        <div className={styles.deleteConfirm} role="alertdialog" aria-live="assertive">
+          <div>
+            <p className={styles.deleteTitle}>Delete conversation?</p>
+            <p className={styles.deleteMessage}>
+              This removes every message with <strong>{deleteCandidate.meta.displayName}</strong>. This action cannot be undone.
+            </p>
+            {deleteError && <p className={styles.deleteError}>{deleteError}</p>}
+          </div>
+          <div className={styles.deleteActions}>
+            <button
+              type="button"
+              className={styles.deleteCancelButton}
+              onClick={handleCancelDelete}
+              disabled={Boolean(deletingId)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.deleteDangerButton}
+              onClick={handleConfirmDelete}
+              disabled={deletingId === deleteCandidate.conversation.conversationId}
+            >
+              {deletingId === deleteCandidate.conversation.conversationId ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

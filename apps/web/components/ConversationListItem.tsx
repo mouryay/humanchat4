@@ -10,8 +10,10 @@ interface ConversationListItemProps {
   isActive: boolean;
   onSelect: (conversationId: string) => void;
   onArchive?: (conversationId: string) => void;
+  onDelete?: (conversationId: string) => void;
   showMetadata?: boolean;
   disableGestures?: boolean;
+  deletePending?: boolean;
 }
 
 const statusIconMap = {
@@ -26,7 +28,7 @@ const statusClassMap: Record<StatusVariant, string> = {
   scheduled: styles.statusScheduled
 };
 
-export default function ConversationListItem({ entry, isActive, onSelect, onArchive, showMetadata = true, disableGestures }: ConversationListItemProps) {
+export default function ConversationListItem({ entry, isActive, onSelect, onArchive, onDelete, showMetadata = true, disableGestures, deletePending }: ConversationListItemProps) {
   const { conversation, meta } = entry;
   const isSam = conversation.type === 'sam';
   const unreadCount = conversation.unreadCount ?? 0;
@@ -61,6 +63,15 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     touchDelta.current = 0;
   };
 
+  const handleDeleteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!onDelete || isSam) {
+      return;
+    }
+    onDelete(conversation.conversationId);
+  };
+
   const statusVariant = meta?.status;
   const statusClass = statusVariant ? statusClassMap[statusVariant] : undefined;
   const avatarSeed = encodeURIComponent(meta?.displayName ?? conversation.conversationId);
@@ -86,7 +97,19 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
         <div className={styles.content}>
           <div className={styles.topRow}>
             <span className={styles.name}>{meta?.displayName ?? 'Unknown'}</span>
-            <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
+            <div className={styles.topRowMeta}>
+              <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
+              {onDelete && !isSam && (
+                <button
+                  type="button"
+                  className={clsx(styles.actionButton, styles.deleteButton)}
+                  onClick={handleDeleteClick}
+                  disabled={deletePending}
+                >
+                  {deletePending ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
           </div>
           <div className={styles.preview}>{meta?.lastMessage ?? 'No messages yet'}</div>
           <div className={styles.badges}>
