@@ -6,7 +6,7 @@ import type { ProfileSummary } from '../../../src/lib/db';
 import styles from './ProfileCard.module.css';
 import StatusBadge from './StatusBadge';
 import RateDisplay from './RateDisplay';
-import { useSessionStatus } from '../hooks/useSessionStatus';
+import { useSessionStatus, type PrefetchedSessionStatus } from '../hooks/useSessionStatus';
 
 const HUMAN_FALLBACK = 'Human';
 
@@ -25,15 +25,31 @@ interface ProfileCardProps {
   onConnectNow?: (profile: ProfileSummary) => void;
   onBookTime?: (profile: ProfileSummary) => void;
   isConnecting?: boolean;
+  disableLiveStatus?: boolean;
+  prefetchedStatus?: PrefetchedSessionStatus | null;
 }
 
-export default function ProfileCard({ profile, onConnectNow, onBookTime, isConnecting }: ProfileCardProps) {
+export default function ProfileCard({
+  profile,
+  onConnectNow,
+  onBookTime,
+  isConnecting,
+  disableLiveStatus,
+  prefetchedStatus
+}: ProfileCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const { isOnline: liveOnline, hasActiveSession: liveActiveSession, presenceState: livePresence, isLoading: statusLoading } = useSessionStatus(
-    profile.userId
-  );
+  const {
+    isOnline: liveOnline,
+    hasActiveSession: liveActiveSession,
+    presenceState: livePresence,
+    isLoading: statusLoading
+  } = useSessionStatus(profile.userId, {
+    disabled: disableLiveStatus,
+    prefetchedStatus
+  });
 
-  const hasLiveStatus = Boolean(profile.userId) && !statusLoading;
+  const allowLiveStatus = Boolean(profile.userId) && !disableLiveStatus;
+  const hasLiveStatus = allowLiveStatus && !statusLoading;
   const fallbackPresence = profile.presenceState ?? (profile.isOnline ? 'active' : 'offline');
   const isOnline = hasLiveStatus ? liveOnline : Boolean(profile.isOnline);
   const hasActiveSession = hasLiveStatus ? liveActiveSession : Boolean(profile.hasActiveSession);

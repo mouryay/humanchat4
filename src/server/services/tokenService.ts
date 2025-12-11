@@ -35,13 +35,49 @@ const getUserIdentity = async (userId: string): Promise<UserIdentity> => {
 const isProd = env.nodeEnv === 'production';
 const sameSiteMode: 'lax' | 'none' = isProd ? 'none' : 'lax';
 
-const cookieConfig = (maxAge: number) => ({
+const cookieBase = {
   httpOnly: true,
   sameSite: sameSiteMode,
   secure: isProd || sameSiteMode === 'none',
-  maxAge,
+  path: '/',
   ...(env.cookieDomain ? { domain: env.cookieDomain } : {})
+} as const;
+
+const cookieConfig = (maxAge: number) => ({
+  ...cookieBase,
+  maxAge
 });
+
+const buildCookieClearVariants = () => {
+  const variants: Array<Record<string, unknown>> = [];
+  const appendVariant = (options: Record<string, unknown>) => {
+    variants.push({
+      ...options,
+      maxAge: 0,
+      expires: new Date(0)
+    });
+  };
+
+  if (cookieBase.domain) {
+    appendVariant(cookieBase);
+    if (cookieBase.domain.startsWith('.')) {
+      appendVariant({ ...cookieBase, domain: cookieBase.domain.slice(1) });
+    } else {
+      appendVariant({ ...cookieBase, domain: `.${cookieBase.domain}` });
+    }
+  }
+
+  appendVariant({ ...cookieBase, domain: undefined });
+
+  return variants;
+};
+
+const clearCookie = (res: Response, name: string): void => {
+  const variants = buildCookieClearVariants();
+  variants.forEach((options) => {
+    res.clearCookie(name, options);
+  });
+};
 
 const hashToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
@@ -130,8 +166,8 @@ export const issueAuthCookies = async (
 };
 
 export const clearAuthCookies = async (res: Response, refreshToken?: string): Promise<void> => {
-  res.clearCookie(ACCESS_COOKIE);
-  res.clearCookie(REFRESH_COOKIE);
+  clearCookie(res, ACCESS_COOKIE);
+  clearCookie(res, REFRESH_COOKIE);
   if (refreshToken) {
     await revokeRefreshToken(refreshToken);
   }

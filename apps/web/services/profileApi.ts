@@ -1,3 +1,5 @@
+import type { ProfileSummary } from '../../../src/lib/db';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export type ConversationCategory = 'free' | 'paid' | 'charity';
@@ -50,6 +52,8 @@ interface UserProfileApiResponse {
   manager_display_name?: string | null;
   display_mode?: 'normal' | 'by_request' | 'confidential' | null;
   confidential_rate: boolean | null;
+  presence_state?: 'active' | 'idle' | 'offline' | null;
+  last_seen_at?: string | null;
   updated_at: string;
 }
 
@@ -130,6 +134,29 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   updatedAt: record.updated_at
 });
 
+const mapRecordToProfileSummary = (record: UserProfileApiResponse): ProfileSummary => ({
+  userId: record.id,
+  name: record.name ?? 'Human',
+  avatarUrl: record.avatar_url ?? undefined,
+  headline: record.headline ?? undefined,
+  bio: record.bio ?? undefined,
+  conversationType: record.conversation_type ?? 'free',
+  confidentialRate: record.confidential_rate ?? undefined,
+  managed: record.managed,
+  managerId: record.manager_id ?? undefined,
+  managerName: record.manager_display_name ?? undefined,
+  displayMode: record.display_mode ?? undefined,
+  instantRatePerMinute: record.instant_rate_per_minute ?? undefined,
+  scheduledRates: toScheduledRateArray(record.scheduled_rates),
+  isOnline: record.is_online,
+  hasActiveSession: record.has_active_session,
+  presenceState: record.presence_state ?? (record.is_online ? 'active' : 'offline'),
+  lastSeenAt: record.last_seen_at ? Date.parse(record.last_seen_at) : undefined,
+  charityName: record.charity_name ?? undefined,
+  charityId: record.charity_id ?? undefined,
+  donationPreference: record.donation_preference ?? undefined
+});
+
 export interface ProfileUpdateInput {
   name?: string;
   headline?: string | null;
@@ -187,4 +214,24 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   );
   const user = unwrap<UserProfileApiResponse>(response, 'user');
   return mapApiProfile(user);
+};
+
+export const searchProfiles = async (
+  query: string,
+  options?: { onlineOnly?: boolean }
+): Promise<ProfileSummary[]> => {
+  const searchParams = new URLSearchParams();
+  const trimmedQuery = query?.trim();
+  if (trimmedQuery) {
+    searchParams.set('q', trimmedQuery);
+  }
+  if (options?.onlineOnly) {
+    searchParams.set('online', 'true');
+  }
+  const queryString = searchParams.toString();
+  const url = queryString ? `${API_BASE_URL}/api/users/search?${queryString}` : `${API_BASE_URL}/api/users/search`;
+  const payload = await handleResponse(await fetch(url, withCredentials()));
+  const users = unwrap<UserProfileApiResponse[]>(payload, 'users');
+  const records = Array.isArray(users) ? users : [];
+  return records.map(mapRecordToProfileSummary);
 };

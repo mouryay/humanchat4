@@ -8,7 +8,7 @@ import { useSettings } from '../../hooks/useSettings';
 
 const fallbackCharities = [
   { id: 'climate-action', name: 'Climate Action Network' },
-  { id: 'youth-mentorship', name: 'Youth Mentorship Initiative' },
+  { id: 'youth-community', name: 'Youth Community Initiative' },
   { id: 'open-access', name: 'Open Access Education Fund' }
 ];
 

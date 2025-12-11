@@ -20,7 +20,7 @@ const sampleSlots = [
 const sampleSession = {
   sessionId: 'session-msw-1',
   conversationId: 'sam-concierge',
-  hostUserId: 'mentor-1',
+  hostUserId: 'member-1',
   guestUserId: 'demo-user',
   type: 'scheduled',
   status: 'pending',
@@ -47,9 +47,9 @@ export const handlers = [
           type: 'show_profiles',
           profiles: [
             {
-              userId: 'mentor-1',
-              name: 'Jordan Mentor',
-              headline: 'Product mentor',
+              userId: 'member-1',
+              name: 'Jordan Rivera',
+              headline: 'Product strategist',
               conversationType: 'paid',
               instantRatePerMinute: 12,
               isOnline: true,

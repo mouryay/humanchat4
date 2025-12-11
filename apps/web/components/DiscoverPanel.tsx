@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from 'react';
-import ProfileCard from './ProfileCard';
 import type { ProfileSummary } from '../../../src/lib/db';
+import ProfileCard from './ProfileCard';
+import { toPrefetchedStatus } from '../utils/profilePresence';
 
 const sampleProfiles: ProfileSummary[] = [
   {
@@ -64,7 +65,13 @@ export default function DiscoverPanel({ onBookProfile }: DiscoverPanelProps) {
       </label>
       <div className="flex flex-col gap-4">
         {filtered.map((profile) => (
-          <ProfileCard key={profile.userId} profile={profile} onBookTime={onBookProfile} />
+          <ProfileCard
+            key={profile.userId}
+            profile={profile}
+            onBookTime={onBookProfile}
+            disableLiveStatus
+            prefetchedStatus={toPrefetchedStatus(profile) ?? undefined}
+          />
         ))}
       </div>
     </section>

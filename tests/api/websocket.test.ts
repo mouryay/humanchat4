@@ -69,10 +69,10 @@ describe('setupWebSockets', () => {
   it('broadcasts status payloads from redis subscriber', async () => {
     const statusClient = await openSocket(`${baseUrl}/status`);
 
-    subscriber.messageHandler?.('status', JSON.stringify({ userId: 'mentor-1', isOnline: true }));
+    subscriber.messageHandler?.('status', JSON.stringify({ userId: 'member-1', isOnline: true }));
 
     const update = await waitForMessage(statusClient);
-    expect(update.userId).toBe('mentor-1');
+    expect(update.userId).toBe('member-1');
     expect(update.isOnline).toBe(true);
 
     statusClient.close();

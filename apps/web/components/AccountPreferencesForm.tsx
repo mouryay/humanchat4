@@ -14,7 +14,7 @@ const availabilityOptions: Array<{ value: AvailabilityState; label: string; help
 ];
 
 const conversationHelpers: Record<ConversationCategory, string> = {
-  free: 'Perfect for open office hours or mentoring loops.',
+  free: 'Perfect for open office hours or community loops.',
   paid: 'Charge per minute for instant connects.',
   charity: 'Route proceeds to a charity partner.'
 };

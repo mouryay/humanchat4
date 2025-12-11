@@ -6,7 +6,7 @@ import ProfileCard from '../ProfileCard';
 import type { ProfileSummary } from '../../../../src/lib/db';
 
 const baseProfile: ProfileSummary = {
-  userId: 'mentor-101',
+  userId: 'member-101',
   name: 'Jordan Mentor',
   headline: 'Product leadership coach',
   conversationType: 'paid',

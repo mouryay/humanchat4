@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import routes from './routes/index.js';
 import webhookRoutes from './routes/webhookRoutes.js';
 import { env } from './config/env.js';
-import { unauthenticatedLimiter } from './middleware/rateLimit.js';
+import { authenticatedLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { success } from './utils/apiResponse.js';
 
@@ -79,7 +79,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 
 app.use('/api/webhooks', webhookRoutes);
 app.use(express.json({ limit: '1mb' }));
-app.use('/api', unauthenticatedLimiter, routes);
+app.use('/api', authenticatedLimiter, routes);
 app.use(errorHandler);
 
 export default app;

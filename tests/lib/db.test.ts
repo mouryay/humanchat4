@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto';
 import {
   addMessage,
   clearUnread,
+  deleteConversationCascade,
   createSession,
   db,
   getAllConversations,
@@ -145,7 +146,7 @@ describe('Dexie helper functions', () => {
       {
         conversationId: 'c2',
         type: 'human',
-        participants: ['user', 'mentor'],
+        participants: ['user', 'member'],
         linkedSessionId: 'session-2',
         lastActivity: 2,
         unreadCount: 1
@@ -155,6 +156,55 @@ describe('Dexie helper functions', () => {
     const conversations = await getAllConversations();
     expect(conversations[0].conversationId).toBe('c2');
     expect(conversations[1].conversationId).toBe('c1');
+  });
+
+  it('deletes a conversation and related records', async () => {
+    const conversationId = 'delete-me';
+    await db.conversations.put({
+      conversationId,
+      type: 'human',
+      participants: ['host', 'guest'],
+      linkedSessionId: 'session-delete',
+      lastActivity: Date.now(),
+      unreadCount: 2
+    });
+    await db.messages.add({
+      conversationId,
+      senderId: 'host',
+      content: 'Sample',
+      timestamp: Date.now(),
+      type: 'user_text'
+    });
+    await db.sessions.put({
+      sessionId: 'session-delete',
+      conversationId,
+      hostUserId: 'host',
+      guestUserId: 'guest',
+      type: 'instant',
+      status: 'pending',
+      startTime: Date.now(),
+      durationMinutes: 30,
+      agreedPrice: 0,
+      paymentMode: 'free'
+    });
+    const expiresAt = Date.now() + 30_000;
+    await db.instantInvites.put({
+      inviteId: 'invite-delete',
+      conversationId,
+      requesterUserId: 'host',
+      targetUserId: 'guest',
+      status: 'pending',
+      expiresAt,
+      createdAt: expiresAt - 1_000,
+      updatedAt: expiresAt - 500
+    });
+
+    await deleteConversationCascade(conversationId);
+
+    expect(await db.conversations.get(conversationId)).toBeUndefined();
+    expect(await db.messages.where('conversationId').equals(conversationId).count()).toBe(0);
+    expect(await db.sessions.where('conversationId').equals(conversationId).count()).toBe(0);
+    expect(await db.instantInvites.where('conversationId').equals(conversationId).count()).toBe(0);
   });
 
   it('persists managed connection requests', async () => {

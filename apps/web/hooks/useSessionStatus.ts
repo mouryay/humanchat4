@@ -10,6 +10,15 @@ interface SessionStatusState {
   isLoading: boolean;
 }
 
+export type PrefetchedSessionStatus = Partial<Pick<SessionStatusState, 'isOnline' | 'hasActiveSession'>> & {
+  presenceState?: PresenceState;
+};
+
+interface UseSessionStatusOptions {
+  disabled?: boolean;
+  prefetchedStatus?: PrefetchedSessionStatus | null;
+}
+
 const initialState: SessionStatusState = {
   isOnline: false,
   hasActiveSession: false,
@@ -17,16 +26,33 @@ const initialState: SessionStatusState = {
   isLoading: false
 };
 
-const derivePresenceState = (status?: Pick<SessionStatus, 'presenceState' | 'isOnline'>): PresenceState => {
+const derivePresenceState = (
+  status?: Pick<SessionStatus, 'presenceState' | 'isOnline'> | PrefetchedSessionStatus
+): PresenceState => {
   if (status?.presenceState) {
     return status.presenceState;
   }
   return status?.isOnline ? 'active' : 'offline';
 };
 
-export const useSessionStatus = (userId?: string | null) => {
+export const useSessionStatus = (userId?: string | null, options?: UseSessionStatusOptions) => {
+  const { disabled = false, prefetchedStatus = null } = options ?? {};
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(sessionStatusManager.getCurrentUserId()));
-  const [state, setState] = useState<SessionStatusState>({ ...initialState, isLoading: Boolean(userId) });
+  const prefetchedSlice = useMemo(() => {
+    if (!prefetchedStatus) {
+      return null;
+    }
+    return {
+      isOnline: Boolean(prefetchedStatus.isOnline),
+      hasActiveSession: Boolean(prefetchedStatus.hasActiveSession),
+      presenceState: derivePresenceState(prefetchedStatus)
+    } satisfies Omit<SessionStatusState, 'isLoading'>;
+  }, [prefetchedStatus?.isOnline, prefetchedStatus?.hasActiveSession, prefetchedStatus?.presenceState]);
+  const [state, setState] = useState<SessionStatusState>(() => ({
+    ...initialState,
+    ...(prefetchedSlice ?? {}),
+    isLoading: Boolean(userId) && !disabled
+  }));
 
   useEffect(() => {
     return sessionStatusManager.onCurrentUserChange((currentUserId) => {
@@ -37,24 +63,27 @@ export const useSessionStatus = (userId?: string | null) => {
   useEffect(() => {
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
+    const cleanup = () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
 
     if (!userId) {
-      setState({ ...initialState, isLoading: false });
-      return () => {
-        cancelled = true;
-        unsubscribe?.();
-      };
+      setState({ ...initialState, ...(prefetchedSlice ?? {}), isLoading: false });
+      return cleanup;
+    }
+
+    if (disabled) {
+      setState((prev) => ({ ...prev, ...(prefetchedSlice ?? {}), isLoading: false }));
+      return cleanup;
     }
 
     if (!isAuthenticated) {
-      setState({ ...initialState, isLoading: Boolean(userId) });
-      return () => {
-        cancelled = true;
-        unsubscribe?.();
-      };
+      setState((prev) => ({ ...prev, ...(prefetchedSlice ?? {}), isLoading: true }));
+      return cleanup;
     }
 
-    setState((prev) => ({ ...prev, isLoading: true }));
+    setState((prev) => ({ ...prev, ...(prefetchedSlice ?? {}), isLoading: true }));
 
     sessionStatusManager
       .checkUserStatus(userId)
@@ -71,7 +100,7 @@ export const useSessionStatus = (userId?: string | null) => {
       .catch((error) => {
         console.warn('Failed to load session status', error);
         if (!cancelled) {
-          setState({ ...initialState, isLoading: false });
+          setState({ ...initialState, ...(prefetchedSlice ?? {}), isLoading: false });
         }
       });
 
@@ -84,11 +113,8 @@ export const useSessionStatus = (userId?: string | null) => {
       });
     });
 
-    return () => {
-      cancelled = true;
-      unsubscribe?.();
-    };
-  }, [userId, isAuthenticated]);
+    return cleanup;
+  }, [userId, isAuthenticated, disabled, prefetchedSlice]);
 
   return state;
 };

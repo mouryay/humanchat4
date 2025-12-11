@@ -121,6 +121,7 @@ export interface Conversation {
   conversationId: string;
   type: ConversationType;
   participants: string[];
+  participantLabels?: Record<string, string>;
   linkedSessionId?: string;
   lastActivity: number;
   unreadCount: number;
@@ -528,6 +529,27 @@ export const clearUnread = async (conversationId: string): Promise<void> => {
     ensureUpdated(updated, 'Conversation', conversationId);
   } catch (error) {
     throw toDbError('clear unread count', error);
+  }
+};
+
+/**
+ * Removes a conversation and all related Dexie records in a single transaction.
+ * @param conversationId - Conversation identifier to remove.
+ */
+export const deleteConversationCascade = async (conversationId: string): Promise<void> => {
+  try {
+    await db.transaction('rw', db.conversations, db.messages, db.sessions, db.instantInvites, async () => {
+      const existing = await db.conversations.get(conversationId);
+      if (!existing) {
+        return;
+      }
+      await db.messages.where('conversationId').equals(conversationId).delete();
+      await db.sessions.where('conversationId').equals(conversationId).delete();
+      await db.instantInvites.where('conversationId').equals(conversationId).delete();
+      await db.conversations.delete(conversationId);
+    });
+  } catch (error) {
+    throw toDbError('delete conversation', error);
   }
 };
 
