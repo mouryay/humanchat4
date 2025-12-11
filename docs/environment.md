@@ -32,13 +32,47 @@ Use this guide to configure production, staging, and local environments for Huma
 - `SENTRY_DSN`, `POSTHOG_API_KEY`, `BETTER_UPTIME_HEARTBEAT`
 - `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW`
 
+## Local Development Environment File Structure
+
+**Why are there multiple `.env` files?**
+
+The project uses a **monorepo structure** with separate frontend (Next.js) and backend (Express) applications that require different environment configurations:
+
+```
+humanchat4/                          (root)
+├── .env.backend.local               ← Backend API uses this (database, Redis, JWT secrets)
+├── apps/
+│   └── web/
+│       ├── .env.local               ← Next.js frontend uses this (API URLs, Firebase client config)
+│       └── next.config.mjs
+```
+
+**Which file does each command use?**
+
+| Command | Application | Working Directory | Env File Used | Purpose |
+|---------|-------------|-------------------|---------------|---------|
+| `npm run dev` | Backend API (Express) | Root `humanchat4/` | `.env.backend.local` | Server logic, database connections, secrets |
+| `npm run web:dev` | Frontend (Next.js) | `apps/web/` | `apps/web/.env.local` | Browser code, API endpoints, Firebase client |
+
+**Why separate files?**
+
+1. **Security**: Backend needs sensitive secrets (database passwords, JWT secrets, Firebase admin keys) that must **never** be exposed to the browser
+2. **Next.js behavior**: Next.js automatically looks for `.env.local` in the same directory as `next.config.mjs`, not in the project root
+3. **Deployment separation**: Frontend deploys to Vercel, backend to Cloud Run - each needs different configuration
+4. **Environment isolation**: Backend connects directly to PostgreSQL/Redis, while frontend only needs HTTP/WebSocket URLs
+
+**⚠️ Common mistake**: Creating `.env.local` in the root directory - this file is **ignored** by both applications. Always use:
+- `apps/web/.env.local` for frontend changes
+- `.env.backend.local` for backend changes
+
 ## Procedure
-1. Duplicate `.env.example` to `.env` for local dev; fill with sandbox credentials.
-2. Run `./scripts/verify-env.sh` before any deploy pipeline.
-3. In Vercel project settings, add frontend keys under **Environment Variables → Production**.
-4. In Cloud Run service configuration, set backend keys (or reference Secret Manager entries) for each environment.
-5. Store master secrets in 1Password; reference them via GitHub Actions secrets (`VERCEL_TOKEN`, `GCP_SA_KEY`, etc.).
-6. Rotate secrets quarterly or immediately after an incident; update IaC variable files and provider dashboards.
+1. Duplicate `.env.example` to `.env.backend.local` for backend local dev; fill with sandbox credentials.
+2. Create `apps/web/.env.local` for frontend local dev with localhost API URLs.
+3. Run `./scripts/verify-env.sh` before any deploy pipeline.
+4. In Vercel project settings, add frontend keys under **Environment Variables → Production**.
+5. In Cloud Run service configuration, set backend keys (or reference Secret Manager entries) for each environment.
+6. Store master secrets in 1Password; reference them via GitHub Actions secrets (`VERCEL_TOKEN`, `GCP_SA_KEY`, etc.).
+7. Rotate secrets quarterly or immediately after an incident; update IaC variable files and provider dashboards.
 
 ### Cloud SQL + Secret Manager
 1. Create the Cloud SQL instance (e.g., `loyal-env-475400-u0:us-central1:users`) and confirm the target database (default `postgres`).

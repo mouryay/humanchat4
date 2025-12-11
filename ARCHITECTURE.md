@@ -18,6 +18,15 @@ graph TD
   A -->|HTTPS| D
 ```
 
+## Local Development Environment
+
+| Process | Command | Directory | Env File Used |
+|---------|---------|-----------|---------------|
+| Backend API | `npm run dev` | Root `humanchat4/` | `.env.backend.local` (from root) |
+| Frontend Web | `npm run web:dev` | `apps/web/` | `apps/web/.env.local` |
+
+**Note**: Next.js looks for `.env.local` in the same directory as `next.config.mjs` (`apps/web/`), not in the project root. The backend uses `.env.backend.local` from the root directory.
+
 ## Data Flow
 1. **User actions** originate in the Next.js client. Mutations call REST endpoints (`/api/*`) while read-heavy resources synchronize through Dexie via background sync.
 2. **Express API** validates auth, hits PostgreSQL for persistence, and emits domain events to Redis.
