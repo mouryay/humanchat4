@@ -10,6 +10,7 @@ import ProfilePanel from '../../components/ProfilePanel';
 import ProfileDetailsSummary from '../../components/ProfileDetailsSummary';
 import AccountPreferencesForm from '../../components/AccountPreferencesForm';
 import AccountIdentityForm from '../../components/AccountIdentityForm';
+import AccountNarrativeForm from '../../components/AccountNarrativeForm';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
 
 const fallbackCharities = [
@@ -254,6 +255,7 @@ const SettingsContent = () => {
           <div className="flex flex-col gap-8">
             <ProfilePanel variant="card" />
             <AccountIdentityForm profileState={profileState} />
+            <AccountNarrativeForm profileState={profileState} />
             <AccountPreferencesForm profileState={profileState} />
             <ProfileDetailsSummary profileState={profileState} />
           </div>
