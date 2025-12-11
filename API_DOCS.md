@@ -67,12 +67,12 @@ Response:
 | POST | `/api/sessions` | Create scheduled session (booking). |
 | GET | `/api/sessions/:id` | Retrieve session metadata. |
 | PATCH | `/api/sessions/:id` | Update status (`pending`, `in_progress`, `complete`). |
-| GET | `/api/availability/:userId` | Fetch mentor slots (CalendarSlotPicker). |
+| GET | `/api/availability/:userId` | Fetch a member's availability slots (CalendarSlotPicker). |
 
 Booking request sample:
 ```json
 {
-  "hostUserId": "mentor-9",
+  "hostUserId": "member-9",
   "startTime": "2025-11-10T18:00:00Z",
   "durationMinutes": 30,
   "price": 220,

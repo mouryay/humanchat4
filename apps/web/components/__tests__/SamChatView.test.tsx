@@ -67,7 +67,7 @@ const sendSamMessageMock = jest.fn().mockResolvedValue({
       type: 'show_profiles',
       profiles: [
         {
-          userId: 'mentor-301',
+          userId: 'member-301',
           name: 'River Product',
           conversationType: 'paid',
           instantRatePerMinute: 10,
@@ -126,14 +126,14 @@ describe('SamChatView', () => {
       />
     );
 
-    await userEvent.type(screen.getByPlaceholderText('Message Sam...'), 'Find me a PM mentor');
+    await userEvent.type(screen.getByPlaceholderText('Message Sam...'), 'Find me a PM peer');
     await userEvent.click(screen.getByRole('button', { name: /send/i }));
 
     await waitFor(() => {
       expect(sendSamMessageMock).toHaveBeenCalledWith(
         expect.objectContaining({
           conversationId: 'sam-concierge',
-          message: 'Find me a PM mentor'
+          message: 'Find me a PM peer'
         })
       );
     });

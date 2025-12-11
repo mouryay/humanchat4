@@ -1,6 +1,6 @@
 # HumanChat
 
-Modern concierge messaging for connecting members with humans, mentors, and Sam (AI) assistants. This monorepo contains the production Next.js web client, Express/Node API + WebSocket hub, Dexie offline cache, and all shared domain logic.
+Modern concierge messaging for connecting members with people from every walk of life through Sam (AI) assistants. This monorepo contains the production Next.js web client, Express/Node API + WebSocket hub, Dexie offline cache, and all shared domain logic.
 
 ## Quick Start
 

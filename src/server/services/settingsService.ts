@@ -24,7 +24,7 @@ export interface SettingsRecord {
 
 const FALLBACK_CHARITIES: CharityOption[] = [
   { id: 'climate-action', name: 'Climate Action Network', description: 'Grassroots projects helping communities respond to climate events.' },
-  { id: 'youth-mentorship', name: 'Youth Mentorship Initiative', description: 'Pairing first-generation students with career mentors.' },
+  { id: 'youth-community', name: 'Youth Community Initiative', description: 'Creating peer circles for first-generation students.' },
   { id: 'open-access', name: 'Open Access Education Fund', description: 'Scholarships and materials for lifelong learners.' }
 ];
 

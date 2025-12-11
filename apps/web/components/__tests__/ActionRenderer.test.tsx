@@ -29,7 +29,7 @@ describe('ActionRenderer', () => {
     };
 
     const otherProfile: ProfileSummary = {
-      userId: 'mentor-456',
+      userId: 'member-456',
       name: 'River Product',
       conversationType: 'paid',
       instantRatePerMinute: 15,
@@ -51,7 +51,7 @@ describe('ActionRenderer', () => {
 
   it('only renders profiles confirmed online when directory data is present', () => {
     const offlineProfile: ProfileSummary = {
-      userId: 'mentor-offline',
+      userId: 'member-offline',
       name: 'Offline Mentor',
       conversationType: 'paid',
       instantRatePerMinute: 20,
@@ -61,7 +61,7 @@ describe('ActionRenderer', () => {
     };
 
     const onlineProfile: ProfileSummary = {
-      userId: 'mentor-online',
+      userId: 'member-online',
       name: 'Online Mentor',
       conversationType: 'paid',
       instantRatePerMinute: 12,

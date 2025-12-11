@@ -146,7 +146,7 @@ describe('Dexie helper functions', () => {
       {
         conversationId: 'c2',
         type: 'human',
-        participants: ['user', 'mentor'],
+        participants: ['user', 'member'],
         linkedSessionId: 'session-2',
         lastActivity: 2,
         unreadCount: 1

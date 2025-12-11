@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import userRoutes from '../../src/server/routes/userRoutes';
 
-const searchUsersMock = jest.fn(async (_query: string, _online?: boolean) => [{ id: 'mentor-1' }]);
+const searchUsersMock = jest.fn(async (_query: string, _online?: boolean) => [{ id: 'member-1' }]);
 const getUserByIdMock = jest.fn(async (id: string) => ({ id }));
 const updateUserProfileMock = jest.fn(async (id: string, payload: Record<string, unknown>) => ({ id, ...payload }));
 const getUserAvailabilityMock = jest.fn(async (id: string) => ({ id, slots: [] }));
@@ -60,25 +60,25 @@ describe('userRoutes', () => {
 
   it('returns user detail', async () => {
     const app = buildApp();
-    const response = await request(app).get('/api/users/mentor-1');
+    const response = await request(app).get('/api/users/member-1');
     expect(response.status).toBe(200);
-    expect(getUserByIdMock).toHaveBeenCalledWith('mentor-1');
+    expect(getUserByIdMock).toHaveBeenCalledWith('member-1');
   });
 
   it('updates user profile fields', async () => {
     const app = buildApp();
     const payload = { headline: 'Updated' };
-    const response = await request(app).patch('/api/users/mentor-1').send(payload);
+    const response = await request(app).patch('/api/users/member-1').send(payload);
     expect(response.status).toBe(200);
-    expect(updateUserProfileMock).toHaveBeenCalledWith('mentor-1', payload);
+    expect(updateUserProfileMock).toHaveBeenCalledWith('member-1', payload);
   });
 
   it('exposes availability and status', async () => {
     const app = buildApp();
-    await request(app).get('/api/users/mentor-1/availability');
-    expect(getUserAvailabilityMock).toHaveBeenCalledWith('mentor-1');
+    await request(app).get('/api/users/member-1/availability');
+    expect(getUserAvailabilityMock).toHaveBeenCalledWith('member-1');
 
-    await request(app).get('/api/users/mentor-1/status');
-    expect(getUserStatusMock).toHaveBeenCalledWith('mentor-1');
+    await request(app).get('/api/users/member-1/status');
+    expect(getUserStatusMock).toHaveBeenCalledWith('member-1');
   });
 });

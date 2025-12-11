@@ -63,7 +63,7 @@ describe('BookingModal', () => {
 
   it('walks through slot selection and confirmation', async () => {
     const profile: ProfileSummary = {
-      userId: 'mentor-9',
+      userId: 'member-9',
       name: 'River Product',
       conversationType: 'paid',
       instantRatePerMinute: 12,
@@ -73,7 +73,7 @@ describe('BookingModal', () => {
     const conversation: Conversation = {
       conversationId: 'conv-1',
       type: 'human',
-      participants: ['guest-user', 'mentor-9'],
+      participants: ['guest-user', 'member-9'],
       lastActivity: Date.now(),
       unreadCount: 0
     };
@@ -97,7 +97,7 @@ describe('BookingModal', () => {
 
     await waitFor(() => {
       expect(createSessionMock).toHaveBeenCalledWith({
-        hostUserId: 'mentor-9',
+        hostUserId: 'member-9',
         guestUserId: 'guest-user',
         conversationId: 'conv-1',
         startTime: '2025-11-10T18:00:00Z',

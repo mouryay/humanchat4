@@ -55,7 +55,7 @@ Reference for key React components in `apps/web/components/`.
 ## Admin Components
 - `AdminRequestedPeopleTable` – managed outreach pipeline.
 - `ProfileCard` – summary tiles with CTA logic.
-- `DiscoverPanel` – curated feed of mentors.
+- `DiscoverPanel` – curated feed of community members.
 
 ## Hooks
 - `useConversationData`, `useConversationDetail` – wrap Dexie live queries.

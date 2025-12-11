@@ -11,7 +11,7 @@ const bootstrapSeed: BootstrapPayload = {
       unreadCount: 0
     },
     {
-      conversationId: 'mentor-1',
+      conversationId: 'member-1',
       type: 'human',
       participants: ['demo-user', 'River Product'],
       lastActivity: Date.now() - 5000,
@@ -66,8 +66,8 @@ test.beforeEach(async ({ page }) => {
             type: 'show_profiles',
             profiles: [
               {
-                userId: 'mentor-9',
-                name: 'Jordan Mentor',
+                userId: 'member-9',
+                name: 'Jordan Rivera',
                 conversationType: 'paid',
                 instantRatePerMinute: 15,
                 isOnline: true,
@@ -109,7 +109,7 @@ test('Sam concierge suggests profiles and booking completes', async ({ page }) =
   await page.getByRole('button', { name: /sam concierge/i }).click();
   await expect(getTextarea(page)).toBeVisible();
 
-  await getTextarea(page).fill('Book a PM mentor for next week.');
+  await getTextarea(page).fill('Book a PM peer for next week.');
   await page.getByRole('button', { name: /^send$/i }).click();
 
   // Sidebar previews also echo this copy, so pin to the in-thread bubble.
@@ -117,7 +117,7 @@ test('Sam concierge suggests profiles and booking completes', async ({ page }) =
   const connectButton = page.getByRole('button', { name: /connect now/i }).first();
   await expect(connectButton).toBeEnabled();
 
-  const bookButton = page.getByRole('button', { name: /book time/i }).first();
+  const bookButton = page.getByRole('button', { name: /schedule/i }).first();
   await bookButton.click();
 
   const selectSlotButton = page.getByRole('button', { name: /^select$/i }).first();
