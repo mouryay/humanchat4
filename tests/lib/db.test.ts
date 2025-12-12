@@ -69,7 +69,8 @@ describe('Dexie helper functions', () => {
       type: 'user_text'
     });
 
-    expect(messageId).toBeGreaterThan(0);
+    expect(typeof messageId).toBe('string');
+    expect(messageId.length).toBeGreaterThan(0);
     const messages = await getMessages(conversationId);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({
@@ -168,12 +169,11 @@ describe('Dexie helper functions', () => {
       lastActivity: Date.now(),
       unreadCount: 2
     });
-    await db.messages.add({
-      conversationId,
+    await addMessage(conversationId, {
       senderId: 'host',
       content: 'Sample',
-      timestamp: Date.now(),
-      type: 'user_text'
+      type: 'user_text',
+      timestamp: Date.now()
     });
     await db.sessions.put({
       sessionId: 'session-delete',

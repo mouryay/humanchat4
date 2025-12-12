@@ -1,4 +1,4 @@
-import { db, saveInstantInvite, type ProfileSummary } from '../../../src/lib/db';
+import { addMessage, db, saveInstantInvite, type ProfileSummary } from '../../../src/lib/db';
 import {
   mapConversationRecord,
   mapSessionRecord,
@@ -92,12 +92,11 @@ export const connectNow = async (profile: ProfileSummary, currentUserId: string)
     }
     const sessionRecord = mapSessionRecord(session, profile);
     await db.sessions.put(sessionRecord);
-    await db.messages.add({
-      conversationId: conversationRecord.conversationId,
+    await addMessage(conversationRecord.conversationId, {
       senderId: 'sam',
       content: `${profile.name ?? 'Your host'} is getting ready to join you now.`,
-      timestamp: Date.now(),
-      type: 'system_notice'
+      type: 'system_notice',
+      timestamp: Date.now()
     });
   } else {
     if (!invite) {

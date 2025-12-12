@@ -48,9 +48,25 @@ const ensureUserByEmail = async (email: string, nameHint?: string): Promise<User
     return existing.rows[0];
   }
   const fallbackName = nameHint ?? email.split('@')[0];
-    const insert = await query<User>(
-      `INSERT INTO users (name, email, role, conversation_type, is_online, has_active_session, managed, display_mode, presence_state, created_at, updated_at)
-       VALUES ($1,$2,'user','free',true,false,false,'normal','active',NOW(),NOW()) RETURNING *`,
+  const insert = await query<User>(
+    `INSERT INTO users (
+       name,
+       email,
+       role,
+       conversation_type,
+       donation_preference,
+       instant_rate_per_minute,
+       scheduled_rates,
+       is_online,
+       has_active_session,
+       managed,
+       display_mode,
+       presence_state,
+       created_at,
+       updated_at
+     )
+     VALUES ($1,$2,'user','free','off',NULL,'[]'::jsonb,true,false,false,'normal','active',NOW(),NOW())
+     RETURNING *`,
     [fallbackName, email]
   );
   return insert.rows[0];
@@ -64,10 +80,26 @@ export const registerUser = async ({ name, email, password }: RegisterInput): Pr
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-    const insert = await query<User>(
-      `INSERT INTO users (name, email, password_hash, role, conversation_type, is_online, has_active_session, managed, display_mode, presence_state, created_at, updated_at)
-       VALUES ($1, $2, $3, 'user', 'free', true, false, false, 'normal', 'active', NOW(), NOW())
-       RETURNING *`,
+  const insert = await query<User>(
+    `INSERT INTO users (
+       name,
+       email,
+       password_hash,
+       role,
+       conversation_type,
+       donation_preference,
+       instant_rate_per_minute,
+       scheduled_rates,
+       is_online,
+       has_active_session,
+       managed,
+       display_mode,
+       presence_state,
+       created_at,
+       updated_at
+     )
+     VALUES ($1,$2,$3,'user','free','off',NULL,'[]'::jsonb,true,false,false,'normal','active',NOW(),NOW())
+     RETURNING *`,
     [name, email, passwordHash]
   );
 

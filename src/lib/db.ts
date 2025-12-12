@@ -295,7 +295,7 @@ const registerMigrations = (db: Dexie): void => {
 
 class HumanChatDB extends Dexie {
   conversations!: Table<Conversation, string>;
-  messages!: Table<Message, number>;
+  messages!: Table<Message, string>;
   sessions!: Table<Session, string>;
   settings!: Table<Setting, string>;
   requests!: Table<ChatRequest, string>;
@@ -341,6 +341,10 @@ function getBootstrapSeed(): BootstrapPayload | null {
   return scoped;
 }
 
+const createLocalMessageId = (): string => {
+  return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
 const toDbError = (operation: string, error: unknown): Error => {
   const message = error instanceof Error ? error.message : String(error);
   return new Error(`[IndexedDB] Failed to ${operation}: ${message}`);
@@ -356,27 +360,29 @@ const ensureUpdated = (count: number, entity: string, id: string): void => {
  * Persists a message in the Dexie store and bumps the parent conversation's activity timestamp.
  * @param conversationId - Identifier of the conversation receiving the message.
  * @param message - Partial message payload (without id) to be stored.
- * @returns Database-generated numeric message id.
+ * @returns Message identifier (UUID or generated placeholder).
  * @throws Error when the conversation cannot be updated or the add operation fails.
  */
 export const addMessage = async (
   conversationId: string,
   message: MessageInput
-): Promise<number> => {
+): Promise<string> => {
   try {
     const timestamp = message.timestamp ?? Date.now();
+    const messageId = message.messageId ?? createLocalMessageId();
     const record: Message = {
       ...message,
+      messageId,
       timestamp,
       conversationId
     };
 
-    const id = await db.messages.add(record);
+    await db.messages.put(record);
     const updated = await db.conversations.update(conversationId, {
       lastActivity: timestamp
     });
     ensureUpdated(updated, 'Conversation', conversationId);
-    return id;
+    return messageId;
   } catch (error) {
     throw toDbError('add message', error);
   }

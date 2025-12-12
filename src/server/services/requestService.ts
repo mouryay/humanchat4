@@ -16,8 +16,8 @@ export const createRequest = async (input: CreateRequestInput): Promise<Request>
     throw new ApiError(400, 'INVALID_REQUEST', 'You cannot send a request to yourself.');
   }
 
-  const targetUser = await query<{ name: string | null; is_online: boolean; has_active_session: boolean }>(
-    `SELECT name, is_online, has_active_session
+  const targetUser = await query<{ name: string | null; manager_id: string | null; manager_display_name: string | null }>(
+    `SELECT name, manager_id, manager_display_name
        FROM users
       WHERE id = $1`,
     [input.target_user_id]
@@ -27,18 +27,21 @@ export const createRequest = async (input: CreateRequestInput): Promise<Request>
   if (!target) {
     throw new ApiError(404, 'NOT_FOUND', 'Target user not found');
   }
-  const displayName = target.name ?? 'That member';
-  if (!target.is_online) {
-    throw new ApiError(409, 'TARGET_OFFLINE', `${displayName} is offline right now.`);
-  }
-  if (target.has_active_session) {
-    throw new ApiError(409, 'TARGET_BUSY', `${displayName} is already in another chat.`);
-  }
+  const managerId = target.manager_id;
+  const representativeName = target.manager_display_name ?? target.name ?? null;
 
   const insert = await query<Request>(
     `INSERT INTO requests (requester_user_id, target_user_id, manager_user_id, representative_name, message, preferred_time, budget_range, status, created_at)
-     VALUES ($1,$2,NULL,NULL,$3,$4,$5,'pending',NOW()) RETURNING *`,
-    [input.requester_user_id, input.target_user_id, input.message, input.preferred_time ?? null, input.budget_range ?? null]
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',NOW()) RETURNING *`,
+    [
+      input.requester_user_id,
+      input.target_user_id,
+      managerId,
+      representativeName,
+      input.message,
+      input.preferred_time ?? null,
+      input.budget_range ?? null
+    ]
   );
   return insert.rows[0];
 };

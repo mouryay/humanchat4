@@ -58,7 +58,8 @@ describe('Dexie helper functions', () => {
       type: 'user_text'
     });
 
-    expect(messageId).toBeGreaterThan(0);
+    expect(typeof messageId).toBe('string');
+    expect(messageId.length).toBeGreaterThan(0);
     const messages = await getMessages(conversationId);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({

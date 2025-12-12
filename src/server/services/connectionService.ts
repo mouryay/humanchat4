@@ -106,7 +106,19 @@ const resolveExistingSession = async (
   }
 };
 
+const requiresRequestWorkflow = (user: User): boolean => {
+  return Boolean(
+    user.managed ||
+      user.display_mode === 'by_request' ||
+      user.display_mode === 'confidential' ||
+      user.confidential_rate
+  );
+};
+
 const assertConnectable = (requester: User, target: User): void => {
+  if (requiresRequestWorkflow(target)) {
+    throw new ApiError(409, 'REQUEST_REQUIRED', 'Please send a private request so their team can coordinate the chat.');
+  }
   if (!target.is_online) {
     throw new ApiError(409, 'TARGET_OFFLINE', `${target.name ?? 'That member'} is offline right now.`);
   }
