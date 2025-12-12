@@ -1,6 +1,7 @@
 import { validate as uuidValidate } from 'uuid';
 
 import { query } from '../db/postgres.js';
+import { redis } from '../db/redis.js';
 import { ApiError } from '../errors/ApiError.js';
 import { Conversation } from '../types/index.js';
 import { logger } from '../utils/logger.js';
@@ -78,6 +79,21 @@ export const addConversationMessage = async (
       [conversationId, senderId ?? null, content, type, actionsJson]
     );
     await query('UPDATE conversations SET last_activity = NOW() WHERE id = $1', [conversationId]);
+    
+    // Notify all participants in the conversation about the new message
+    const participants = conversation.rows[0].participants;
+    for (const participantId of participants) {
+      await redis.publish(
+        'notification',
+        JSON.stringify({
+          type: 'new_message',
+          userId: participantId,
+          conversationId,
+          message: inserted.rows[0]
+        })
+      );
+    }
+    
     return inserted.rows[0];
   };
 

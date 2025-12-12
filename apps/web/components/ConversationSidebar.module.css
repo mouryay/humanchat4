@@ -525,6 +525,26 @@
   letter-spacing: normal;
 }
 
+.unreadBadge {
+  display: inline-block;
+  margin-left: 8px;
+  background: #0ea5e9;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.loadingMore {
+  text-align: center;
+  padding: 12px;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.7);
+}
+
 .conciergeSection {
   margin: 16px;
   border-radius: 28px;
