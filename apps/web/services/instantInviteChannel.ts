@@ -20,6 +20,21 @@ interface InstantInviteNotification {
   session?: SessionRecord;
 }
 
+interface NewMessageNotification {
+  type: 'new_message';
+  userId: string;
+  conversationId: string;
+  message: {
+    id: string;
+    conversation_id: string;
+    sender_id: string | null;
+    content: string;
+    message_type: 'user_text' | 'sam_response' | 'system_notice';
+    actions?: unknown;
+    created_at: string;
+  };
+}
+
 const WS_BASE_URL = process.env.NEXT_PUBLIC_WS_URL ?? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/^http/i, 'ws');
 
 class InstantInviteChannel {
@@ -60,12 +75,14 @@ class InstantInviteChannel {
       this.ws = new WebSocket(`${WS_BASE_URL.replace(/\/$/, '')}/notifications/${this.userId}`);
       this.ws.addEventListener('message', (event) => {
         try {
-          const payload = JSON.parse(event.data as string) as InstantInviteNotification;
-          if (payload?.type === 'instant_invite' && payload.invite) {
+          const payload = JSON.parse(event.data as string) as InstantInviteNotification | NewMessageNotification;
+          if (payload?.type === 'instant_invite' && 'invite' in payload) {
             void this.handleInviteNotification(payload);
+          } else if (payload?.type === 'new_message' && 'message' in payload) {
+            void this.handleNewMessage(payload);
           }
         } catch (error) {
-          console.warn('Failed to parse invite notification', error);
+          console.warn('Failed to parse notification', error);
         }
       });
       this.ws.addEventListener('close', () => {
@@ -98,6 +115,46 @@ class InstantInviteChannel {
     }
 
     this.emitTargetedInvite(invite);
+  }
+
+  private async handleNewMessage(payload: NewMessageNotification): Promise<void> {
+    const { message, conversationId } = payload;
+    
+    console.log('Received new_message notification:', JSON.stringify(payload, null, 2));
+    console.log('Message content:', message.content);
+    
+    if (!message.id) {
+      console.warn('Message without ID received, cannot store:', message);
+      return;
+    }
+    
+    const timestamp = new Date(message.created_at).getTime();
+    
+    const messageToAdd = {
+      messageId: message.id,
+      conversationId: message.conversation_id,
+      senderId: message.sender_id ?? '',
+      content: message.content,
+      timestamp,
+      type: message.message_type,
+      actions: message.actions ? (Array.isArray(message.actions) ? message.actions : [message.actions]) : undefined
+    };
+    
+    console.log('Upserting message to IndexedDB:', messageToAdd);
+    
+    // Use put for upsert - with &messageId as primary key, this prevents duplicates
+    await db.messages.put(messageToAdd);
+
+    // Update conversation's lastActivity timestamp
+    const conversation = await db.conversations.get(conversationId);
+    if (conversation) {
+      await db.conversations.update(conversationId, {
+        lastActivity: timestamp
+      });
+      console.log(`Updated conversation ${conversationId} lastActivity to ${timestamp}`);
+    } else {
+      console.warn(`Conversation ${conversationId} not found in IndexedDB`);
+    }
   }
 
   private emitTargetedInvite(invite: InstantInvite): void {

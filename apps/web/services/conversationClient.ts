@@ -109,3 +109,50 @@ export const connectNow = async (profile: ProfileSummary, currentUserId: string)
 
   return conversationRecord.conversationId;
 };
+
+/**
+ * Send a message to a conversation via the backend API.
+ * The backend will save to PostgreSQL and broadcast to participants via WebSocket.
+ * @param conversationId - The conversation ID
+ * @param senderId - The user ID sending the message
+ * @param content - The message text content
+ * @param type - Message type (default: 'user_text')
+ * @returns The created message from the backend
+ */
+export const sendMessage = async (
+  conversationId: string,
+  senderId: string,
+  content: string,
+  type: 'user_text' | 'sam_response' | 'system_notice' = 'user_text'
+): Promise<{
+  message_id: string;
+  conversation_id: string;
+  sender_user_id: string;
+  message_text: string;
+  created_at: string;
+}> => {
+  const url = `${API_BASE_URL}/api/conversations/${conversationId}/messages`;
+  console.log('Sending message to:', url, { senderId, content, type });
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+      senderId,
+      content,
+      type
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Message API error:', response.status, errorText);
+    throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.message;
+};

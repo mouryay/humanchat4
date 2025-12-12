@@ -46,12 +46,22 @@ export default function ConversationSidebar({
   const [deleteCandidate, setDeleteCandidate] = useState<ConversationListEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(10); // Start with 10 conversations
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<number>(0);
   const pulling = useRef(false);
   const pendingRequests = useMemo(() => {
     return (requests ?? []).filter((request) => request.status === 'pending');
   }, [requests]);
+  
+  // Calculate unread conversations count
+  const unreadCount = useMemo(() => {
+    return conversations.slice(1).filter(entry => 
+      !isArchived(entry.conversation.conversationId) && 
+      (entry.conversation.unreadCount ?? 0) > 0
+    ).length;
+  }, [conversations, isArchived]);
+  
   const formattedDate = useMemo(() => {
     try {
       return new Intl.DateTimeFormat(undefined, {
@@ -71,6 +81,22 @@ export default function ConversationSidebar({
   const samEntry = conversations[0];
   const humanEntries = conversations.slice(1).filter((entry) => !isArchived(entry.conversation.conversationId));
   const archivedEntries = conversations.slice(1).filter((entry) => isArchived(entry.conversation.conversationId));
+  
+  // Paginated human entries (show first N)
+  const visibleHumanEntries = humanEntries.slice(0, visibleCount);
+  const hasMore = humanEntries.length > visibleCount;
+  
+  // Handle infinite scroll
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    if (humanView !== 'active' || !hasMore) return;
+    
+    const target = event.currentTarget;
+    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100; // 100px threshold
+    
+    if (scrolledToBottom && !refreshing) {
+      setVisibleCount(prev => prev + 10);
+    }
+  };
 
   const handleDeleteRequest = (conversationId: string) => {
     const target = conversations.find((entry) => entry.conversation.conversationId === conversationId);
@@ -193,7 +219,8 @@ export default function ConversationSidebar({
                 className={clsx(styles.tab, humanView === 'active' && styles.tabActive)}
                 onClick={() => setHumanView('active')}
               >
-                Active <span className={styles.tabCount}>{humanEntries.length}</span>
+                Active {humanEntries.length > 0 && <span className={styles.tabCount}>{humanEntries.length}</span>}
+                {unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount}</span>}
               </button>
               <button
                 type="button"
@@ -209,8 +236,8 @@ export default function ConversationSidebar({
 
           {humanView === 'active' ? (
             <>
-              <ul className={styles.list}>
-                {humanEntries.map((entry) => (
+              <ul className={styles.list} onScroll={handleScroll}>
+                {visibleHumanEntries.map((entry) => (
                   <ConversationListItem
                     key={entry.conversation.conversationId}
                     entry={entry}
@@ -223,6 +250,12 @@ export default function ConversationSidebar({
                   />
                 ))}
               </ul>
+              
+              {hasMore && (
+                <div className={styles.loadingMore}>
+                  Loading more conversations...
+                </div>
+              )}
 
               {!hasHumanConversations && (
                 <div className={styles.emptyState}>

@@ -78,13 +78,32 @@ export const useConversationDetail = (conversationId?: string) => {
     const subscription = liveQuery(() => fetchConversationDetail(conversationId)).subscribe({
       next: (result) => {
         if (!result) {
+          console.log('[useConversationDetail] No result for conversationId:', conversationId);
           setState({ conversation: null, session: null, invite: null, messages: [], loading: false, error: null });
           return;
         }
+        
+        // Check for duplicate messages
+        const messageIds = result.messages?.map(m => m.messageId || m.id).filter(Boolean) || [];
+        const uniqueIds = new Set(messageIds);
+        if (messageIds.length !== uniqueIds.size) {
+          console.warn('[useConversationDetail] ⚠️  DUPLICATES DETECTED in IndexedDB!', {
+            total: messageIds.length,
+            unique: uniqueIds.size,
+            messageIds: messageIds
+          });
+        }
+        
+        console.log('[useConversationDetail] Got result for conversationId:', conversationId, {
+          conversation: result.conversation?.conversationId,
+          messagesCount: result.messages?.length || 0,
+          uniqueMessageIds: uniqueIds.size
+        });
         const session = result.session ?? null;
         setState({ ...result, session, invite: result.invite ?? null, loading: false, error: null });
       },
       error: (err) => {
+        console.error('[useConversationDetail] Error loading conversation:', err);
         const error = err instanceof Error ? err : new Error(String(err));
         setState({ conversation: null, session: null, invite: null, messages: [], loading: false, error });
       }

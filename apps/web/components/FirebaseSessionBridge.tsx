@@ -56,18 +56,22 @@ export default function FirebaseSessionBridge() {
       }
       inflight.current = true;
       try {
+        console.log('Syncing Firebase session to backend...');
         const response = await fetch(`${API_BASE_URL}/api/auth/firebase`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken })
         });
+        console.log('Firebase bridge response:', response.status);
         if (response.ok) {
           lastToken.current = idToken;
           notifyAuthUpdated();
+          console.log('Firebase session bridged successfully');
         } else {
           lastToken.current = null;
-          console.error('Failed to bridge Firebase session');
+          const errorText = await response.text();
+          console.error('Failed to bridge Firebase session:', response.status, errorText);
         }
       } catch (error) {
         lastToken.current = null;

@@ -105,6 +105,144 @@ export const useConversationData = () => {
   const [payload, setPayload] = useState<ConversationPayload | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [synced, setSynced] = useState(false);
+
+  // Force resync if data format changed (increment this when schema changes)
+  const SYNC_VERSION = 4;
+  const SYNC_KEY = 'humanchat_sync_version';
+
+  // Sync conversations from backend on mount (after refresh/first load)
+  useEffect(() => {
+    console.log('Sync effect triggered:', { synced, currentUserId });
+    
+    if (!currentUserId) {
+      console.log('Skipping sync: no current user');
+      return;
+    }
+    
+    // Check if we need to force a resync due to version change
+    const lastSyncVersion = parseInt(localStorage.getItem(SYNC_KEY) || '0', 10);
+    const needsResync = lastSyncVersion < SYNC_VERSION;
+    
+    if (needsResync) {
+      console.log('Forcing resync due to version change:', lastSyncVersion, '->', SYNC_VERSION);
+      // Don't return - let it fall through to sync
+    } else if (synced) {
+      console.log('Skipping sync: already synced');
+      return;
+    }
+    
+    // Mark as synced immediately to prevent duplicate runs
+    setSynced(true);
+    
+    // Add a delay to ensure authentication cookie is set
+    const timer = setTimeout(() => {
+      void syncFromBackend(needsResync);
+    }, 1000); // Wait 1 second for auth to complete
+    
+    const syncFromBackend = async (isResync: boolean) => {
+      try {
+        console.log('Starting conversation sync from backend...', { isResync });
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+        const response = await fetch(`${API_BASE_URL}/api/conversations`, {
+          credentials: 'include'
+        });
+        
+        console.log('Conversations API response:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to sync conversations from backend:', response.status, errorText);
+          
+          // If unauthorized, retry after another second
+          if (response.status === 401) {
+            console.log('Got 401, will retry sync after authentication...');
+            setTimeout(() => {
+              setSynced(false); // Reset to trigger another sync attempt
+            }, 2000);
+          }
+          setSynced(true);
+          return;
+        }
+        
+        const data = await response.json();
+        console.log('Raw API response:', data);
+        
+        // Backend wraps response in { success: true, data: { conversations: [...] } }
+        const conversations = data.data?.conversations || data.conversations || [];
+        
+        console.log(`Syncing ${conversations.length} conversations from backend`, conversations);
+        
+        // Clear existing messages to avoid duplicates on resync
+        if (isResync) {
+          console.log('Clearing existing messages for fresh sync...');
+          await db.messages.clear();
+        }
+        
+        console.log(`Syncing ${conversations.length} conversations from backend`);
+        
+        // Save conversations to IndexedDB
+        for (const conv of conversations) {
+          await db.conversations.put({
+            conversationId: conv.id,
+            type: conv.type,
+            participants: conv.participants || [],
+            participantLabels: conv.participant_display_map || {},
+            linkedSessionId: conv.linked_session_id || undefined,
+            lastActivity: new Date(conv.last_activity).getTime(),
+            unreadCount: 0
+          });
+          
+          // Fetch messages for this conversation
+          try {
+            const messagesResponse = await fetch(`${API_BASE_URL}/api/conversations/${conv.id}/messages`, {
+              credentials: 'include'
+            });
+            
+            if (messagesResponse.ok) {
+              const messagesData = await messagesResponse.json();
+              const messages = messagesData.data?.messages || messagesData.messages || [];
+              console.log(`  - Fetched ${messages.length} messages for conversation ${conv.id}`);
+              
+              // Save messages to IndexedDB using backend message IDs for duplicate detection
+              for (const msg of messages) {
+                console.log(`    Checking message: id=${msg.id}, content="${msg.content?.substring(0, 20)}..."`);
+                
+                if (!msg.id) {
+                  console.warn(`    ⚠️  Message without ID, skipping:`, msg);
+                  continue;
+                }
+                
+                // Use put instead of add - with &messageId as primary key, put will upsert
+                console.log(`    → Upserting message ${msg.id}`);
+                await db.messages.put({
+                  messageId: msg.id,
+                  conversationId: msg.conversation_id,
+                  senderId: msg.sender_id ?? '',
+                  content: msg.content,
+                  timestamp: new Date(msg.created_at).getTime(),
+                  type: msg.message_type,
+                  actions: msg.actions
+                });
+              }
+              console.log(`  - Synced ${messages.length} messages for conversation ${conv.id}`);
+            }
+          } catch (msgError) {
+            console.warn(`Failed to sync messages for conversation ${conv.id}:`, msgError);
+          }
+        }
+        
+        console.log('Conversation sync complete');
+        localStorage.setItem(SYNC_KEY, SYNC_VERSION.toString());
+        setSynced(true);
+      } catch (error) {
+        console.error('Error syncing conversations:', error);
+        setSynced(true); // Don't block on error
+      }
+    };
+    
+    return () => clearTimeout(timer);
+  }, [currentUserId, synced]);
 
   useEffect(() => {
     void ensureSamConversationRecord();

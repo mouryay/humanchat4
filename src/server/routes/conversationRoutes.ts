@@ -16,6 +16,8 @@ const router = Router();
 router.get('/', authenticate, authenticatedLimiter, async (req, res, next) => {
   try {
     const conversations = await listConversations(req.user!.id);
+    console.log(`[Conversations API] Returning ${conversations.length} conversations for user ${req.user!.id}`);
+    console.log('[Conversations API] Sample:', conversations[0]);
     success(res, { conversations });
   } catch (error) {
     next(error);

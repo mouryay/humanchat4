@@ -129,6 +129,7 @@ export interface Conversation {
 
 export interface Message {
   id?: number;
+  messageId?: string; // Backend message UUID
   conversationId: string;
   senderId: string;
   content: string;
@@ -252,6 +253,28 @@ const schemaMigrations: SchemaMigration[] = [
     stores: {
       conversations: '&conversationId,type,linkedSessionId,lastActivity,unreadCount',
       messages: '++id,conversationId,senderId,timestamp,type',
+      sessions: '&sessionId,conversationId,status,startTime,endTime',
+      settings: '&key',
+      requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt',
+      instantInvites: '&inviteId,targetUserId,status,conversationId,expiresAt'
+    }
+  },
+  {
+    version: 4,
+    stores: {
+      conversations: '&conversationId,type,linkedSessionId,lastActivity,unreadCount',
+      messages: '++id,messageId,conversationId,senderId,timestamp,type',
+      sessions: '&sessionId,conversationId,status,startTime,endTime',
+      settings: '&key',
+      requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt',
+      instantInvites: '&inviteId,targetUserId,status,conversationId,expiresAt'
+    }
+  },
+  {
+    version: 5,
+    stores: {
+      conversations: '&conversationId,type,linkedSessionId,lastActivity,unreadCount',
+      messages: '&messageId,conversationId,senderId,timestamp,type',
       sessions: '&sessionId,conversationId,status,startTime,endTime',
       settings: '&key',
       requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt',

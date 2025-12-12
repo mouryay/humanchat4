@@ -160,19 +160,30 @@ export const acceptInstantInvite = async (
     );
     const updatedInvite = updatedInviteResult.rows[0];
 
-    const session = await createSessionRecord(
-      {
-        host_user_id: invite.target_user_id,
-        guest_user_id: invite.requester_user_id,
-        conversation_id: invite.conversation_id,
-        type: 'instant',
-        start_time: new Date().toISOString(),
-        duration_minutes: 30,
-        agreed_price: 0,
-        payment_mode: 'free'
-      },
-      client
-    );
+    let session;
+    try {
+      session = await createSessionRecord(
+        {
+          host_user_id: invite.target_user_id,
+          guest_user_id: invite.requester_user_id,
+          conversation_id: invite.conversation_id,
+          type: 'instant',
+          start_time: new Date().toISOString(),
+          duration_minutes: 30,
+          agreed_price: 0,
+          payment_mode: 'free'
+        },
+        client
+      );
+    } catch (error) {
+      logger.error('Failed to create session for instant invite', {
+        inviteId: invite.id,
+        conversationId: invite.conversation_id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
 
     const conversationResult = await client.query<Conversation>('SELECT * FROM conversations WHERE id = $1', [invite.conversation_id]);
     const conversation = conversationResult.rows[0];

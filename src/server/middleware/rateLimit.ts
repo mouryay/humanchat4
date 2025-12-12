@@ -1,10 +1,15 @@
 import rateLimit from 'express-rate-limit';
+import { env } from '../config/env.js';
+
+// Disable rate limiting in local development
+const skipRateLimit = env.nodeEnv === 'development' || env.nodeEnv === 'localhost';
 
 export const unauthenticatedLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => skipRateLimit,
   message: {
     success: false,
     error: {
@@ -19,6 +24,7 @@ export const authenticatedLimiter = rateLimit({
   limit: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => skipRateLimit,
   message: {
     success: false,
     error: {
