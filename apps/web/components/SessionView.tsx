@@ -73,13 +73,22 @@ export default function SessionView({ conversation, session, invite, messages, r
 
   if (!session) {
     return (
-      <div className={styles.sessionShell}>
+      <div className={styles.humanView}>
         {invitePanel}
-        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
-          {(message) => (
-            <MessageBubble message={message} variant={isUserMessage(message, conversation) ? 'user' : 'sam'} />
-          )}
-        </VirtualMessageList>
+        <div className={styles.pendingSessionNotice}>
+          <p className={styles.pendingSessionTitle}>
+            {invite?.status === 'pending' ? 'Waiting for a host to accept' : 'Live room not started yet'}
+          </p>
+          <p className={styles.pendingSessionSub}>Keep chatting here while we spin up the live room.</p>
+        </div>
+        <div className={styles.chatSection}>
+          <ChatArea
+            conversation={conversation}
+            messages={messages}
+            registerScrollContainer={registerScrollContainer}
+            currentUserId={currentUserId}
+          />
+        </div>
       </div>
     );
   }

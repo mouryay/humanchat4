@@ -10,6 +10,7 @@ import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { useConversationData } from '../../hooks/useConversationData';
 import { useChatRequests } from '../../hooks/useChatRequests';
 import { fetchUserProfile, type UserProfile } from '../../services/profileApi';
+import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../../constants/events';
 
 export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
@@ -86,6 +87,30 @@ export default function ChatPage() {
       setMobilePane('conversation');
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleInstantInvite = (event: Event) => {
+      const detail = (event as CustomEvent<InstantInviteTargetedDetail>).detail;
+      if (!detail) return;
+
+      setActiveConversationId(detail.conversationId);
+      if (isMobile) {
+        setActiveNav('home');
+        setMobilePane('conversation');
+      } else {
+        setSidebarCollapsed(false);
+      }
+    };
+
+    window.addEventListener(INSTANT_INVITE_TARGETED_EVENT, handleInstantInvite as EventListener);
+    return () => {
+      window.removeEventListener(INSTANT_INVITE_TARGETED_EVENT, handleInstantInvite as EventListener);
+    };
+  }, [isMobile]);
 
   useEffect(() => {
     const pendingIds = requests

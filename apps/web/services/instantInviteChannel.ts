@@ -1,7 +1,8 @@
 'use client';
 
-import { db, saveInstantInvite } from '../../../src/lib/db';
+import { db, saveInstantInvite, type InstantInvite } from '../../../src/lib/db';
 import { sessionStatusManager } from './sessionStatusManager';
+import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../constants/events';
 import {
   mapConversationRecord,
   mapInviteRecord,
@@ -95,6 +96,21 @@ class InstantInviteChannel {
       const session = mapSessionRecord(payload.session);
       await db.sessions.put(session);
     }
+
+    this.emitTargetedInvite(invite);
+  }
+
+  private emitTargetedInvite(invite: InstantInvite): void {
+    if (typeof window === 'undefined') return;
+    if (!this.userId || invite.targetUserId !== this.userId) return;
+    if (invite.status !== 'pending') return;
+
+    const detail: InstantInviteTargetedDetail = {
+      conversationId: invite.conversationId,
+      inviteId: invite.inviteId
+    };
+
+    window.dispatchEvent(new CustomEvent<InstantInviteTargetedDetail>(INSTANT_INVITE_TARGETED_EVENT, { detail }));
   }
 
   public dispose(): void {
