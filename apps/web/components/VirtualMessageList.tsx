@@ -26,7 +26,8 @@ export default function VirtualMessageList({ messages, className, registerScroll
     count: messages.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 120,
-    overscan: 8
+    overscan: 8,
+    getItemKey: (index) => messages[index]?.messageId ?? messages[index]?.id ?? index
   });
 
   useEffect(() => {
@@ -40,22 +41,31 @@ export default function VirtualMessageList({ messages, className, registerScroll
   return (
     <div ref={handleRef} className={className}>
       <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
-        {virtualizer.getVirtualItems().map((virtualRow) => (
-          <div
-            key={virtualRow.key}
-            ref={virtualizer.measureElement}
-            data-index={virtualRow.index}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualRow.start}px)`
-            }}
-          >
-            {children(messages[virtualRow.index], virtualRow.index)}
-          </div>
-        ))}
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const message = messages[virtualRow.index];
+          if (!message) {
+            console.error('VirtualMessageList: undefined message at index', virtualRow.index);
+            return null;
+          }
+          // Use messageId as the React key, not virtualRow.key
+          const messageKey = message.messageId ?? message.id ?? `fallback-${virtualRow.index}`;
+          return (
+            <div
+              key={messageKey}
+              ref={virtualizer.measureElement}
+              data-index={virtualRow.index}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`
+              }}
+            >
+              {children(message, virtualRow.index)}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

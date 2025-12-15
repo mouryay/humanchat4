@@ -274,6 +274,7 @@ const ChatShell = () => {
             )}
             {(activeNav === 'sam' || (activeNav === 'home' && mobilePane === 'conversation')) && (
               <ConversationView
+                key={`mobile-${activeConversationId ?? samConversationId}`}
                 activeConversationId={activeConversationId ?? samConversationId}
                 onSelectConversation={handleSelectConversation}
                 isMobile
@@ -283,7 +284,11 @@ const ChatShell = () => {
           </section>
         ) : (
           <section className="flex flex-1 flex-col overflow-hidden">
-            <ConversationView activeConversationId={activeConversationId} onSelectConversation={handleSelectConversation} />
+            <ConversationView
+              key={`desktop-${activeConversationId}`}
+              activeConversationId={activeConversationId}
+              onSelectConversation={handleSelectConversation}
+            />
           </section>
         )}
       </div>

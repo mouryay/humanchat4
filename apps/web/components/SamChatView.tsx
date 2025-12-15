@@ -201,7 +201,9 @@ export default function SamChatView({
     setActiveConversationId(conversation.conversationId);
   }, [conversation.conversationId]);
 
-  const orderedMessages = useMemo(() => [...messages].sort((a, b) => a.timestamp - b.timestamp), [messages]);
+  const orderedMessages = useMemo(() => {
+    return [...messages].sort((a, b) => a.timestamp - b.timestamp);
+  }, [messages]);
 
   const knownProfiles = useMemo(() => {
     const collected = new Map<string, SamShowcaseProfile>();
@@ -468,16 +470,15 @@ export default function SamChatView({
           const fromSam = isSamMessage(message);
           return (
             <MessageBubble
-              key={message.id ?? `${message.timestamp}-${message.senderId}`}
               message={message}
               variant={fromSam ? 'sam' : 'user'}
               onQuickReply={handleQuickReply}
             >
               {fromSam && message.actions && message.actions.length > 0 && (
                 <div className={styles.actionStack}>
-                  {message.actions.map((action, index) => (
+                  {message.actions.map((action, idx) => (
                     <ActionRenderer
-                      key={action.id ?? `${message.timestamp}-${index}`}
+                      key={action.id ?? `${message.timestamp}-${idx}`}
                       action={action}
                       onOpenConversation={handleOpenConversation}
                       onCreateSession={handleCreateSessionAction}

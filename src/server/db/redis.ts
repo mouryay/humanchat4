@@ -62,6 +62,12 @@ export const createRedisClient = (): Redis => {
     return new NoopRedis() as unknown as Redis;
   }
 
+  console.info('[Redis] Initializing connection', {
+    url: env.redisUrl,
+    useTls: env.redisUseTls,
+    rejectUnauthorized: env.redisTlsRejectUnauthorized
+  });
+
   let redisOptions: RedisOptions | undefined;
   if (env.redisUseTls) {
     try {
@@ -79,12 +85,33 @@ export const createRedisClient = (): Redis => {
     } catch (error) {
       console.warn('[Redis] Failed to parse REDIS_URL for TLS configuration, proceeding without TLS', error);
     }
+  } else {
+    console.info('[Redis] Connecting without TLS (Memorystore internal VPC)');
   }
 
   const client = redisOptions ? new Redis(env.redisUrl, redisOptions) : new Redis(env.redisUrl);
-  client.on('error', (error: Error) => {
-    console.error('[Redis] connection error', error);
+  
+  client.on('connect', () => {
+    console.info('[Redis] ✅ Connected successfully');
   });
+  
+  client.on('ready', () => {
+    console.info('[Redis] ✅ Ready to accept commands');
+  });
+  
+  client.on('error', (error: Error) => {
+    console.error('[Redis] ❌ Connection error:', error.message);
+    console.error('[Redis] Error details:', error);
+  });
+  
+  client.on('close', () => {
+    console.warn('[Redis] ⚠️  Connection closed');
+  });
+  
+  client.on('reconnecting', () => {
+    console.info('[Redis] 🔄 Reconnecting...');
+  });
+  
   return client;
 };
 
