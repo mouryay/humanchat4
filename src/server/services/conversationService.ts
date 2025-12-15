@@ -82,16 +82,23 @@ export const addConversationMessage = async (
     
     // Notify all participants in the conversation about the new message
     const participants = conversation.rows[0].participants;
+    console.log('[ConversationService] Broadcasting message to participants:', {
+      conversationId,
+      messageId: inserted.rows[0].id,
+      participants,
+      content: content.substring(0, 50)
+    });
+    
     for (const participantId of participants) {
-      await redis.publish(
-        'notification',
-        JSON.stringify({
-          type: 'new_message',
-          userId: participantId,
-          conversationId,
-          message: inserted.rows[0]
-        })
-      );
+      const payload = {
+        type: 'new_message',
+        userId: participantId,
+        conversationId,
+        message: inserted.rows[0]
+      };
+      
+      const publishResult = await redis.publish('notification', JSON.stringify(payload));
+      console.log(`[ConversationService] Published to Redis for user ${participantId}: ${publishResult} subscribers received`);
     }
     
     return inserted.rows[0];
