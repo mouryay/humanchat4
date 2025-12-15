@@ -128,6 +128,13 @@ class InstantInviteChannel {
       return;
     }
     
+    // Skip WebSocket sync for Sam conversations (they're purely client-side)
+    const conversation = await db.conversations.get(conversationId);
+    if (conversation?.type === 'sam') {
+      console.log('Ignoring WebSocket message for Sam conversation (client-side only)');
+      return;
+    }
+    
     const timestamp = new Date(message.created_at).getTime();
     
     const messageToAdd = {
@@ -146,7 +153,6 @@ class InstantInviteChannel {
     await db.messages.put(messageToAdd);
 
     // Update conversation's lastActivity timestamp
-    const conversation = await db.conversations.get(conversationId);
     if (conversation) {
       await db.conversations.update(conversationId, {
         lastActivity: timestamp
