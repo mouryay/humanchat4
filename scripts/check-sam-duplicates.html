@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Sam Chat Duplicates</title>
+</head>
+<body>
+    <h1>Sam Chat Duplicate Checker</h1>
+    <button onclick="checkDuplicates()">Check for Duplicates</button>
+    <button onclick="removeDuplicates()">Remove Duplicates</button>
+    <pre id="output"></pre>
+
+    <script>
+        const log = (msg) => {
+            const output = document.getElementById('output');
+            output.textContent += msg + '\n';
+            console.log(msg);
+        };
+
+        async function checkDuplicates() {
+            document.getElementById('output').textContent = '';
+            log('Opening IndexedDB...');
+            
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('humanchat_db');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+
+            log('Fetching all messages...');
+            const tx = db.transaction('messages', 'readonly');
+            const messages = await new Promise((resolve) => {
+                const req = tx.objectStore('messages').getAll();
+                req.onsuccess = () => resolve(req.result);
+            });
+
+            log(`Total messages in DB: ${messages.length}`);
+
+            const samMessages = messages.filter(m => m.conversationId === 'sam-concierge');
+            log(`Sam messages: ${samMessages.length}`);
+
+            // Group by messageId
+            const grouped = {};
+            samMessages.forEach(msg => {
+                const id = msg.messageId || msg.id || 'no-id';
+                if (!grouped[id]) grouped[id] = [];
+                grouped[id].push(msg);
+            });
+
+            log('\nMessage ID Analysis:');
+            Object.entries(grouped).forEach(([id, msgs]) => {
+                if (msgs.length > 1) {
+                    log(`⚠️  DUPLICATE: ${id} appears ${msgs.length} times`);
+                    msgs.forEach((msg, idx) => {
+                        log(`   [${idx}] content: "${msg.content?.substring(0, 40)}..."`);
+                        log(`       timestamp: ${new Date(msg.timestamp).toLocaleTimeString()}`);
+                        log(`       senderId: ${msg.senderId}`);
+                    });
+                } else {
+                    log(`✓ ${id}: "${msgs[0].content?.substring(0, 40)}..."`);
+                }
+            });
+
+            log('\nDone!');
+        }
+
+        async function removeDuplicates() {
+            document.getElementById('output').textContent = '';
+            log('Opening IndexedDB...');
+            
+            const db = await new Promise((resolve, reject) => {
+                const req = indexedDB.open('humanchat_db');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+
+            log('Fetching all Sam messages...');
+            const tx = db.transaction('messages', 'readwrite');
+            const store = tx.objectStore('messages');
+            
+            const messages = await new Promise((resolve) => {
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result);
+            });
+
+            const samMessages = messages.filter(m => m.conversationId === 'sam-concierge');
+            log(`Found ${samMessages.length} Sam messages`);
+
+            // Group by messageId, keep only the first one
+            const seen = new Set();
+            let removed = 0;
+
+            for (const msg of samMessages) {
+                const id = msg.messageId;
+                if (!id) {
+                    log(`⚠️  Message without messageId, skipping`);
+                    continue;
+                }
+
+                if (seen.has(id)) {
+                    // This is a duplicate, remove it
+                    log(`Removing duplicate: ${id}`);
+                    await new Promise((resolve, reject) => {
+                        const delReq = store.delete(id);
+                        delReq.onsuccess = () => resolve();
+                        delReq.onerror = () => reject(delReq.error);
+                    });
+                    removed++;
+                } else {
+                    seen.add(id);
+                }
+            }
+
+            log(`\n✓ Removed ${removed} duplicate messages`);
+            log('Please refresh your app to see changes');
+        }
+    </script>
+</body>
+</html>

@@ -8,6 +8,13 @@ export type SessionType = 'instant' | 'scheduled';
 export type SessionStatus = 'pending' | 'in_progress' | 'complete';
 export type PaymentMode = 'free' | 'paid' | 'charity';
 export type InstantInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
+export type BookingStatus =
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled_by_user'
+  | 'cancelled_by_expert'
+  | 'no_show';
 
 export type SamActionType =
   | 'show_profiles'
@@ -196,6 +203,34 @@ export interface InstantInvite {
   updatedAt: number;
 }
 
+export interface Booking {
+  bookingId: string;
+  expertId: string;
+  expertName: string;
+  expertAvatar: string | null;
+  expertHeadline: string | null;
+  userId: string;
+  userName: string;
+  userAvatar: string | null;
+  userEmail: string;
+  startTime: number; // timestamp
+  endTime: number; // timestamp
+  durationMinutes: number;
+  timezone: string;
+  status: BookingStatus;
+  meetingTitle: string | null;
+  meetingNotes: string | null;
+  meetingLink: string | null;
+  calendarEventId: string | null;
+  price: number | null;
+  paymentStatus: string;
+  cancellationReason: string | null;
+  cancelledAt: number | null;
+  cancelledBy: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
 type MessageInput = Omit<Message, 'id' | 'conversationId' | 'timestamp'> & {
   timestamp?: number;
 };
@@ -280,6 +315,18 @@ const schemaMigrations: SchemaMigration[] = [
       requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt',
       instantInvites: '&inviteId,targetUserId,status,conversationId,expiresAt'
     }
+  },
+  {
+    version: 6,
+    stores: {
+      conversations: '&conversationId,type,linkedSessionId,lastActivity,unreadCount',
+      messages: '&messageId,conversationId,senderId,timestamp,type',
+      sessions: '&sessionId,conversationId,status,startTime,endTime',
+      settings: '&key',
+      requests: '&requestId,targetUserId,managerId,requesterId,status,createdAt',
+      instantInvites: '&inviteId,targetUserId,status,conversationId,expiresAt',
+      bookings: '&bookingId,expertId,userId,status,startTime,endTime'
+    }
   }
 ];
 
@@ -300,6 +347,7 @@ class HumanChatDB extends Dexie {
   settings!: Table<Setting, string>;
   requests!: Table<ChatRequest, string>;
   instantInvites!: Table<InstantInvite, string>;
+  bookings!: Table<Booking, string>;
 
   constructor() {
     super(DATABASE_NAME);

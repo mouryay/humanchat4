@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { useMemo } from 'react';
 
-import UserSettingsMenu from '../../components/UserSettingsMenu';
 import { useConversationData } from '../../hooks/useConversationData';
 
 const quickActions = [
   { label: 'Open Sam Concierge', href: '/chat?focus=sam', description: 'Continue your AI-powered thread.' },
   { label: 'Browse Workspace', href: '/chat', description: 'Jump back into any human chat.' },
+  { label: 'My Bookings', href: '/bookings', description: 'View and manage your scheduled calls.' },
+  { label: 'Manage Availability', href: '/expert/availability', description: 'Set your calendar and available time slots.' },
   { label: 'Account Preferences', href: '/account', description: 'Set availability, pricing, and chat settings.' }
 ];
 
@@ -28,9 +29,6 @@ export default function DashboardPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-white/50">Dashboard</p>
           <h1 className="text-2xl font-semibold text-white">Welcome back to HumanChat</h1>
           <p className="text-sm text-white/60">{unreadTotal > 0 ? `${unreadTotal} unread conversation${unreadTotal === 1 ? '' : 's'}` : 'All caught up'}</p>
-        </div>
-        <div className="ml-auto">
-          <UserSettingsMenu />
         </div>
       </header>
 
@@ -55,7 +53,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm uppercase tracking-[0.3em] text-indigoGlow">Sam Concierge</p>
                 <h3 className="mt-2 text-xl font-semibold text-white">Pick up where you left off</h3>
-                <p className="text-sm text-white/70">
+                <p className="text-sm text-white/70" suppressHydrationWarning>
                   Last activity · {new Date(samConversation.conversation.lastActivity).toLocaleString()}
                 </p>
               </div>
