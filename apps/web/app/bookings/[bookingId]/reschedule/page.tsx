@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getBookingById, getExpertAvailability, rescheduleBooking, type TimeSlot } from '../../../../services/bookingApi';
-import { Booking } from '../../../../../src/lib/db';
+import { Booking } from '@/src/lib/db';
 
 export default function RescheduleBookingPage() {
   const router = useRouter();

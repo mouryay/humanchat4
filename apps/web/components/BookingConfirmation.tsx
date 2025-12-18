@@ -1,13 +1,13 @@
 'use client';
 
-import type { ProfileSummary } from '../../../src/lib/db';
-import type { CalendarSlot } from '../services/bookingService';
+import type { ProfileSummary } from '@/src/lib/db';
+import type { TimeSlot } from '../services/bookingApi';
 import { formatSlotDate, formatSlotTimeRange, getTimezoneAbbreviation } from '../utils/timezone';
 import styles from './BookingModal.module.css';
 
 interface BookingConfirmationProps {
   profile: ProfileSummary;
-  slot: CalendarSlot;
+  slot: TimeSlot;
   durationMinutes: number;
   price: number;
   timezone: string;

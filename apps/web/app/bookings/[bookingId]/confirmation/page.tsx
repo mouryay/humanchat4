@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getBookingById } from '../../../../services/bookingApi';
-import { Booking } from '../../../../../src/lib/db';
+import { Booking } from '@/src/lib/db';
 
 export default function BookingConfirmationPage() {
   const router = useRouter();

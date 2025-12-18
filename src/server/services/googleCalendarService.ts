@@ -32,6 +32,18 @@ export interface BusyTimeSlot {
   end: Date;
 }
 
+const mapCalendarConnection = (row: any): CalendarConnection => ({
+  id: row.id,
+  expertId: row.expert_id,
+  provider: row.provider,
+  accessToken: row.access_token,
+  refreshToken: row.refresh_token,
+  tokenExpiresAt: row.token_expires_at,
+  calendarId: row.calendar_id,
+  syncEnabled: row.sync_enabled,
+  lastSyncAt: row.last_sync_at
+});
+
 /**
  * Generate OAuth authorization URL for expert to connect Google Calendar
  */
@@ -60,7 +72,7 @@ export const handleGoogleCallback = async (
     const { tokens } = await oauth2Client.getToken(code);
 
     if (!tokens.access_token || !tokens.refresh_token) {
-      throw new ApiError(400, 'Invalid tokens received from Google');
+      throw new ApiError(400, 'INVALID_REQUEST', 'Invalid tokens received from Google');
     }
 
     const expiresAt = tokens.expiry_date
@@ -95,10 +107,10 @@ export const handleGoogleCallback = async (
       ]
     );
 
-    return result.rows[0];
+    return mapCalendarConnection(result.rows[0]);
   } catch (error: any) {
     console.error('Google Calendar callback error:', error);
-    throw new ApiError(500, `Failed to connect calendar: ${error.message}`);
+    throw new ApiError(500, 'SERVER_ERROR', `Failed to connect calendar: ${error.message}`);
   }
 };
 
@@ -135,7 +147,7 @@ const refreshAccessToken = async (connection: CalendarConnection): Promise<strin
     return credentials.access_token;
   } catch (error: any) {
     console.error('Token refresh error:', error);
-    throw new ApiError(500, `Failed to refresh token: ${error.message}`);
+    throw new ApiError(500, 'SERVER_ERROR', `Failed to refresh token: ${error.message}`);
   }
 };
 
@@ -151,7 +163,7 @@ export const getCalendarConnection = async (
     [expertId]
   );
 
-  return result.rows[0] ?? null;
+  return result.rows[0] ? mapCalendarConnection(result.rows[0]) : null;
 };
 
 /**

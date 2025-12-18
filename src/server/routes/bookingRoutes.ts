@@ -106,19 +106,19 @@ router.post(
       const { rules } = req.body;
 
       if (!Array.isArray(rules)) {
-        throw new ApiError(400, 'Rules must be an array');
+        throw new ApiError(400, 'INVALID_REQUEST', 'Rules must be an array');
       }
 
       // Validate each rule
       for (const rule of rules) {
         if (typeof rule.dayOfWeek !== 'number' || rule.dayOfWeek < 0 || rule.dayOfWeek > 6) {
-          throw new ApiError(400, `Invalid dayOfWeek: ${rule.dayOfWeek}`);
+          throw new ApiError(400, 'INVALID_REQUEST', `Invalid dayOfWeek: ${rule.dayOfWeek}`);
         }
         if (!rule.startTime || !rule.endTime) {
-          throw new ApiError(400, 'startTime and endTime are required');
+          throw new ApiError(400, 'INVALID_REQUEST', 'startTime and endTime are required');
         }
         if (!rule.timezone) {
-          throw new ApiError(400, 'timezone is required');
+          throw new ApiError(400, 'INVALID_REQUEST', 'timezone is required');
         }
       }
 
@@ -151,7 +151,7 @@ router.get(
       const { startDate, endDate } = req.query as { startDate: string; endDate: string };
 
       if (!startDate || !endDate) {
-        throw new ApiError(400, 'startDate and endDate are required');
+        throw new ApiError(400, 'INVALID_REQUEST', 'startDate and endDate are required');
       }
 
       const overrides = await expertAvailabilityService.getAvailabilityOverrides(
@@ -233,7 +233,7 @@ router.post(
       const { startDate, endDate, timezone, reason } = req.body;
 
       if (!startDate || !endDate || !timezone) {
-        throw new ApiError(400, 'startDate, endDate, and timezone are required');
+        throw new ApiError(400, 'INVALID_REQUEST', 'startDate, endDate, and timezone are required');
       }
 
       const overrides = await expertAvailabilityService.blockDateRange(
@@ -316,7 +316,7 @@ router.get(
       const validation = getAvailabilitySchema.safeParse(req.query);
 
       if (!validation.success) {
-        throw new ApiError(400, validation.error.message);
+        throw new ApiError(400, 'INVALID_REQUEST', validation.error.message);
       }
 
       const { date, timezone } = validation.data;
@@ -393,7 +393,7 @@ router.get(
       const { startDate, endDate } = req.query as { startDate: string; endDate: string };
 
       if (!startDate || !endDate) {
-        throw new ApiError(400, 'startDate and endDate are required');
+        throw new ApiError(400, 'INVALID_REQUEST', 'startDate and endDate are required');
       }
 
       const overrides = await expertAvailabilityService.getAvailabilityOverrides(
@@ -445,14 +445,14 @@ router.post(
       const validation = createBookingSchema.safeParse({ ...req.body, expertId });
 
       if (!validation.success) {
-        throw new ApiError(400, validation.error.message);
+        throw new ApiError(400, 'INVALID_REQUEST', validation.error.message);
       }
 
       const userId = req.user!.id;
 
       // Prevent self-booking
       if (expertId === userId) {
-        throw new ApiError(400, 'Cannot book yourself');
+        throw new ApiError(400, 'INVALID_REQUEST', 'Cannot book yourself');
       }
 
       const booking = await bookingService.createBooking({
@@ -516,7 +516,7 @@ router.get(
 
       // Check authorization
       if (booking.userId !== userId && booking.expertId !== userId) {
-        throw new ApiError(403, 'Not authorized to view this booking');
+        throw new ApiError(403, 'FORBIDDEN', 'Not authorized to view this booking');
       }
 
       res.json({
@@ -543,14 +543,14 @@ router.post(
       const validation = cancelBookingSchema.safeParse(req.body);
 
       if (!validation.success) {
-        throw new ApiError(400, validation.error.message);
+        throw new ApiError(400, 'INVALID_REQUEST', validation.error.message);
       }
 
       const booking = await bookingService.getBookingById(bookingId);
 
       // Check authorization
       if (booking.userId !== userId && booking.expertId !== userId) {
-        throw new ApiError(403, 'Not authorized to cancel this booking');
+        throw new ApiError(403, 'FORBIDDEN', 'Not authorized to cancel this booking');
       }
 
       const cancelledBooking = await bookingService.cancelBooking(
@@ -583,14 +583,14 @@ router.post(
       const validation = rescheduleBookingSchema.safeParse(req.body);
 
       if (!validation.success) {
-        throw new ApiError(400, validation.error.message);
+        throw new ApiError(400, 'INVALID_REQUEST', validation.error.message);
       }
 
       const booking = await bookingService.getBookingById(bookingId);
 
       // Only users can reschedule (experts must cancel)
       if (booking.userId !== userId) {
-        throw new ApiError(403, 'Only booking creator can reschedule');
+        throw new ApiError(403, 'FORBIDDEN', 'Only booking creator can reschedule');
       }
 
       const rescheduledBooking = await bookingService.rescheduleBooking(
@@ -621,7 +621,7 @@ router.get(
       const { code, state } = req.query as { code: string; state: string };
 
       if (!code || !state) {
-        throw new ApiError(400, 'Missing code or state parameter');
+        throw new ApiError(400, 'INVALID_REQUEST', 'Missing code or state parameter');
       }
 
       // state contains expertId

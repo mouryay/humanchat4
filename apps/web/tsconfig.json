@@ -8,7 +8,11 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "types": ["node", "react"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/src/*": ["../../src/*"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts"],
   "exclude": ["node_modules"]

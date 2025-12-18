@@ -304,7 +304,7 @@ export default function BookingModal({ open, profile, conversation, onClose }: B
 
       // Close modal so chat UI resets before redirecting
       onClose();
-      router.push(`/bookings/${booking.bookingId ?? booking.id}/confirmation`);
+      router.push(`/bookings/${booking.bookingId}/confirmation`);
       return;
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Unable to confirm booking');

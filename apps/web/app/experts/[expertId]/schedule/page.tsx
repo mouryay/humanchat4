@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getExpertAvailability, createBooking, type TimeSlot } from '../../../../services/bookingApi';
-import { ProfileSummary } from '../../../../../src/lib/db';
+import { ProfileSummary } from '@/src/lib/db';
 
 export default function BookingPage() {
   const router = useRouter();
