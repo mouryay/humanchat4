@@ -112,6 +112,24 @@ export default function UserSettingsMenu() {
           {identity ? (
             <>
               <Link
+                href="/dashboard"
+                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/bookings"
+                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
+              >
+                My Bookings
+              </Link>
+              <Link
+                href="/expert/availability"
+                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
+              >
+                Manage Availability
+              </Link>
+              <Link
                 href="/settings"
                 className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
               >
