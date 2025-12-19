@@ -112,28 +112,10 @@ export default function UserSettingsMenu() {
           {identity ? (
             <>
               <Link
-                href="/dashboard"
+                href="/account"
                 className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
               >
-                Dashboard
-              </Link>
-              <Link
-                href="/bookings"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
-              >
-                My Bookings
-              </Link>
-              <Link
-                href="/expert/availability"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
-              >
-                Manage Availability
-              </Link>
-              <Link
-                href="/settings"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
-              >
-                Settings
+                Account
               </Link>
               <LogoutButton className="w-full rounded-xl border border-white/10 px-3 py-2 text-left text-white/90 hover:bg-white/10" />
             </>

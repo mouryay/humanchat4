@@ -217,7 +217,7 @@ export default function BookingsPage() {
           <div className="text-center text-gray-400 py-12">
             <p className="mb-4">No {activeTab} bookings</p>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/account')}
               className="text-blue-400 hover:text-blue-300"
             >
               Browse experts

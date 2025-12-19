@@ -2,7 +2,7 @@ import { initiateInstantConnection } from '../../src/server/services/connectionS
 import type { Conversation, Session, User } from '../../src/server/types';
 import { ApiError } from '../../src/server/errors/ApiError';
 import { getUserById } from '../../src/server/services/userService';
-import { ensureHumanConversation, addConversationMessage } from '../../src/server/services/conversationService';
+import { ensureHumanConversation, addConversationMessage, attachParticipantLabels } from '../../src/server/services/conversationService';
 import { createSessionRecord, getSessionById, updateSessionStatus } from '../../src/server/services/sessionService';
 
 jest.mock('../../src/server/services/userService', () => ({
@@ -11,7 +11,8 @@ jest.mock('../../src/server/services/userService', () => ({
 
 jest.mock('../../src/server/services/conversationService', () => ({
   ensureHumanConversation: jest.fn(),
-  addConversationMessage: jest.fn()
+  addConversationMessage: jest.fn(),
+  attachParticipantLabels: jest.fn()
 }));
 
 jest.mock('../../src/server/services/sessionService', () => ({
@@ -98,6 +99,7 @@ const buildConversation = (overrides: Partial<Conversation>): Conversation => {
 const mockedGetUserById = getUserById as jest.MockedFunction<typeof getUserById>;
 const mockedEnsureConversation = ensureHumanConversation as jest.MockedFunction<typeof ensureHumanConversation>;
 const mockedAddConversationMessage = addConversationMessage as jest.MockedFunction<typeof addConversationMessage>;
+const mockedAttachParticipantLabels = attachParticipantLabels as jest.MockedFunction<typeof attachParticipantLabels>;
 const mockedCreateSessionRecord = createSessionRecord as jest.MockedFunction<typeof createSessionRecord>;
 const mockedGetSessionById = getSessionById as jest.MockedFunction<typeof getSessionById>;
 const mockedUpdateSessionStatus = updateSessionStatus as jest.MockedFunction<typeof updateSessionStatus>;
@@ -105,6 +107,7 @@ const mockedUpdateSessionStatus = updateSessionStatus as jest.MockedFunction<typ
 describe('initiateInstantConnection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedAttachParticipantLabels.mockImplementation(async (conversation) => conversation);
   });
 
   it('reuses an existing session for the same participants instead of creating a new one', async () => {
