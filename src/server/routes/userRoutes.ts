@@ -40,6 +40,8 @@ router.get('/:id', authenticate, authenticatedLimiter, async (req, res, next) =>
   }
 });
 
+const socialUrlSchema = z.string().url().max(2048).nullable().optional();
+
 const updateSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   headline: z.string().optional(),
@@ -48,7 +50,14 @@ const updateSchema = z.object({
   instant_rate_per_minute: z.number().nullable().optional(),
   scheduled_rates: z.record(z.string(), z.number()).optional(),
   is_online: z.boolean().optional(),
-  has_active_session: z.boolean().optional()
+  has_active_session: z.boolean().optional(),
+  linkedin_url: socialUrlSchema,
+  facebook_url: socialUrlSchema,
+  instagram_url: socialUrlSchema,
+  quora_url: socialUrlSchema,
+  medium_url: socialUrlSchema,
+  youtube_url: socialUrlSchema,
+  other_social_url: socialUrlSchema
 });
 
 router.patch('/:id', authenticate, authenticatedLimiter, async (req, res, next) => {

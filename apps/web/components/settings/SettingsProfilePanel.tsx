@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import AccountIdentityForm from '../AccountIdentityForm';
 import AccountNarrativeForm from '../AccountNarrativeForm';
+import AccountSocialLinksForm from '../AccountSocialLinksForm';
 import ProfileDetailsSummary from '../ProfileDetailsSummary';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
 
@@ -14,7 +15,7 @@ interface SettingsProfilePanelProps {
   embedded?: boolean;
 }
 
-type ProfileSection = 'summary' | 'identity' | 'story' | null;
+type ProfileSection = 'summary' | 'identity' | 'story' | 'reputation' | null;
 
 export default function SettingsProfilePanel({ profileState, embedded = false }: SettingsProfilePanelProps) {
   const resolvedProfileState = profileState ?? useProfileDetails();
@@ -33,6 +34,12 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
       label: 'Story & positioning',
       tagline: 'Headline and narrative members read.',
       content: <AccountNarrativeForm profileState={resolvedProfileState} />
+    },
+    {
+      id: 'reputation' as const,
+      label: 'Public reputation',
+      tagline: 'Link socials and credibility signals.',
+      content: <AccountSocialLinksForm profileState={resolvedProfileState} />
     },
     {
       id: 'summary' as const,

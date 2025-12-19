@@ -1,23 +1,19 @@
 'use client';
 
 import Image from 'next/image';
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { UseProfileDetailsResult } from '../hooks/useProfileDetails';
-import { compressImageFile } from '../utils/media';
 
 interface AccountIdentityFormProps {
   profileState: UseProfileDetailsResult;
 }
 
 const MIN_NAME_LENGTH = 2;
-const AVATAR_STORAGE_KEY = 'humanchat.profile.avatar';
-
 export default function AccountIdentityForm({ profileState }: AccountIdentityFormProps) {
   const { profile, save, saving } = profileState;
   const [name, setName] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
-  const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.name) {
@@ -28,16 +24,6 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     setStatus('idle');
     setMessage(null);
   }, [profile?.name]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!profile?.id) {
-      setAvatar(null);
-      return;
-    }
-    const stored = window.localStorage.getItem(`${AVATAR_STORAGE_KEY}:${profile.id}`);
-    setAvatar(stored);
-  }, [profile?.id]);
 
   const trimmedName = name.trim();
 
@@ -74,23 +60,6 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     }
   };
 
-  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!profile?.id) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const compressed = await compressImageFile(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result?.toString() ?? null;
-      if (!dataUrl || typeof window === 'undefined') {
-        return;
-      }
-      setAvatar(dataUrl);
-      window.localStorage.setItem(`${AVATAR_STORAGE_KEY}:${profile.id}`, dataUrl);
-    };
-    reader.readAsDataURL(compressed);
-  };
-
   return (
     <section className="rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
       <header className="flex flex-col gap-1">
@@ -103,11 +72,11 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
 
       {profile && (
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20 overflow-hidden rounded-full border border-white/20">
-                {avatar ? (
-                  <Image src={avatar} alt="Profile avatar" fill sizes="80px" className="object-cover" unoptimized />
+                {profile?.avatarUrl ? (
+                  <Image src={profile.avatarUrl} alt="Profile avatar" fill sizes="80px" className="object-cover" />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center text-lg font-semibold" aria-hidden>
                     {initials}
@@ -119,18 +88,9 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
                 <p className="text-xs text-white/60">Visible on ProfileCards, chat, and bookings.</p>
               </div>
             </div>
-            <div className="flex flex-1 flex-col gap-2 text-sm text-white/80">
-              <label className="font-semibold">
-                Upload new avatar
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(event) => void handleAvatarChange(event)}
-                  className="mt-2 text-white"
-                />
-              </label>
-              <span className="text-xs text-white/60">Images are compressed client-side for performance.</span>
-            </div>
+            <p className="text-xs text-white/60">
+              Avatars sync from your sign-in provider right now. Custom uploads launch once the backend endpoint ships.
+            </p>
           </div>
           <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="account-name-input">
             Display name
