@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import LogoutButton from '../LogoutButton';
 import { AvailabilityManager } from '../AvailabilityManager';
+import DevicePreferencesPanel from '../DevicePreferencesPanel';
 import { useSettings, AVAILABILITY_PROMPT_KEY, AVAILABILITY_STORAGE_KEY } from '../../hooks/useSettings';
 import type { ConnectionType } from '../../services/settingsApi';
 
@@ -26,7 +27,7 @@ interface SettingsConnectionsPanelProps {
   settingsState?: ReturnType<typeof useSettings>;
 }
 
-type PreferenceSection = 'availability-status' | 'availability-schedule' | 'connection' | 'integrations' | 'account';
+type PreferenceSection = 'availability-status' | 'availability-schedule' | 'connection' | 'integrations' | 'account' | 'device';
 
 export default function SettingsConnectionsPanel({ embedded = false, settingsState }: SettingsConnectionsPanelProps) {
   const router = useRouter();
@@ -460,6 +461,12 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
           </button>
         </div>
       )
+    },
+    {
+      id: 'device',
+      label: 'Device & display',
+      tagline: 'Push notifications, install prompt, and readability.',
+      content: <DevicePreferencesPanel />
     }
   ];
 

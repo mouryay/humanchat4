@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import ProfilePanel from '../ProfilePanel';
 import AccountIdentityForm from '../AccountIdentityForm';
 import AccountNarrativeForm from '../AccountNarrativeForm';
 import ProfileDetailsSummary from '../ProfileDetailsSummary';
@@ -27,12 +26,7 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
       id: 'identity' as const,
       label: 'Identity & appearance',
       tagline: 'Avatar, name, and public basics.',
-      content: (
-        <div className="space-y-6">
-          <ProfilePanel variant="card" />
-          <AccountIdentityForm profileState={resolvedProfileState} />
-        </div>
-      )
+      content: <AccountIdentityForm profileState={resolvedProfileState} />
     },
     {
       id: 'story' as const,
