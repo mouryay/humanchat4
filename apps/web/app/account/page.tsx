@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import AccountProfilePanel from '../../components/AccountProfilePanel';
+import { AvailabilityManager } from '../../components/AvailabilityManager';
+import { BookingsManager } from '../../components/BookingsManager';
 import { useAuthIdentity } from '../../hooks/useAuthIdentity';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
 import { getExpertBookings, getUserBookings } from '../../services/bookingApi';
@@ -78,20 +80,8 @@ export default function AccountPage() {
       label: 'Full calendar',
       tagline: 'Review upcoming, past, and canceled sessions.',
       content: (
-        <div className="space-y-3 text-sm text-white/70">
-          <p>
-            See every booking, transcript, and payout detail without leaving the account hub. The calendar opens in a
-            dedicated view so you can filter by timeframe and type.
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-white/50">
-            <span>{sessions.length > 0 ? 'Next session already scheduled.' : 'No sessions on your calendar.'}</span>
-            <Link
-              href="/bookings"
-              className="rounded-full border border-white/20 px-3 py-1 text-[11px] font-semibold text-white/80 transition hover:border-white/40"
-            >
-              Open bookings
-            </Link>
-          </div>
+        <div className="space-y-4">
+          <BookingsManager embedded />
         </div>
       )
     },
@@ -100,18 +90,8 @@ export default function AccountPage() {
       label: 'Availability',
       tagline: 'Control when Sam can auto-book and who can find you.',
       content: (
-        <div className="space-y-3 text-sm text-white/70">
-          <ul className="space-y-1 text-white/60">
-            <li>Instant status: {profile?.isOnline ? 'Online to members' : 'Offline / request only'}</li>
-            <li>Display mode: {profile?.displayMode ?? 'normal'}</li>
-            <li>Conversation type: {profile?.conversationType ?? 'free'}</li>
-          </ul>
-          <Link
-            href="/expert/availability"
-            className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/80 transition hover:border-white/40"
-          >
-            Edit availability
-          </Link>
+        <div className="space-y-4">
+          <AvailabilityManager embedded />
         </div>
       )
     },
