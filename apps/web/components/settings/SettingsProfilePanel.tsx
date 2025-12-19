@@ -5,7 +5,6 @@ import { useState } from 'react';
 import ProfilePanel from '../ProfilePanel';
 import AccountIdentityForm from '../AccountIdentityForm';
 import AccountNarrativeForm from '../AccountNarrativeForm';
-import AccountPreferencesForm from '../AccountPreferencesForm';
 import ProfileDetailsSummary from '../ProfileDetailsSummary';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
 
@@ -16,20 +15,14 @@ interface SettingsProfilePanelProps {
   embedded?: boolean;
 }
 
-type ProfileSection = 'summary' | 'identity' | 'story' | 'preferences' | null;
+type ProfileSection = 'summary' | 'identity' | 'story' | null;
 
 export default function SettingsProfilePanel({ profileState, embedded = false }: SettingsProfilePanelProps) {
   const resolvedProfileState = profileState ?? useProfileDetails();
   const containerClass = embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8 text-white';
-  const [openSection, setOpenSection] = useState<ProfileSection>('summary');
+  const [openSection, setOpenSection] = useState<ProfileSection>('identity');
 
   const editSections = [
-    {
-      id: 'summary' as const,
-      label: 'How members see you',
-      tagline: 'At-a-glance public profile preview.',
-      content: <ProfileDetailsSummary profileState={resolvedProfileState} />
-    },
     {
       id: 'identity' as const,
       label: 'Identity & appearance',
@@ -48,10 +41,10 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
       content: <AccountNarrativeForm profileState={resolvedProfileState} />
     },
     {
-      id: 'preferences' as const,
-      label: 'Audience preferences',
-      tagline: 'Formats, categories, and safety settings.',
-      content: <AccountPreferencesForm profileState={resolvedProfileState} />
+      id: 'summary' as const,
+      label: 'How members see you',
+      tagline: 'At-a-glance public profile preview.',
+      content: <ProfileDetailsSummary profileState={resolvedProfileState} />
     }
   ];
 

@@ -1,17 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ConversationCategory } from '../services/profileApi';
 import type { UseProfileDetailsResult } from '../hooks/useProfileDetails';
-import { useSessionStatus } from '../hooks/useSessionStatus';
-
-type AvailabilityState = 'available' | 'busy' | 'offline';
-
-const availabilityOptions: Array<{ value: AvailabilityState; label: string; helper: string }> = [
-  { value: 'available', label: 'Available now', helper: 'Shows the green dot and boosts you in search.' },
-  { value: 'busy', label: 'In a session', helper: 'Lets members know you are wrapping up shortly.' },
-  { value: 'offline', label: 'Offline', helper: 'Removes you from instant connects until you come back.' }
-];
 
 const conversationHelpers: Record<ConversationCategory, string> = {
   free: 'Perfect for open office hours or community loops.',
@@ -31,66 +22,20 @@ const rateFromInput = (value: string): number | null => {
 
 export default function AccountPreferencesForm({ profileState }: AccountPreferencesFormProps) {
   const { profile, save, saving } = profileState;
-  const [availability, setAvailability] = useState<AvailabilityState>('available');
   const [conversationType, setConversationType] = useState<ConversationCategory>('free');
   const [instantRate, setInstantRate] = useState('');
   const [openToRequests, setOpenToRequests] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusVariant, setStatusVariant] = useState<'success' | 'error' | null>(null);
-  const { isOnline: realtimeOnline, hasActiveSession: realtimeActive, isLoading: statusLoading } = useSessionStatus(profile?.id);
-
-  const readyState = useMemo(() => {
-    if (statusLoading) {
-      return { label: 'Checking…', helper: 'Syncing your live availability.', variant: 'loading' as const };
-    }
-    if (realtimeActive) {
-      return { label: 'In a session', helper: 'Members see you as busy right now.', variant: 'busy' as const };
-    }
-    if (realtimeOnline) {
-      return { label: 'Ready to chat', helper: 'You are discoverable for instant connects.', variant: 'online' as const };
-    }
-    return { label: 'Offline', helper: 'You are hidden until you toggle back on.', variant: 'offline' as const };
-  }, [statusLoading, realtimeActive, realtimeOnline]);
-
-  const readyBadgeClass = useMemo(() => {
-    switch (readyState.variant) {
-      case 'busy':
-        return 'border-amber-400/30 bg-amber-500/10 text-amber-100';
-      case 'online':
-        return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100';
-      case 'loading':
-        return 'border-white/15 bg-white/5 text-white/70';
-      default:
-        return 'border-white/15 bg-white/5 text-white/50';
-    }
-  }, [readyState.variant]);
 
   useEffect(() => {
     if (!profile) {
       return;
     }
-    if (profile.hasActiveSession) {
-      setAvailability('busy');
-    } else if (profile.isOnline) {
-      setAvailability('available');
-    } else {
-      setAvailability('offline');
-    }
     setConversationType(profile.conversationType);
     setInstantRate(profile.instantRatePerMinute ? String(profile.instantRatePerMinute) : '');
     setOpenToRequests(profile.displayMode !== 'by_request');
   }, [profile]);
-
-  const availabilityCopy = useMemo(() => {
-    switch (availability) {
-      case 'busy':
-        return 'Members will see you as in-session but still online.';
-      case 'offline':
-        return 'You will disappear from instant search until you toggle back on.';
-      default:
-        return 'Sam will route members to you instantly.';
-    }
-  }, [availability]);
 
   const disableSubmit = saving || !profile;
 
@@ -104,8 +49,6 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
       await save({
         conversationType,
         instantRatePerMinute: conversationType === 'paid' ? numericRate : null,
-        isOnline: availability !== 'offline',
-        hasActiveSession: availability === 'busy',
         displayMode: openToRequests ? 'normal' : 'by_request'
       });
       setStatusVariant('success');
@@ -134,48 +77,10 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
       {profile && (
         <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Ready to chat</p>
-                <p className="text-xs text-white/60">{readyState.helper}</p>
-              </div>
-              <span className={`rounded-full border px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] ${readyBadgeClass}`}>
-                {readyState.label}
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold">Availability</p>
-                <p className="text-xs text-white/60">Choose how Sam represents you right now.</p>
-              </div>
-              <span className="text-xs uppercase tracking-[0.3em] text-white/50">{availability}</span>
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {availabilityOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`rounded-2xl border bg-white/5 p-4 text-left text-sm transition ${
-                    availability === option.value
-                      ? 'border-aqua/60 bg-aqua/10 text-white'
-                      : 'border-white/15 text-white/70 hover:border-white/30'
-                  }`}
-                  onClick={() => setAvailability(option.value)}
-                >
-                  <p className="font-semibold">{option.label}</p>
-                  <p className="mt-2 text-xs text-white/60">{option.helper}</p>
-                </button>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-white/50">{availabilityCopy}</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-sm font-semibold">Conversation type</p>
-                <p className="text-xs text-white/60">Choose whether your instant connects are free, paid, or charity-focused. Everyone starts in Free mode.</p>
+            <p className="text-xs text-white/60">
+              Choose whether your instant connects are free, paid, or charity-focused. Everyone starts in Free mode.
+            </p>
             <div className="mt-4 flex flex-wrap gap-3">
               {(['free', 'paid', 'charity'] as ConversationCategory[]).map((type) => (
                 <label
