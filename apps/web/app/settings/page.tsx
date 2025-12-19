@@ -12,8 +12,8 @@ import { useProfileDetails } from '../../hooks/useProfileDetails';
 type SettingsTab = 'connections' | 'profile';
 
 const tabs: Array<{ id: SettingsTab; label: string; blurb: string }> = [
-  { id: 'connections', label: 'Availability & Connections', blurb: 'Control how members reach you.' },
-  { id: 'profile', label: 'Profile & Identity', blurb: 'Update who you are and what you share.' }
+  { id: 'profile', label: 'Profile', blurb: 'Update who you are and what you share.' },
+  { id: 'connections', label: 'Preferences', blurb: 'Control how members reach you.' }
 ];
 
 const SettingsContent = () => {
@@ -22,7 +22,7 @@ const SettingsContent = () => {
   const settingsState = useSettings();
   const profileState = useProfileDetails();
 
-  const deriveTab = (value: string | null): SettingsTab => (value === 'profile' ? 'profile' : 'connections');
+  const deriveTab = (value: string | null): SettingsTab => (value === 'connections' ? 'connections' : 'profile');
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => deriveTab(searchParams.get('tab')));
 
   useEffect(() => {
@@ -32,8 +32,8 @@ const SettingsContent = () => {
   const handleTabChange = (tab: SettingsTab) => {
     setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
-    if (tab === 'profile') {
-      params.set('tab', 'profile');
+    if (tab === 'connections') {
+      params.set('tab', 'connections');
     } else {
       params.delete('tab');
     }

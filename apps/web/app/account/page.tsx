@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import AccountProfilePanel from '../../components/AccountProfilePanel';
-import { AvailabilityManager } from '../../components/AvailabilityManager';
 import { BookingsManager } from '../../components/BookingsManager';
 import SettingsConnectionsPanel from '../../components/settings/SettingsConnectionsPanel';
 import SettingsProfilePanel from '../../components/settings/SettingsProfilePanel';
@@ -20,16 +18,16 @@ export default function AccountPage() {
 
   const panelSections = [
     {
-      id: 'settings-connections',
-      label: 'Settings · Availability & connections',
-      tagline: 'Presence toggle, paid modes, and integrations.',
-      content: <SettingsConnectionsPanel embedded settingsState={settingsState} />
-    },
-    {
       id: 'settings-profile',
-      label: 'Settings · Profile & identity',
+      label: 'Profile',
       tagline: 'Update public details, narrative, and preferences.',
       content: <SettingsProfilePanel embedded profileState={profileState} />
+    },
+    {
+      id: 'settings-connections',
+      label: 'Preferences',
+      tagline: 'Presence toggle, paid modes, and integrations.',
+      content: <SettingsConnectionsPanel embedded settingsState={settingsState} />
     },
     {
       id: 'calendar',
@@ -38,16 +36,6 @@ export default function AccountPage() {
       content: (
         <div className="space-y-4">
           <BookingsManager embedded />
-        </div>
-      )
-    },
-    {
-      id: 'availability',
-      label: 'Availability',
-      tagline: 'Control when Sam can auto-book and who can find you.',
-      content: (
-        <div className="space-y-4">
-          <AvailabilityManager embedded />
         </div>
       )
     }
@@ -76,8 +64,6 @@ export default function AccountPage() {
 
       <div className="mx-auto w-full max-w-6xl px-4 pb-12">
         <div className="flex flex-col gap-8 py-10">
-          <AccountProfilePanel profileState={profileState} />
-
           <div className="space-y-4">
             {panelSections.map((panel) => {
               const isOpen = openPanel === panel.id;

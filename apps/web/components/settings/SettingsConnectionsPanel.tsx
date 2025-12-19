@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 import LogoutButton from '../LogoutButton';
+import { AvailabilityManager } from '../AvailabilityManager';
 import { useSettings, AVAILABILITY_PROMPT_KEY, AVAILABILITY_STORAGE_KEY } from '../../hooks/useSettings';
 import type { ConnectionType } from '../../services/settingsApi';
 
@@ -24,6 +25,8 @@ interface SettingsConnectionsPanelProps {
   embedded?: boolean;
   settingsState?: ReturnType<typeof useSettings>;
 }
+
+type PreferenceSection = 'availability-status' | 'availability-schedule' | 'connection' | 'integrations' | 'account';
 
 export default function SettingsConnectionsPanel({ embedded = false, settingsState }: SettingsConnectionsPanelProps) {
   const router = useRouter();
@@ -195,154 +198,175 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
     );
   }
 
-  const cardClass = embedded ? 'rounded-3xl border border-white/12 bg-white/5 p-6' : 'rounded-3xl border border-white/10 bg-white/5 p-6';
+  const sectionCardClass = embedded ? 'rounded-3xl border border-white/12 bg-white/5' : 'rounded-3xl border border-white/10 bg-white/5';
+  const [openSection, setOpenSection] = useState<PreferenceSection | null>('availability-status');
 
-  return (
-    <div className={embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8'}>
-      <div className={cardClass}>
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Availability</h2>
-            <p className="text-sm text-white/60">Toggle whether Sam can surface you in discovery.</p>
-          </div>
-          <button
-            type="button"
-            disabled={savingAvailability}
-            onClick={handleAvailabilityToggle}
-            className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] ${
-              settings?.isOnline ? 'border-aqua/60 text-aqua' : 'border-white/20 text-white/60'
-            }`}
-          >
-            {savingAvailability ? 'Saving…' : settings?.isOnline ? 'On' : 'Off'}
-          </button>
-        </header>
-        <p className="text-sm text-white/60">
-          {settings?.isOnline
-            ? 'You appear in search and Sam can route instant connects.'
-            : 'You are hidden until you toggle availability back on.'}
-        </p>
-        {availabilityNotice && <p className="mt-3 text-xs text-amber-300">{availabilityNotice}</p>}
-        {promptToReenable && (
-          <div className="mt-4 rounded-2xl border border-white/15 bg-black/40 p-4 text-sm text-white/80">
-            <p>You were set to offline after inactivity. Turn availability back on?</p>
-            <button
-              type="button"
-              className="mt-3 rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-5 py-2 text-xs font-semibold text-midnight"
-              onClick={() => {
-                setPromptToReenable(false);
-                window.localStorage.removeItem(AVAILABILITY_PROMPT_KEY);
-                void updateAvailability(true);
-              }}
-            >
-              Re-enable availability
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className={cardClass}>
-        <h2 className="text-xl font-semibold">Connection settings</h2>
-        <p className="text-sm text-white/60">Choose how you connect and whether you accept tips.</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {(['free', 'paid', 'charity'] as ConnectionType[]).map((type) => (
-            <button
-              key={type}
-              type="button"
-              className={`rounded-2xl border p-4 text-left text-sm ${
-                connectionType === type
-                  ? 'border-aqua/60 bg-aqua/10 text-white'
-                  : 'border-white/10 text-white/70 hover:border-white/30'
-              }`}
-              onClick={() => setConnectionType(type)}
-            >
-              <p className="text-base font-semibold capitalize text-white">{type}</p>
-              <p className="mt-2 text-xs text-white/60">
-                {type === 'free' && 'Members can join instantly with no payment.'}
-                {type === 'paid' && 'Set a live rate for instant connects.'}
-                {type === 'charity' && 'Donate the proceeds to a partner organization.'}
+  const sections: Array<{
+    id: PreferenceSection;
+    label: string;
+    tagline: string;
+    content: ReactNode;
+  }> = [
+    {
+      id: 'availability-status',
+      label: 'Availability status',
+      tagline: 'Control whether Sam can surface you right now.',
+      content: (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">Instant availability</h3>
+              <p className="text-sm text-white/60">
+                {settings?.isOnline
+                  ? 'You appear in search and Sam routes instant connects.'
+                  : 'You are hidden until you toggle availability back on.'}
               </p>
-            </button>
-          ))}
-        </div>
-
-        {connectionType === 'paid' && (
-          <label className="mt-6 block text-sm text-white/80">
-            Rate per minute (USD)
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={instantRate}
-              onChange={(event) => setInstantRate(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
-              placeholder="3.00"
-            />
-          </label>
-        )}
-
-        {connectionType === 'charity' && (
-          <label className="mt-6 block text-sm text-white/80">
-            Charity partner
-            <select
-              value={selectedCharity ?? ''}
-              onChange={(event) => setSelectedCharity(event.target.value || null)}
-              className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
+            </div>
+            <button
+              type="button"
+              disabled={savingAvailability}
+              onClick={handleAvailabilityToggle}
+              className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] ${
+                settings?.isOnline ? 'border-aqua/60 text-aqua' : 'border-white/20 text-white/60'
+              }`}
             >
-              <option value="" disabled>
-                Choose a charity
-              </option>
-              {availableCharities.map((charity) => (
-                <option key={charity.id} value={charity.id}>
-                  {charity.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        <div className="mt-6 flex items-center gap-3">
-          <label className="flex cursor-pointer items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded"
-              checked={acceptTips}
-              onChange={(event) => setAcceptTips(event.target.checked)}
-            />
-            Accept optional tips ({acceptTips ? 'enabled' : 'disabled'})
-          </label>
+              {savingAvailability ? 'Saving…' : settings?.isOnline ? 'On' : 'Off'}
+            </button>
+          </div>
+          {availabilityNotice && <p className="text-xs text-amber-300">{availabilityNotice}</p>}
+          {promptToReenable && (
+            <div className="rounded-2xl border border-white/15 bg-black/40 p-4 text-sm text-white/80">
+              <p>You were set to offline after inactivity. Turn availability back on?</p>
+              <button
+                type="button"
+                className="mt-3 rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-5 py-2 text-xs font-semibold text-midnight"
+                onClick={() => {
+                  setPromptToReenable(false);
+                  window.localStorage.removeItem(AVAILABILITY_PROMPT_KEY);
+                  void updateAvailability(true);
+                }}
+              >
+                Re-enable availability
+              </button>
+            </div>
+          )}
         </div>
-
-        {connectionErrors.length > 0 && (
-          <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-rose-300">
-            {connectionErrors.map((item) => (
-              <li key={item}>{item}</li>
+      )
+    },
+    {
+      id: 'availability-schedule',
+      label: 'Weekly schedule & blocks',
+      tagline: 'Set recurring hours, overrides, and integrations.',
+      content: <AvailabilityManager embedded />
+    },
+    {
+      id: 'connection',
+      label: 'Connection modes',
+      tagline: 'Choose free, paid, or charity conversations.',
+      content: (
+        <div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {(['free', 'paid', 'charity'] as ConnectionType[]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                className={`rounded-2xl border p-4 text-left text-sm ${
+                  connectionType === type
+                    ? 'border-aqua/60 bg-aqua/10 text-white'
+                    : 'border-white/10 text-white/70 hover:border-white/30'
+                }`}
+                onClick={() => setConnectionType(type)}
+              >
+                <p className="text-base font-semibold capitalize text-white">{type}</p>
+                <p className="mt-2 text-xs text-white/60">
+                  {type === 'free' && 'Members can join instantly with no payment.'}
+                  {type === 'paid' && 'Set a live rate for instant connects.'}
+                  {type === 'charity' && 'Donate the proceeds to a partner organization.'}
+                </p>
+              </button>
             ))}
-          </ul>
-        )}
+          </div>
 
-        {connectionMessage && <p className="mt-4 text-xs text-white/70">{connectionMessage}</p>}
+          {connectionType === 'paid' && (
+            <label className="mt-6 block text-sm text-white/80">
+              Rate per minute (USD)
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={instantRate}
+                onChange={(event) => setInstantRate(event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
+                placeholder="3.00"
+              />
+            </label>
+          )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            disabled={!hasChanges || savingConnection}
-            onClick={() => void handleSaveConnection()}
-            className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-40"
-          >
-            {savingConnection ? 'Saving…' : 'Save changes'}
-          </button>
-          <p className="text-xs text-white/60">
-            Current mode: <span className="font-semibold text-white">{connectionType}</span>{' '}
-            {connectionType === 'paid' && numericRate ? `· ${formatCurrency(trimmedRate)}/min` : null}
-          </p>
+          {connectionType === 'charity' && (
+            <label className="mt-6 block text-sm text-white/80">
+              Charity partner
+              <select
+                value={selectedCharity ?? ''}
+                onChange={(event) => setSelectedCharity(event.target.value || null)}
+                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
+              >
+                <option value="" disabled>
+                  Choose a charity
+                </option>
+                {availableCharities.map((charity) => (
+                  <option key={charity.id} value={charity.id}>
+                    {charity.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <div className="mt-6 flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded"
+                checked={acceptTips}
+                onChange={(event) => setAcceptTips(event.target.checked)}
+              />
+              Accept optional tips ({acceptTips ? 'enabled' : 'disabled'})
+            </label>
+          </div>
+
+          {connectionErrors.length > 0 && (
+            <ul className="mt-4 list-disc space-y-1 pl-5 text-xs text-rose-300">
+              {connectionErrors.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
+
+          {connectionMessage && <p className="mt-4 text-xs text-white/70">{connectionMessage}</p>}
+
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              disabled={!hasChanges || savingConnection}
+              onClick={() => void handleSaveConnection()}
+              className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-40"
+            >
+              {savingConnection ? 'Saving…' : 'Save changes'}
+            </button>
+            <p className="text-xs text-white/60">
+              Current mode: <span className="font-semibold text-white">{connectionType}</span>{' '}
+              {connectionType === 'paid' && numericRate ? `· ${formatCurrency(trimmedRate)}/min` : null}
+            </p>
+          </div>
         </div>
-      </div>
-
-      <div className={cardClass}>
-        <h2 className="text-xl font-semibold">Calendar & payments</h2>
-        <p className="text-sm text-white/60">Keep Sam aligned with your availability and payouts.</p>
-
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
+      )
+    },
+    {
+      id: 'integrations',
+      label: 'Calendar, payments & sync',
+      tagline: 'Align Google Calendar and payouts.',
+      content: (
+        <div className="space-y-6">
           <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
             <p className="text-sm font-semibold">Google Calendar</p>
             <p className="text-xs text-white/60">{settings?.calendarConnected ? 'Connected ✓' : 'Not connected'}</p>
@@ -403,14 +427,17 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
               )}
             </div>
           </div>
+
+          {integrationsMessage && <p className="text-xs text-white/70">{integrationsMessage}</p>}
         </div>
-
-        {integrationsMessage && <p className="mt-4 text-xs text-white/70">{integrationsMessage}</p>}
-      </div>
-
-      <div className={cardClass}>
-        <h2 className="text-xl font-semibold">Account</h2>
-        <div className="mt-4 flex flex-col gap-3 text-sm">
+      )
+    },
+    {
+      id: 'account',
+      label: 'Account controls',
+      tagline: 'Security, logout, and account deletion.',
+      content: (
+        <div className="flex flex-col gap-3 text-sm">
           <button
             type="button"
             className="rounded-2xl border border-white/15 px-4 py-3 text-left hover:border-white/40"
@@ -432,7 +459,31 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
             Delete account
           </button>
         </div>
-      </div>
+      )
+    }
+  ];
+
+  return (
+    <div className={embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8'}>
+      {sections.map((section) => {
+        const isOpen = openSection === section.id;
+        return (
+          <section key={section.id} className={`${sectionCardClass} transition-colors`}>
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+              onClick={() => setOpenSection((prev) => (prev === section.id ? null : section.id))}
+            >
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/50">{section.label}</p>
+                <p className="text-sm text-white/70">{section.tagline}</p>
+              </div>
+              <span className="text-xl text-white/60">{isOpen ? '−' : '+'}</span>
+            </button>
+            {isOpen && <div className="border-t border-white/10 px-5 py-4">{section.content}</div>}
+          </section>
+        );
+      })}
     </div>
   );
 }
