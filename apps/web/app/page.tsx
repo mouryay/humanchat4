@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import HeroExperience from '../components/HeroExperience';
+import HomePageExperience from '../components/HomePageExperience';
 
 export const metadata: Metadata = {
   title: 'HumanChat — Talk to Anyone, About Anything',
@@ -21,11 +21,5 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
-  return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-midnight text-white">
-      <main className="flex flex-1 items-center justify-center px-4 py-6 sm:py-10">
-        <HeroExperience />
-      </main>
-    </div>
-  );
+  return <HomePageExperience />;
 }
