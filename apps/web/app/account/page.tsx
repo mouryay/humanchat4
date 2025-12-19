@@ -30,6 +30,7 @@ const formatSessionTime = (start: number, end: number) => {
 
 export default function AccountPage() {
   const profileState = useProfileDetails();
+  const { profile } = profileState;
   const { identity } = useAuthIdentity();
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
@@ -71,8 +72,6 @@ export default function AccountPage() {
     };
   }, []);
 
-  return (
-    <main className="min-h-screen bg-midnight text-white">
   const panelSections = [
     {
       id: 'calendar',
@@ -144,6 +143,9 @@ export default function AccountPage() {
       )
     }
   ];
+
+  return (
+    <main className="min-h-screen bg-midnight text-white">
       <header className="border-b border-white/10 px-6 py-6">
         <div className="flex flex-wrap items-center gap-4">
           <Link
