@@ -16,14 +16,20 @@ interface SettingsProfilePanelProps {
   embedded?: boolean;
 }
 
-type ProfileSection = 'identity' | 'story' | 'preferences' | null;
+type ProfileSection = 'summary' | 'identity' | 'story' | 'preferences' | null;
 
 export default function SettingsProfilePanel({ profileState, embedded = false }: SettingsProfilePanelProps) {
   const resolvedProfileState = profileState ?? useProfileDetails();
   const containerClass = embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8 text-white';
-  const [openSection, setOpenSection] = useState<ProfileSection>('identity');
+  const [openSection, setOpenSection] = useState<ProfileSection>('summary');
 
   const editSections = [
+    {
+      id: 'summary' as const,
+      label: 'How members see you',
+      tagline: 'At-a-glance public profile preview.',
+      content: <ProfileDetailsSummary profileState={resolvedProfileState} />
+    },
     {
       id: 'identity' as const,
       label: 'Identity & appearance',
@@ -51,8 +57,6 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
 
   return (
     <div className={containerClass}>
-      <ProfileDetailsSummary profileState={resolvedProfileState} />
-
       <div className="space-y-3">
         {editSections.map((section) => {
           const isOpen = openSection === section.id;
