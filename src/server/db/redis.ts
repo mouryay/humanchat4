@@ -57,6 +57,12 @@ declare global {
 const globalRedis = globalThis as typeof globalThis & { __humanchatRedis__?: Redis };
 
 export const createRedisClient = (): Redis => {
+  const isTestEnv = process.env.NODE_ENV === 'test';
+
+  if (isTestEnv) {
+    return new NoopRedis() as unknown as Redis;
+  }
+
   if (!env.redisUrl) {
     console.warn('[Redis] REDIS_URL missing; disabling Redis features until Memorystore is configured.');
     return new NoopRedis() as unknown as Redis;
@@ -105,11 +111,15 @@ export const createRedisClient = (): Redis => {
   });
   
   client.on('close', () => {
-    console.warn('[Redis] ⚠️  Connection closed');
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[Redis] ⚠️  Connection closed');
+    }
   });
   
   client.on('reconnecting', () => {
-    console.info('[Redis] 🔄 Reconnecting...');
+    if (process.env.NODE_ENV !== 'test') {
+      console.info('[Redis] 🔄 Reconnecting...');
+    }
   });
   
   return client;

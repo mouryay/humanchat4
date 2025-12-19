@@ -30,6 +30,13 @@ export interface User {
   manager_display_name?: string | null;
   presence_state?: 'active' | 'idle' | 'offline' | null;
   last_seen_at?: string | null;
+  linkedin_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  quora_url?: string | null;
+  medium_url?: string | null;
+  youtube_url?: string | null;
+  other_social_url?: string | null;
   created_at: string;
   updated_at: string;
 }

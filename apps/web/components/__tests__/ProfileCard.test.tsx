@@ -59,7 +59,7 @@ describe('ProfileCard', () => {
     await userEvent.click(sendRequestButton);
     expect(bookSpy).toHaveBeenCalledWith(profile);
     expect(connectSpy).not.toHaveBeenCalled();
-    expect(screen.getByText(/works through a representative/i)).toBeInTheDocument();
+    expect(screen.getByText(/keeps these chats private/i)).toBeInTheDocument();
   });
 
   it('renders Human fallback copy when profile has no headline or bio', () => {

@@ -33,12 +33,12 @@ export const upsertAvailabilityRule = async (
 ): Promise<any> => {
   // Validate time format
   if (!/^\d{2}:\d{2}$/.test(input.startTime) || !/^\d{2}:\d{2}$/.test(input.endTime)) {
-    throw new ApiError(400, 'Invalid time format. Use HH:MM');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Invalid time format. Use HH:MM');
   }
 
   // Validate day of week
   if (input.dayOfWeek < 0 || input.dayOfWeek > 6) {
-    throw new ApiError(400, 'Day of week must be between 0 (Sunday) and 6 (Saturday)');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Day of week must be between 0 (Sunday) and 6 (Saturday)');
   }
 
   const result = await query(
@@ -104,7 +104,7 @@ export const setWeeklyAvailability = async (
     });
   } catch (error: any) {
     console.error('Error in setWeeklyAvailability:', error);
-    throw new ApiError(500, `Failed to update availability: ${error.message}`);
+    throw new ApiError(500, 'SERVER_ERROR', `Failed to update availability: ${error.message}`);
   }
 };
 
@@ -132,7 +132,7 @@ export const deleteAvailabilityRule = async (ruleId: string, expertId: string): 
   );
 
   if (result.rowCount === 0) {
-    throw new ApiError(404, 'Availability rule not found');
+    throw new ApiError(404, 'NOT_FOUND', 'Availability rule not found');
   }
 };
 
@@ -144,12 +144,12 @@ export const createAvailabilityOverride = async (
 ): Promise<any> => {
   // Validate date format
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.overrideDate)) {
-    throw new ApiError(400, 'Invalid date format. Use YYYY-MM-DD');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Invalid date format. Use YYYY-MM-DD');
   }
 
   // Validate override type
   if (input.overrideType === 'available' && (!input.startTime || !input.endTime)) {
-    throw new ApiError(400, 'Available override requires start and end time');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Available override requires start and end time');
   }
 
   const result = await query(
@@ -204,7 +204,7 @@ export const deleteAvailabilityOverride = async (
   );
 
   if (result.rowCount === 0) {
-    throw new ApiError(404, 'Availability override not found');
+    throw new ApiError(404, 'NOT_FOUND', 'Availability override not found');
   }
 };
 

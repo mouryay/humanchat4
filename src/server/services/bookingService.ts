@@ -46,8 +46,8 @@ export interface Booking {
   id: string;
   expertId: string;
   userId: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: number;
+  endTime: number;
   durationMinutes: number;
   timezone: string;
   status: string;
@@ -57,11 +57,12 @@ export interface Booking {
   calendarEventId: string | null;
   price: number | null;
   paymentStatus: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface BookingWithDetails extends Booking {
+  bookingId: string;
   expertName: string;
   expertAvatar: string | null;
   expertHeadline: string | null;
@@ -380,7 +381,7 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     );
 
     if (isDayBlocked) {
-      throw new ApiError(409, 'Expert is unavailable on this date');
+      throw new ApiError(409, 'CONFLICT', 'Expert is unavailable on this date');
     }
 
     // Check slot availability (with row lock)
@@ -390,7 +391,7 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     );
 
     if (!available.rows[0].available) {
-      throw new ApiError(409, 'Time slot is no longer available');
+      throw new ApiError(409, 'CONFLICT', 'Time slot is no longer available');
     }
 
     // Get expert and user details
@@ -405,7 +406,7 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     );
 
     if (!expertResult.rows[0] || !userResult.rows[0]) {
-      throw new ApiError(404, 'Expert or user not found');
+      throw new ApiError(404, 'NOT_FOUND', 'Expert or user not found');
     }
 
     const expert = expertResult.rows[0];
@@ -516,7 +517,7 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
   );
 
   if (result.rows.length === 0) {
-    throw new ApiError(404, 'Booking not found');
+    throw new ApiError(404, 'NOT_FOUND', 'Booking not found');
   }
 
   const row = result.rows[0];
@@ -685,7 +686,7 @@ export const cancelBooking = async (
   const booking = await getBookingById(bookingId);
 
   if (!['scheduled', 'in_progress'].includes(booking.status)) {
-    throw new ApiError(400, 'Booking cannot be cancelled');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Booking cannot be cancelled');
   }
 
   // Check cancellation policy (e.g., no cancel within 1 hour)
@@ -693,6 +694,7 @@ export const cancelBooking = async (
   if (booking.startTime < oneHourFromNow) {
     throw new ApiError(
       400,
+      'INVALID_REQUEST',
       'Cannot cancel booking less than 1 hour before start time'
     );
   }
@@ -759,12 +761,12 @@ export const rescheduleBooking = async (
   const oldBooking = await getBookingById(bookingId);
 
   if (!['scheduled'].includes(oldBooking.status)) {
-    throw new ApiError(400, 'Booking cannot be rescheduled');
+    throw new ApiError(400, 'INVALID_REQUEST', 'Booking cannot be rescheduled');
   }
 
   // Check if the new time is in the future
   if (newStartTime.getTime() <= Date.now()) {
-    throw new ApiError(400, 'New booking time must be in the future');
+    throw new ApiError(400, 'INVALID_REQUEST', 'New booking time must be in the future');
   }
 
   // Validate availability for the new slot
@@ -775,7 +777,7 @@ export const rescheduleBooking = async (
   );
 
   if (!isAvailable) {
-    throw new ApiError(409, 'The selected time slot is no longer available');
+    throw new ApiError(409, 'CONFLICT', 'The selected time slot is no longer available');
   }
 
   const client = await pool.connect();

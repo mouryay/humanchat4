@@ -29,6 +29,13 @@ export interface UserProfile {
   managerDisplayName: string | null;
   displayMode: 'normal' | 'by_request' | 'confidential' | null;
   confidentialRate: boolean | null;
+  linkedinUrl: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  quoraUrl: string | null;
+  mediumUrl: string | null;
+  youtubeUrl: string | null;
+  otherSocialUrl: string | null;
   updatedAt: string;
 }
 
@@ -54,6 +61,13 @@ interface UserProfileApiResponse {
   confidential_rate: boolean | null;
   presence_state?: 'active' | 'idle' | 'offline' | null;
   last_seen_at?: string | null;
+  linkedin_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  quora_url?: string | null;
+  medium_url?: string | null;
+  youtube_url?: string | null;
+  other_social_url?: string | null;
   updated_at: string;
 }
 
@@ -131,6 +145,13 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   managerDisplayName: record.manager_display_name ?? null,
   displayMode: record.display_mode ?? null,
   confidentialRate: record.confidential_rate,
+  linkedinUrl: record.linkedin_url ?? null,
+  facebookUrl: record.facebook_url ?? null,
+  instagramUrl: record.instagram_url ?? null,
+  quoraUrl: record.quora_url ?? null,
+  mediumUrl: record.medium_url ?? null,
+  youtubeUrl: record.youtube_url ?? null,
+  otherSocialUrl: record.other_social_url ?? null,
   updatedAt: record.updated_at
 });
 
@@ -167,6 +188,13 @@ export interface ProfileUpdateInput {
   isOnline?: boolean;
   hasActiveSession?: boolean;
   displayMode?: 'normal' | 'by_request' | 'confidential' | null;
+  linkedinUrl?: string | null;
+  facebookUrl?: string | null;
+  instagramUrl?: string | null;
+  quoraUrl?: string | null;
+  mediumUrl?: string | null;
+  youtubeUrl?: string | null;
+  otherSocialUrl?: string | null;
 }
 
 export const fetchUserProfile = async (id: string): Promise<UserProfile> => {
@@ -204,6 +232,27 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   }
   if ('displayMode' in updates) {
     payload.display_mode = updates.displayMode ?? null;
+  }
+  if ('linkedinUrl' in updates) {
+    payload.linkedin_url = updates.linkedinUrl ?? null;
+  }
+  if ('facebookUrl' in updates) {
+    payload.facebook_url = updates.facebookUrl ?? null;
+  }
+  if ('instagramUrl' in updates) {
+    payload.instagram_url = updates.instagramUrl ?? null;
+  }
+  if ('quoraUrl' in updates) {
+    payload.quora_url = updates.quoraUrl ?? null;
+  }
+  if ('mediumUrl' in updates) {
+    payload.medium_url = updates.mediumUrl ?? null;
+  }
+  if ('youtubeUrl' in updates) {
+    payload.youtube_url = updates.youtubeUrl ?? null;
+  }
+  if ('otherSocialUrl' in updates) {
+    payload.other_social_url = updates.otherSocialUrl ?? null;
   }
 
   const response = await handleResponse(
