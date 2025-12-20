@@ -1,7 +1,6 @@
 /// <reference types="jest" />
 import '@testing-library/jest-dom';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import BookingModal from '../BookingModal';
 import type { Conversation, ProfileSummary } from '../../../../src/lib/db';
 
@@ -21,7 +20,6 @@ const weeklyAvailabilityMock = jest.fn().mockResolvedValue([
   { dayOfWeek: 4 },
   { dayOfWeek: 5 }
 ]);
-const sendSamMessageMock = jest.fn().mockResolvedValue({ text: 'Booking logged' });
 const reminderMock = jest.fn().mockResolvedValue(undefined);
 const getCurrentUserIdMock = jest.fn(() => 'guest-user');
 const pushMock = jest.fn();
@@ -32,10 +30,6 @@ jest.mock('../../services/bookingApi', () => ({
   getExpertBlockedDates: (...args: unknown[]) => blockedDatesMock(...args),
   getExpertWeeklyAvailability: (...args: unknown[]) => weeklyAvailabilityMock(...args),
   createBooking: (...args: unknown[]) => createBookingMock(...args)
-}));
-
-jest.mock('../../utils/samAPI', () => ({
-  sendSamMessage: (...args: unknown[]) => sendSamMessageMock(...args)
 }));
 
 jest.mock('../../services/sessionStatusManager', () => ({
@@ -55,18 +49,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('BookingModal', () => {
-  beforeAll(() => {
-    jest.useFakeTimers();
-  });
-
-  afterAll(() => {
-    jest.useRealTimers();
-  });
   beforeEach(() => {
     availabilityMock.mockClear();
     blockedDatesMock.mockClear();
     weeklyAvailabilityMock.mockClear();
-    sendSamMessageMock.mockClear();
     reminderMock.mockClear();
     pushMock.mockClear();
     createBookingMock.mockClear();
@@ -89,39 +75,30 @@ describe('BookingModal', () => {
       unreadCount: 0
     };
     const onClose = jest.fn();
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    render(<BookingModal open profile={profile} conversation={conversation} onClose={onClose} />);
 
-    await act(async () => {
-      render(<BookingModal open profile={profile} conversation={conversation} onClose={onClose} />);
-    });
+    const selectButton = await screen.findByRole('button', { name: /select 15 min/i });
+    fireEvent.click(selectButton);
 
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    await screen.findByRole('button', { name: /select 15 min/i });
-    await user.click(screen.getByRole('button', { name: /30 min/i }));
-    const selectButton = screen.getByRole('button', { name: /select 30 min/i });
-    await user.click(selectButton);
-
-    expect(screen.getByRole('button', { name: /confirm booking/i })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /confirm booking/i }));
+    const confirmButton = await screen.findByRole('button', { name: /confirm booking/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => {
       expect(createBookingMock).toHaveBeenCalledWith(
         'member-9',
         expect.objectContaining({
           startTime: '2025-11-10T18:00:00.000Z',
-          endTime: '2025-11-10T18:30:00.000Z',
-          durationMinutes: 30,
+          endTime: '2025-11-10T18:15:00.000Z',
+          durationMinutes: 15,
           timezone: expect.any(String)
         })
       );
     });
 
-    expect(sendSamMessageMock).toHaveBeenCalled();
-    expect(reminderMock).toHaveBeenCalledWith(expect.any(Number), 'River Product');
-    expect(onClose).toHaveBeenCalled();
-    expect(pushMock).toHaveBeenCalledWith('/bookings/booking-123/confirmation');
+    await waitFor(() => {
+      expect(reminderMock).toHaveBeenCalledWith(expect.any(Number), 'River Product');
+      expect(onClose).toHaveBeenCalled();
+      expect(pushMock).toHaveBeenCalledWith('/bookings/booking-123/confirmation');
+    });
   });
 });

@@ -18,6 +18,7 @@ interface ActionRendererProps {
   connectingProfileId?: string | null;
   directoryProfiles?: ProfileSummary[];
   currentUserId?: string;
+  selfNameTokens?: string[];
 }
 
 const formatRate = (rate?: number) => (rate ? `$${rate.toFixed(2)}/min` : '');
@@ -229,9 +230,25 @@ export default function ActionRenderer({
   onBookTime,
   connectingProfileId,
   directoryProfiles,
-  currentUserId
+  currentUserId,
+  selfNameTokens
 }: ActionRendererProps) {
   if (!action) return null;
+
+  const selfNameLookup = useMemo(() => {
+    return new Set(
+      (selfNameTokens ?? [])
+        .map((token) => token?.trim().toLowerCase())
+        .filter((token): token is string => Boolean(token))
+    );
+  }, [selfNameTokens]);
+
+  const matchesSelfName = (name?: string | null) => {
+    if (!name || selfNameLookup.size === 0) {
+      return false;
+    }
+    return selfNameLookup.has(name.trim().toLowerCase());
+  };
 
   const directoryById = useMemo(() => {
     const map = new Map<string, ProfileSummary>();
@@ -242,10 +259,13 @@ export default function ActionRenderer({
       if (currentUserId && profile.userId === currentUserId) {
         return;
       }
+      if (matchesSelfName(profile.name)) {
+        return;
+      }
       map.set(profile.userId, profile);
     });
     return map;
-  }, [directoryProfiles, currentUserId]);
+  }, [directoryProfiles, currentUserId, selfNameLookup]);
 
   const profileDirectory = useMemo(() => {
     const map = new Map<string, ProfileSummary>();
@@ -256,21 +276,32 @@ export default function ActionRenderer({
       if (currentUserId && profile.userId === currentUserId) {
         return;
       }
+      if (matchesSelfName(profile.name)) {
+        return;
+      }
       map.set(profile.name.trim().toLowerCase(), profile);
     });
     return map;
-  }, [directoryProfiles, currentUserId]);
+  }, [directoryProfiles, currentUserId, selfNameLookup]);
 
   switch (action.type || action.actionType) {
     case 'show_profiles': {
       const profiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
       const visibleProfiles = profiles.filter((profile) => {
-        if (!currentUserId) {
+        if (isLegacyProfile(profile)) {
+          if (currentUserId && profile.userId === currentUserId) {
+            return false;
+          }
+          if (matchesSelfName(profile.name)) {
+            return false;
+          }
           return true;
         }
-        if (isLegacyProfile(profile)) {
-          return profile.userId !== currentUserId;
+
+        if (matchesSelfName(profile.name)) {
+          return false;
         }
+
         return true;
       });
       const legacyProfiles = visibleProfiles.filter(isLegacyProfile) as ProfileSummary[];

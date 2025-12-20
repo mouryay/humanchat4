@@ -15,6 +15,8 @@ import { sessionStatusManager } from '../services/sessionStatusManager';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
+type ShowcaseEntry = SamShowcaseProfile & { userId?: string };
+
 interface DirectoryUserRecord {
   id: string;
   name?: string | null;
@@ -86,8 +88,9 @@ const mapDirectoryUser = (user: DirectoryUserRecord): ProfileSummary => {
   };
 };
 
-const profileSummaryToShowcase = (profile: ProfileSummary): SamShowcaseProfile => {
+const profileSummaryToShowcase = (profile: ProfileSummary): ShowcaseEntry => {
   return {
+    userId: profile.userId,
     name: profile.name ?? 'Human',
     headline: profile.headline ?? 'HumanChat expert',
     expertise: profile.scheduledRates?.map((slot) => `${slot.durationMinutes} min`) ?? [],
@@ -108,10 +111,11 @@ interface SamChatViewProps {
 
 const isSamMessage = (message: Message) => message.type === 'sam_response' || message.senderId === 'sam';
 
-const normalizeProfile = (profile: ProfileSummary | SamShowcaseProfile, index: number): SamShowcaseProfile => {
+const normalizeProfile = (profile: ProfileSummary | SamShowcaseProfile, index: number): ShowcaseEntry => {
   if ('rate_per_minute' in profile || 'status' in profile) {
-    const typed = profile as SamShowcaseProfile;
+    const typed = profile as SamShowcaseProfile & { userId?: string };
     return {
+      userId: typeof typed.userId === 'string' ? typed.userId : undefined,
       name: typed.name ?? `Profile ${index + 1}`,
       headline: typed.headline ?? 'HumanChat expert',
       expertise: Array.isArray(typed.expertise) ? typed.expertise : [],
@@ -122,6 +126,7 @@ const normalizeProfile = (profile: ProfileSummary | SamShowcaseProfile, index: n
 
   const legacy = profile as ProfileSummary;
   return {
+    userId: legacy.userId,
     name: legacy.name ?? `Profile ${index + 1}`,
     headline: legacy.headline ?? 'HumanChat expert',
     expertise: legacy.scheduledRates?.map((slot) => `${slot.durationMinutes} min`) ?? [],
@@ -232,7 +237,7 @@ export default function SamChatView({
   }, [messages, currentUserId]);
 
   const knownProfiles = useMemo(() => {
-    const collected = new Map<string, SamShowcaseProfile>();
+    const collected = new Map<string, ShowcaseEntry>();
 
     orderedMessages.forEach((message) => {
       (message.actions ?? []).forEach((action) => {
@@ -240,7 +245,7 @@ export default function SamChatView({
         const profiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
         profiles.forEach((profile, index) => {
           const normalized = normalizeProfile(profile, index);
-          const key = normalized.name?.toLowerCase() ?? `profile-${index}`;
+          const key = normalized.userId ?? normalized.name?.toLowerCase() ?? `profile-${index}`;
           collected.set(key, normalized);
         });
       });
@@ -249,17 +254,13 @@ export default function SamChatView({
     return Array.from(collected.values());
   }, [orderedMessages]);
 
-  const fallbackProfiles = useMemo(() => {
-    return conversation.participants
-      .filter((participant) => participant !== 'sam' && participant !== localUserId)
-      .map((participantId) => ({
-        name: conversation.participantLabels?.[participantId] ?? participantId,
-        headline: 'HumanChat expert',
-        status: 'available' as const,
-        expertise: [],
-        rate_per_minute: 0
-      }));
-  }, [conversation.participants, conversation.participantLabels, localUserId]);
+  const selfNameTokens = useMemo(() => {
+    const names = new Set<string>();
+    if (localUserId && conversation.participantLabels?.[localUserId]) {
+      names.add(conversation.participantLabels[localUserId].trim().toLowerCase());
+    }
+    return names;
+  }, [conversation.participantLabels, localUserId]);
 
   const loadOnlineProfiles = useCallback(async (): Promise<ProfileSummary[]> => {
     try {
@@ -302,27 +303,72 @@ export default function SamChatView({
     };
   }, [loadOnlineProfiles]);
 
+  useEffect(() => {
+    if (!localUserId || localUserId === 'user_local') {
+      return;
+    }
+    setOnlineProfiles((profiles) => profiles.filter((profile) => profile.userId !== localUserId));
+  }, [localUserId]);
+
   const buildAvailableProfiles = useCallback(
     (overrideOnline?: ProfileSummary[]) => {
-      const registry = new Map<string, SamShowcaseProfile>();
-      const register = (profile?: SamShowcaseProfile | null) => {
-        if (!profile) return;
-        const key = profile.name?.toLowerCase() ?? `profile-${registry.size}`;
-        if (!registry.has(key)) {
-          registry.set(key, profile);
+      const registry = new Map<string, ShowcaseEntry>();
+      const liveDirectory = (overrideOnline ?? onlineProfiles).filter(
+        (profile) => profile.isOnline && !profile.hasActiveSession
+      );
+      const liveIdLookup = new Set(
+        liveDirectory.map((profile) => profile.userId).filter(Boolean) as string[]
+      );
+      const liveNameLookup = new Set(
+        liveDirectory
+          .map((profile) => profile.name?.trim().toLowerCase())
+          .filter((name): name is string => Boolean(name))
+      );
+      const selfNameLookup = new Set(selfNameTokens);
+
+      const shouldSkipProfile = (profile: ShowcaseEntry): boolean => {
+        const normalizedName = profile.name?.trim().toLowerCase();
+        if (profile.userId && localUserId && profile.userId === localUserId) {
+          return true;
         }
+        if (!profile.userId && normalizedName && selfNameLookup.has(normalizedName)) {
+          return true;
+        }
+        return false;
       };
 
-      knownProfiles.forEach(register);
-      (overrideOnline ?? onlineProfiles).forEach((profile) => register(profileSummaryToShowcase(profile)));
+      const register = (profile?: ShowcaseEntry | null) => {
+        if (!profile || shouldSkipProfile(profile)) {
+          return;
+        }
+        const key = profile.userId ?? profile.name?.trim().toLowerCase();
+        if (!key || registry.has(key)) {
+          return;
+        }
+        registry.set(key, profile);
+      };
 
-      if (registry.size === 0) {
-        fallbackProfiles.forEach(register);
+      liveDirectory.map((profile) => profileSummaryToShowcase(profile)).forEach(register);
+
+      if (registry.size === 0 && (liveIdLookup.size > 0 || liveNameLookup.size > 0)) {
+        knownProfiles
+          .filter((profile) => profile.status === 'available')
+          .filter((profile) => {
+            if (profile.userId && liveIdLookup.size > 0) {
+              return liveIdLookup.has(profile.userId);
+            }
+            const normalizedName = profile.name?.trim().toLowerCase();
+            if (normalizedName && liveNameLookup.size > 0) {
+              return liveNameLookup.has(normalizedName);
+            }
+            return false;
+          })
+          .forEach(register);
       }
 
-      return registry.size > 0 ? Array.from(registry.values()) : fallbackProfiles;
+      return Array.from(registry.values());
     },
-    [knownProfiles, onlineProfiles, fallbackProfiles]
+    [knownProfiles, localUserId, onlineProfiles, selfNameTokens]
   );
 
   const handleContainerRef = useCallback(
@@ -514,6 +560,7 @@ export default function SamChatView({
                       connectingProfileId={connectingProfileId}
                       directoryProfiles={onlineProfiles}
                       currentUserId={localUserId}
+                      selfNameTokens={Array.from(selfNameTokens)}
                     />
                   ))}
                 </div>
