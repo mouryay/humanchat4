@@ -415,7 +415,7 @@ export default function ActionRenderer({
     }
     case 'system_notice': {
       const notice = action as Extract<Action, { type: 'system_notice' }>;
-      return <div className={styles.noticeBanner}>{notice.notice || notice.label}</div>;
+      return <div className={`${styles.noticeBanner} ${styles.systemNoticeBanner}`}>{notice.notice || notice.label}</div>;
     }
     case 'create_session': {
       const payload = action as Extract<Action, { type: 'create_session' }>;
@@ -477,9 +477,9 @@ export default function ActionRenderer({
     case 'follow_up_prompt': {
       const followUp = action as Extract<Action, { type: 'follow_up_prompt' }>;
       return (
-        <div className={styles.noticeBanner}>
-          <strong>Try asking Sam:</strong>
-          <p>{followUp.prompt}</p>
+        <div className={styles.tipCard}>
+          <span className={styles.tipCardTitle}>💡 Try asking Sam</span>
+          <p className={styles.tipCardPrompt}>{followUp.prompt}</p>
         </div>
       );
     }

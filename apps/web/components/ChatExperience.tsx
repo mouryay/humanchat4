@@ -282,13 +282,20 @@ const ChatShell = () => {
             )}
           </section>
         ) : (
-          <section className="flex flex-1 flex-col overflow-hidden">
-            <ConversationView
-              key={`desktop-${activeConversationId}`}
-              activeConversationId={activeConversationId}
-              onSelectConversation={handleSelectConversation}
+          <>
+            <section className="flex flex-1 flex-col overflow-hidden">
+              <ConversationView
+                key={`desktop-${activeConversationId}`}
+                activeConversationId={activeConversationId}
+                onSelectConversation={handleSelectConversation}
+              />
+            </section>
+            <div
+              aria-hidden
+              className="flex h-full shrink-0 flex-col border-l border-white/10 bg-midnight/40"
+              style={{ width: 'var(--sidebar-width)', minWidth: 'var(--sidebar-width)' }}
             />
-          </section>
+          </>
         )}
       </div>
       {isMobile && <MobileBottomNav active={activeNav} onChange={handleNavChange} hasUnread={unreadTotal > 0} />}

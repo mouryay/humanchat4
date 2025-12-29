@@ -61,6 +61,7 @@ export default function MessageBubble({
 }: MessageBubbleProps) {
   const touchStartX = useRef<number | null>(null);
   const touchDelta = useRef(0);
+  const isSystemMessage = message.type === 'system_notice';
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     touchStartX.current = event.touches[0].clientX;
@@ -86,17 +87,21 @@ export default function MessageBubble({
     conversation ?? null
   );
 
+  const rowClass = clsx(
+    styles.bubbleRow,
+    isSystemMessage ? styles.systemRow : variant === 'sam' ? styles.samRow : styles.userRow
+  );
+
+  const stackClass = clsx(styles.messageBubble, isSystemMessage && styles.systemMessage);
+  const bubbleClass = clsx(styles.bubble, isSystemMessage && styles.systemBubble);
+  const metaClass = clsx(styles.messageMeta, isSystemMessage && styles.systemMeta);
+
   return (
-    <div
-      className={clsx(styles.bubbleRow, variant === 'sam' ? styles.samRow : styles.userRow)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className={styles.messageBubble}>
-        <div className={styles.bubble}>{content}</div>
+    <div className={rowClass} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      <div className={stackClass}>
+        <div className={bubbleClass}>{content}</div>
         {children}
-        <span className={styles.messageMeta}>
+        <span className={metaClass}>
           {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>

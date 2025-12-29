@@ -42,7 +42,6 @@ export default function ConversationSidebar({
   const { conversations, hasHumanConversations, error, reload, refreshing } = useConversationData();
   const { archive, unarchive, isArchived } = useArchivedConversations();
   const [pullHint, setPullHint] = useState<'idle' | 'ready' | 'refreshing'>('idle');
-  const [humanView, setHumanView] = useState<'active' | 'pending'>('active');
   const [deleteCandidate, setDeleteCandidate] = useState<ConversationListEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -53,12 +52,10 @@ export default function ConversationSidebar({
   const pendingRequests = useMemo(() => {
     return (requests ?? []).filter((request) => request.status === 'pending');
   }, [requests]);
-  
-  // Calculate unread conversations count
+
   const unreadCount = useMemo(() => {
-    return conversations.slice(1).filter(entry => 
-      !isArchived(entry.conversation.conversationId) && 
-      (entry.conversation.unreadCount ?? 0) > 0
+    return conversations.slice(1).filter((entry) =>
+      !isArchived(entry.conversation.conversationId) && (entry.conversation.unreadCount ?? 0) > 0
     ).length;
   }, [conversations, isArchived]);
   
@@ -88,13 +85,13 @@ export default function ConversationSidebar({
   
   // Handle infinite scroll
   const handleScroll = (event: React.UIEvent<HTMLUListElement>) => {
-    if (humanView !== 'active' || !hasMore) return;
-    
+    if (!hasMore) return;
+
     const target = event.currentTarget;
     const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100; // 100px threshold
     
     if (scrolledToBottom && !refreshing) {
-      setVisibleCount(prev => prev + 10);
+      setVisibleCount((prev) => prev + 10);
     }
   };
 
@@ -189,83 +186,69 @@ export default function ConversationSidebar({
         )}
         <section className={styles.conciergeSection}>
           <div className={styles.sectionMeta}>
-            <p className={styles.sectionTitle}>Concierge</p>
+            <p className={styles.sectionTitle}>AI Concierge</p>
             <span className={styles.sectionTag}>Always on</span>
           </div>
-          <ul className={clsx(styles.list, styles.conciergeList)}>
-            {samEntry && (
-              <ConversationListItem
-                key={samEntry.conversation.conversationId}
-                entry={samEntry}
-                isActive={activeConversationId === samEntry.conversation.conversationId}
-                onSelect={handleSelect}
-                onArchive={archive}
-                showMetadata={!collapsed}
-              />
-            )}
-          </ul>
-          <p className={styles.conciergeHint}>Sam keeps the room warm 24/7—drop back in whenever you want.</p>
+          <div className={styles.conciergeCard}>
+            <ul className={clsx(styles.list, styles.conciergeList)}>
+              {samEntry && (
+                <ConversationListItem
+                  key={samEntry.conversation.conversationId}
+                  entry={samEntry}
+                  isActive={activeConversationId === samEntry.conversation.conversationId}
+                  onSelect={handleSelect}
+                  onArchive={archive}
+                  showMetadata={!collapsed}
+                />
+              )}
+            </ul>
+            <p className={styles.conciergeHint}>Sam keeps the room warm 24/7—drop back in whenever you want.</p>
+          </div>
         </section>
 
         <section className={styles.humansSection}>
           <div className={styles.sectionMeta}>
             <p className={styles.sectionTitle}>Humans</p>
-            <div className={styles.tabBar} role="tablist" aria-label="Human conversation filters">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={humanView === 'active'}
-                className={clsx(styles.tab, humanView === 'active' && styles.tabActive)}
-                onClick={() => setHumanView('active')}
-              >
-                Active {humanEntries.length > 0 && <span className={styles.tabCount}>{humanEntries.length}</span>}
-                {unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount}</span>}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={humanView === 'pending'}
-                className={clsx(styles.tab, humanView === 'pending' && styles.tabActive)}
-                onClick={() => setHumanView('pending')}
-              >
-                Requests <span className={styles.tabCount}>{pendingRequests.length}</span>
-              </button>
-            </div>
+            <span className={styles.sectionTag}>
+              {humanEntries.length} active{unreadCount > 0 ? ` · ${unreadCount} unread` : ''}
+            </span>
           </div>
 
-          {humanView === 'active' ? (
-            <>
-              <ul className={styles.list} onScroll={handleScroll}>
-                {visibleHumanEntries.map((entry) => (
-                  <ConversationListItem
-                    key={entry.conversation.conversationId}
-                    entry={entry}
-                    isActive={activeConversationId === entry.conversation.conversationId}
-                    onSelect={handleSelect}
-                    onArchive={archive}
-                    onDelete={handleDeleteRequest}
-                    deletePending={deletingId === entry.conversation.conversationId}
-                    showMetadata={!collapsed}
-                  />
-                ))}
-              </ul>
-              
-              {hasMore && (
-                <div className={styles.loadingMore}>
-                  Loading more conversations...
-                </div>
-              )}
+          <ul className={styles.list} onScroll={handleScroll}>
+            {visibleHumanEntries.map((entry) => (
+              <ConversationListItem
+                key={entry.conversation.conversationId}
+                entry={entry}
+                isActive={activeConversationId === entry.conversation.conversationId}
+                onSelect={handleSelect}
+                onArchive={archive}
+                onDelete={handleDeleteRequest}
+                deletePending={deletingId === entry.conversation.conversationId}
+                showMetadata={!collapsed}
+              />
+            ))}
+          </ul>
 
-              {!hasHumanConversations && (
-                <div className={styles.emptyState}>
-                  <strong>No human conversations yet.</strong>
-                  <p style={{ marginTop: '8px', marginBottom: 0 }}>
-                    Once you connect with guests, they will appear here with their latest activity.
-                  </p>
-                </div>
-              )}
-            </>
-          ) : (
+          {hasMore && (
+            <div className={styles.loadingMore}>
+              Loading more conversations...
+            </div>
+          )}
+
+          {!hasHumanConversations && (
+            <div className={styles.emptyState}>
+              <strong>No human conversations yet.</strong>
+              <p style={{ marginTop: '8px', marginBottom: 0 }}>
+                Once you connect with guests, they will appear here with their latest activity.
+              </p>
+            </div>
+          )}
+
+          <div className={styles.requestsSection}>
+            <div className={styles.sectionMeta}>
+              <p className={styles.sectionTitle}>Requests</p>
+              <span className={styles.sectionTag}>{pendingRequests.length} pending</span>
+            </div>
             <div className={styles.pendingPanel}>
               {requestLoading && <div className={styles.requestNotice}>Loading requests…</div>}
               {requestError && !requestLoading && <div className={clsx(styles.requestNotice, styles.requestNoticeError)}>{requestError}</div>}
@@ -344,7 +327,7 @@ export default function ConversationSidebar({
                 </ul>
               )}
             </div>
-          )}
+          </div>
         </section>
 
         {error && (
