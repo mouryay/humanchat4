@@ -99,23 +99,24 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
   }
 
   return (
-    <section id="login-panel" className="flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-black/40 p-5 sm:p-6 lg:h-full">
-      <h2 className="mt-2 font-display text-2xl leading-tight text-white">
-        Log in to talk to Simple Sam (AI), who connects you with humans based on your specifics.
+    <section id="login-panel" className="flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-black/40 p-4 sm:p-5 lg:p-6 lg:h-full">
+      <h2 className="mt-0 sm:mt-2 font-display text-lg sm:text-xl lg:text-2xl leading-tight text-white">
+        <span className="hidden sm:inline">Log in to talk to Simple Sam (AI), who connects you with humans based on your specifics.</span>
+        <span className="sm:hidden">Log in to talk to Sam (AI), who connects you with humans.</span>
       </h2>
 
-      <div className="mt-5 flex flex-col gap-4 sm:mt-6">
+      <div className="mt-3 sm:mt-5 flex flex-col gap-3 sm:gap-4 lg:mt-6">
         <button
           type="button"
           onClick={handleGoogleSignIn}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-2 text-sm font-semibold text-midnight transition hover:scale-[1.01]"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-4 py-2.5 sm:px-5 sm:py-2 text-sm font-semibold text-midnight transition hover:scale-[1.01]"
           disabled={googleStatus === 'signing-in'}
         >
           {googleStatus === 'signing-in' ? 'Signing in…' : 'Continue with Google'}
         </button>
 
-        <form onSubmit={handleMagicLink} className="space-y-3" aria-label="Request email link">
-          <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="hero-login-email">
+        <form onSubmit={handleMagicLink} className="space-y-2 sm:space-y-3" aria-label="Request email link">
+          <label className="flex flex-col gap-1.5 sm:gap-2 text-sm text-white/80" htmlFor="hero-login-email">
             Work email
             <input
               id="hero-login-email"
@@ -127,15 +128,15 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
                 setError(null);
               }}
               placeholder="you@company.com"
-              className="rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-white focus:border-white/60 focus:outline-none"
+              className="rounded-2xl border border-white/20 bg-white/5 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-white focus:border-white/60 focus:outline-none"
               required
             />
           </label>
-          {error && <p className="text-sm text-peach">{error}</p>}
-          {status === 'sent' && <p className="text-sm text-aqua">Magic link sent — check your inbox.</p>}
+          {error && <p className="text-xs sm:text-sm text-peach">{error}</p>}
+          {status === 'sent' && <p className="text-xs sm:text-sm text-aqua">Magic link sent — check your inbox.</p>}
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white transition hover:border-white"
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/30 px-4 py-2.5 sm:px-5 sm:py-2 text-sm font-semibold text-white transition hover:border-white"
             disabled={status === 'sending'}
           >
             {status === 'sending' ? 'Sending…' : 'Email me a link'}

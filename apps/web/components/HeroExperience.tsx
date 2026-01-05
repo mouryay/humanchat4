@@ -8,18 +8,18 @@ export default function HeroExperience() {
   const loginPanelRef = useRef<HeroLoginPanelHandle>(null);
 
   return (
-    <div className="flex w-full flex-col gap-6 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.25),transparent_55%)] p-5 sm:gap-8 sm:p-8 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.85fr)] lg:gap-10 lg:p-12 lg:min-h-[600px]">
-      <div className="flex flex-col justify-center gap-5 lg:gap-6">
+    <div className="flex w-full flex-col gap-4 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.25),transparent_55%)] p-4 sm:gap-6 sm:p-5 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.85fr)] lg:gap-10 lg:p-12 lg:min-h-[600px]">
+      <div className="flex flex-col justify-center gap-3 sm:gap-5 lg:gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.5em] text-white/60">HumanChat</p>
-          <h1 className="mt-3 font-display text-3xl leading-tight text-white sm:text-4xl lg:text-5xl">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.5em] text-white/60">HumanChat</p>
+          <h1 className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl leading-tight text-white lg:text-5xl">
             Talk to anyone, from anywhere, about anything.
           </h1>
         </div>
 
-        <p className="mt-4 max-w-2xl text-sm text-white/70 sm:text-base lg:mt-6 lg:text-lg">
-          AI can do a lot of things, but can it ever be truly human? We don’t think so, and that’s why we are working to bring
-          all the humans on Earth together to talk to each other instead of just AI bots.
+        <p className="mt-2 sm:mt-4 max-w-2xl text-xs sm:text-sm text-white/70 lg:mt-6 lg:text-lg">
+          <span className="hidden sm:inline">AI can do a lot of things, but can it ever be truly human? We don't think so, and that's why we are working to bring all the humans on Earth together to talk to each other instead of just AI bots.</span>
+          <span className="sm:hidden">Connecting humans to talk, not just AI bots.</span>
         </p>
       </div>
 
