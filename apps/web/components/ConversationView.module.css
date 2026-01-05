@@ -185,6 +185,8 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
 
 .drawerButton {
   border: 1px solid #e5e7eb;
