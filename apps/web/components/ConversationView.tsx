@@ -19,6 +19,7 @@ interface ConversationViewProps {
   onSelectConversation?: (conversationId: string) => void;
   isMobile?: boolean;
   onBack?: () => void;
+  onShowProfilePanel?: () => void;
 }
 
 type ScrollBinding = {
@@ -26,7 +27,13 @@ type ScrollBinding = {
   cleanup?: () => void;
 };
 
-export default function ConversationView({ activeConversationId, onSelectConversation, isMobile, onBack }: ConversationViewProps) {
+export default function ConversationView({
+  activeConversationId,
+  onSelectConversation,
+  isMobile,
+  onBack,
+  onShowProfilePanel
+}: ConversationViewProps) {
   const { conversation, session, invite, messages, loading, error } = useConversationDetail(activeConversationId);
   const scrollPositions = useRef<Map<string, number>>(new Map());
   const bindingRef = useRef<ScrollBinding>({ node: null });
@@ -170,13 +177,18 @@ export default function ConversationView({ activeConversationId, onSelectConvers
         <div className={styles.headerTitleStack}>
           {isMobile && (
             <button type="button" className={styles.backButton} onClick={onBack}>
-              ← Back
+              Menu
             </button>
           )}
           <div className={styles.title}>{summary.title}</div>
           <div className={styles.subtitle}>{summary.subtitle}</div>
         </div>
         <div className={styles.headerActions}>
+          {isMobile && onShowProfilePanel && (
+            <button type="button" className={styles.drawerButton} onClick={onShowProfilePanel}>
+              Account
+            </button>
+          )}
           {otherParticipant && (
             <button
               type="button"

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import ConversationSidebar from './ConversationSidebar';
 import ConversationView from './ConversationView';
-import MobileBottomNav, { type MobileNavRoute } from './MobileBottomNav';
 import ProfilePanel from './ProfilePanel';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useConversationData } from '../hooks/useConversationData';
@@ -19,11 +18,10 @@ const ChatShell = () => {
   const searchParams = useSearchParams();
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [shouldOpenSam, setShouldOpenSam] = useState(false);
-  const [mobilePane, setMobilePane] = useState<'list' | 'conversation'>('list');
-  const [activeNav, setActiveNav] = useState<MobileNavRoute>('home');
+  const [mobileDrawer, setMobileDrawer] = useState<'none' | 'conversations' | 'profile'>('none');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const { isMobile, isTablet } = useBreakpoint();
-  const { conversations, unreadTotal } = useConversationData();
+  const { conversations } = useConversationData();
   const {
     requests,
     loading: requestsLoading,
@@ -53,10 +51,7 @@ const ChatShell = () => {
     if (!shouldOpenSam) return;
     setActiveConversationId(samConversationId);
     if (isMobile) {
-      setActiveNav('sam');
-      setMobilePane('conversation');
-    } else {
-      setActiveNav('home');
+      setMobileDrawer('none');
     }
   }, [shouldOpenSam, samConversationId, isMobile]);
 
@@ -82,10 +77,8 @@ const ChatShell = () => {
     (conversationId: string) => {
       setActiveConversationId(conversationId);
       if (isMobile) {
-        setActiveNav('home');
-        setMobilePane('conversation');
+        setMobileDrawer('none');
       } else {
-        setActiveNav('home');
         setSidebarCollapsed(false);
       }
     },
@@ -95,24 +88,20 @@ const ChatShell = () => {
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
     if (isMobile) {
-      setMobilePane('conversation');
-      setActiveNav('home');
+      setMobileDrawer('none');
     }
   };
 
-  const handleBackToList = () => {
-    setMobilePane('list');
+  const handleShowConversationDrawer = () => {
+    setMobileDrawer('conversations');
   };
 
-  const handleNavChange = (route: MobileNavRoute) => {
-    setActiveNav(route);
-    if (route === 'home') {
-      setMobilePane(activeConversationId ? 'conversation' : 'list');
-    }
-    if (route === 'sam') {
-      setActiveConversationId(samConversationId);
-      setMobilePane('conversation');
-    }
+  const handleShowProfileDrawer = () => {
+    setMobileDrawer('profile');
+  };
+
+  const handleCloseDrawers = () => {
+    setMobileDrawer('none');
   };
 
   useEffect(() => {
@@ -207,8 +196,7 @@ const ChatShell = () => {
       if (status === 'approved' && result.conversation) {
         setActiveConversationId(result.conversation.conversationId);
         if (isMobile) {
-          setMobilePane('conversation');
-          setActiveNav('home');
+          setMobileDrawer('none');
         }
       }
       return result;
@@ -248,38 +236,108 @@ const ChatShell = () => {
         )}
 
         {isMobile ? (
-          <section
-            className={clsx('relative flex min-h-0 flex-1 flex-col', {
-              'overflow-hidden': !(activeNav === 'account'),
-              'overflow-y-auto': activeNav === 'account'
-            })}
-          >
-            {activeNav === 'account' && (
-              <div className="flex flex-1">
-                <ProfilePanel />
+          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight">
+            <ConversationView
+              key={`mobile-${activeConversationId ?? samConversationId}`}
+              activeConversationId={activeConversationId ?? samConversationId}
+              onSelectConversation={handleSelectConversation}
+              isMobile
+              onBack={handleShowConversationDrawer}
+              onShowProfilePanel={handleShowProfileDrawer}
+            />
+
+            <div
+              className={clsx('pointer-events-none absolute inset-0 z-30 flex', {
+                'pointer-events-auto': mobileDrawer === 'conversations'
+              })}
+              aria-hidden={mobileDrawer !== 'conversations'}
+            >
+              <button
+                type="button"
+                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200', {
+                  'opacity-0': mobileDrawer !== 'conversations',
+                  'opacity-100': mobileDrawer === 'conversations'
+                })}
+                onClick={handleCloseDrawers}
+                aria-label="Close drawer"
+              />
+              <div
+                className={clsx(
+                  'relative h-full w-full max-w-[min(90%,360px)] border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
+                  {
+                    '-translate-x-full': mobileDrawer !== 'conversations',
+                    'translate-x-0': mobileDrawer === 'conversations'
+                  }
+                )}
+              >
+                <div className="flex h-full flex-col">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
+                    <span>Inbox</span>
+                    <button
+                      type="button"
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
+                      onClick={handleCloseDrawers}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <ConversationSidebar
+                      activeConversationId={activeConversationId}
+                      onSelectConversation={handleSelectConversation}
+                      requests={requests}
+                      requestProfiles={requesterProfiles}
+                      requestLoading={requestsLoading}
+                      requestError={requestsError}
+                      onRequestAction={handleRequestAction}
+                      requestActionPendingId={updatingId}
+                    />
+                  </div>
+                </div>
               </div>
-            )}
-            {activeNav === 'home' && mobilePane === 'list' && (
-              <ConversationSidebar
-                activeConversationId={activeConversationId}
-                onSelectConversation={handleSelectConversation}
-                requests={requests}
-                requestProfiles={requesterProfiles}
-                requestLoading={requestsLoading}
-                requestError={requestsError}
-                onRequestAction={handleRequestAction}
-                requestActionPendingId={updatingId}
+            </div>
+
+            <div
+              className={clsx('pointer-events-none absolute inset-0 z-30 flex justify-end', {
+                'pointer-events-auto': mobileDrawer === 'profile'
+              })}
+              aria-hidden={mobileDrawer !== 'profile'}
+            >
+              <button
+                type="button"
+                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200', {
+                  'opacity-0': mobileDrawer !== 'profile',
+                  'opacity-100': mobileDrawer === 'profile'
+                })}
+                onClick={handleCloseDrawers}
+                aria-label="Close drawer"
               />
-            )}
-            {(activeNav === 'sam' || (activeNav === 'home' && mobilePane === 'conversation')) && (
-              <ConversationView
-                key={`mobile-${activeConversationId ?? samConversationId}`}
-                activeConversationId={activeConversationId ?? samConversationId}
-                onSelectConversation={handleSelectConversation}
-                isMobile
-                onBack={handleBackToList}
-              />
-            )}
+              <div
+                className={clsx(
+                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
+                  {
+                    'translate-x-full': mobileDrawer !== 'profile',
+                    'translate-x-0': mobileDrawer === 'profile'
+                  }
+                )}
+              >
+                <div className="flex h-full flex-col">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
+                    <span>Account</span>
+                    <button
+                      type="button"
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
+                      onClick={handleCloseDrawers}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <ProfilePanel />
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         ) : (
           <>
@@ -298,7 +356,6 @@ const ChatShell = () => {
           </>
         )}
       </div>
-      {isMobile && <MobileBottomNav active={activeNav} onChange={handleNavChange} hasUnread={unreadTotal > 0} />}
     </main>
   );
 };
