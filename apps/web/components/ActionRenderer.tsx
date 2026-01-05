@@ -474,15 +474,8 @@ export default function ActionRenderer({
         </div>
       );
     }
-    case 'follow_up_prompt': {
-      const followUp = action as Extract<Action, { type: 'follow_up_prompt' }>;
-      return (
-        <div className={styles.tipCard}>
-          <span className={styles.tipCardTitle}>💡 Try asking Sam</span>
-          <p className={styles.tipCardPrompt}>{followUp.prompt}</p>
-        </div>
-      );
-    }
+    case 'follow_up_prompt':
+      return null;
     default:
       return action.label ? <div className={styles.noticeBanner}>{action.label}</div> : null;
   }

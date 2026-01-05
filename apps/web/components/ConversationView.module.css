@@ -12,6 +12,9 @@
 .mobileContainer {
   min-height: 0;
   height: 100%;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
@@ -37,6 +40,14 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .headerTitleStack {
+    gap: 2px;
+  }
 }
 
 .backButton {
@@ -46,10 +57,20 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  padding: 8px 0;
-  min-height: 44px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  min-height: 32px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .backButton {
+    font-size: 13px;
+    padding: 4px 6px;
+    margin: -4px -6px;
+  }
 }
 
 .scheduleButton {
@@ -101,15 +122,28 @@
   flex-wrap: wrap;
   max-width: min(45vw, 360px);
   text-align: right;
+  flex-shrink: 0;
 }
 
 .headerActionsMetadata {
   flex: 1 1 100%;
 }
 
+@media (max-width: 767px) {
+  .headerActions {
+    gap: 6px;
+    max-width: none;
+  }
+
+  .headerActionsMetadata {
+    display: none;
+  }
+}
+
 .viewArea {
   flex: 1;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -134,6 +168,7 @@
 .archivedView {
   flex: 1;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -191,11 +226,12 @@
 .drawerButton {
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 6px 12px;
+  font-size: 12px;
   background: #fff;
-  min-height: 44px;
+  min-height: 32px;
   transition: transform 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
 }
 
 .callButtonPrimary {
@@ -237,11 +273,18 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px 32px 120px;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+@media (max-width: 767px) {
+  .messageList {
+    padding: 12px 16px 100px;
+  }
 }
 
 .bubbleRow {
@@ -620,12 +663,14 @@
   gap: 12px;
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(16px);
+  flex-shrink: 0;
 }
 
 @media (max-width: 767px) {
   .inputBar {
-    padding: 12px 16px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    gap: 8px;
   }
 }
 
@@ -1044,15 +1089,34 @@
 
 @media (max-width: 767px) {
   .container {
-    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: 0;
+    height: 100%;
+    max-height: 100dvh;
   }
 
   .header {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
-    align-items: flex-start;
-    padding: 12px 16px;
-    padding-top: calc(12px + env(safe-area-inset-top));
+    align-items: center;
+    padding: 8px 12px;
+    padding-top: calc(8px + env(safe-area-inset-top));
+    flex-shrink: 0;
+  }
+
+  .headerTitleStack {
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .title {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   .viewArea {
