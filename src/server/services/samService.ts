@@ -105,19 +105,14 @@ const maybeHandleRequestedPerson = async (userId: string, message: string): Prom
     return null;
   }
 
+  // Log the interest for tracking, but let Sam handle the response
+  // Sam has better context (availableProfiles) to provide a helpful answer
   await logRequestedPersonInterest({ requestedName: candidate, searchQuery: message, userId }).catch((error) => {
     console.warn('Failed to log requested person request', error);
   });
 
-  return {
-    text: `${candidate} isn't on HumanChat yet, but I noted your interest. Want me to suggest a similar person you can talk to today?`,
-    actions: [
-      {
-        type: 'follow_up_prompt',
-        prompt: `Show me profiles similar to ${candidate}`
-      }
-    ]
-  };
+  // Return null so Sam processes the request with full context
+  return null;
 };
 
 export const handleSamChat = async (conversationId: string, userId: string, payload: SamPayload): Promise<SamChatResult> => {
