@@ -788,6 +788,12 @@
   font-size: 14px;
 }
 
+@media (max-width: 767px) {
+  .inputBar textarea {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+}
+
 .inputBar button {
   background: linear-gradient(135deg, #0ea5e9, #38bdf8);
   border: none;
@@ -974,6 +980,13 @@
   padding: 12px;
   resize: none;
   min-height: 60px;
+  font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .chatInputBar textarea {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
 }
 
 .chatInputBar button {
