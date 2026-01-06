@@ -43,7 +43,7 @@ export type SamPayload = z.infer<typeof SamPayloadSchema>;
 const REQUEST_REGEX = /(?:talk|speak|chat|connect|book)\s+(?:to|with)\s+([A-Za-z][A-Za-z\s.'-]{2,})/i;
 const SAM_CONCIERGE_ID = 'sam-concierge';
 const SAM_INTRO_MESSAGE =
-  "Hi, I'm Sam. HumanChat connects you with real humans for live conversations. We're in early testing, so our network is small right now, but you can test connecting with people who are online. What would you like to explore?";
+  "I'm Sam, an AI assistant. HumanChat connects you with real humans for live conversations. We're in early testing, so our network is small right now, but you can test connecting with people who are online. What would you like to explore?";
 
 const normalizeSamActions = (
   actions: unknown
