@@ -31,6 +31,7 @@ interface UserSettingsMenuProps {
 export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { identity, loading } = useAuthIdentity();
   const pathname = usePathname();
   const { isMobile } = useBreakpoint();
@@ -67,6 +68,30 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
     };
   }, []);
 
+  // Close menu when clicking outside on mobile
+  useEffect(() => {
+    if (!open || !isMobile) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    // Use a small delay to avoid closing immediately when opening
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [open, isMobile]);
+
   // Hide in layout when on mobile in chat view
   if (shouldHide) {
     return null;
@@ -79,7 +104,8 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
 
   return (
     <div
-      className="relative"
+      ref={menuRef}
+      className="relative user-settings-menu-container"
       onMouseEnter={openWithHover}
       onMouseLeave={closeWithDelay}
       onFocusCapture={() => {
@@ -87,9 +113,13 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         setOpen(true);
       }}
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          clearHoverTimeout();
-          setOpen(false);
+        // Don't close immediately on blur - let click-outside handler manage it on mobile
+        if (!isMobile) {
+          const relatedTarget = event.relatedTarget as Node | null;
+          if (!event.currentTarget.contains(relatedTarget)) {
+            clearHoverTimeout();
+            setOpen(false);
+          }
         }
       }}
     >
@@ -116,10 +146,12 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150',
+          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[100]',
           isHeaderVariant ? 'right-0' : 'right-0',
-          open ? 'visible translate-y-0 opacity-100' : 'invisible translate-y-1 opacity-0'
+          open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-3 rounded-xl bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.35em] text-white/70">
           Account status
@@ -139,11 +171,18 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
             <>
               <Link
                 href="/account"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10"
+                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10 min-h-[44px] flex items-center touch-action: manipulation relative z-[101]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Close menu after a short delay to allow navigation
+                  setTimeout(() => setOpen(false), 200);
+                }}
               >
                 Account
               </Link>
-              <LogoutButton className="w-full rounded-xl border border-white/10 px-3 py-2 text-left text-white/90 hover:bg-white/10" />
+              <div className="relative z-[101]">
+                <LogoutButton className="w-full rounded-xl border border-white/10 px-3 py-2 text-left text-white/90 hover:bg-white/10 min-h-[44px] touch-action: manipulation" />
+              </div>
             </>
           ) : (
             <Link
