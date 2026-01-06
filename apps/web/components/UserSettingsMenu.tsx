@@ -37,7 +37,8 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
   
   // Hide in layout when on mobile on home page (where chat shows when logged in)
   // Chat interface is on '/' not '/chat' (which redirects to '/')
-  const shouldHide = variant === 'default' && isMobile && (pathname === '/' || pathname?.startsWith('/chat'));
+  // Only hide when user is logged in (viewing chat, not login overlay)
+  const shouldHide = variant === 'default' && isMobile && identity && (pathname === '/' || pathname?.startsWith('/chat'));
 
   const clearHoverTimeout = () => {
     if (hoverTimeout.current) {
