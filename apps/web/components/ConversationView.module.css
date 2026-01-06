@@ -159,6 +159,7 @@
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
+  height: 40px;
   min-height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
@@ -232,6 +233,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
+}
+
+.mobileHeaderAccount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .viewArea {

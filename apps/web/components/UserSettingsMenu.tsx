@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
 import LogoutButton from './LogoutButton';
 import { useAuthIdentity } from '../hooks/useAuthIdentity';
+import { useBreakpoint } from '../hooks/useBreakpoint';
 
 const getInitials = (name?: string | null, email?: string | null) => {
   if (name) {
@@ -22,10 +24,19 @@ const getInitials = (name?: string | null, email?: string | null) => {
   return email?.[0]?.toUpperCase() ?? 'HC';
 };
 
-export default function UserSettingsMenu() {
+interface UserSettingsMenuProps {
+  variant?: 'default' | 'header';
+}
+
+export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { identity, loading } = useAuthIdentity();
+  const pathname = usePathname();
+  const { isMobile } = useBreakpoint();
+  
+  // Hide in layout when on mobile in chat view (it will be shown in header instead)
+  const shouldHideInLayout = variant === 'default' && isMobile && pathname === '/chat';
 
   const clearHoverTimeout = () => {
     if (hoverTimeout.current) {
@@ -54,6 +65,15 @@ export default function UserSettingsMenu() {
     };
   }, []);
 
+  if (shouldHideInLayout) {
+    return null;
+  }
+
+  const isHeaderVariant = variant === 'header';
+  const buttonClassName = isHeaderVariant
+    ? 'relative flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
+    : 'relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-sm font-semibold text-white transition hover:border-white/50';
+
   return (
     <div
       className="relative"
@@ -76,22 +96,25 @@ export default function UserSettingsMenu() {
           clearHoverTimeout();
           setOpen((prev) => !prev);
         }}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-sm font-semibold text-white transition hover:border-white/50"
+        className={buttonClassName}
         aria-label={statusLabel}
       >
         <span className="sr-only">{statusLabel}</span>
         <span aria-hidden>{initials}</span>
-        <span
-          aria-hidden
-          className={clsx(
-            'pointer-events-none absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-midnight shadow-[0_0_4px_rgba(0,0,0,0.45)]',
-            statusDot
-          )}
-        />
+        {!isHeaderVariant && (
+          <span
+            aria-hidden
+            className={clsx(
+              'pointer-events-none absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-midnight shadow-[0_0_4px_rgba(0,0,0,0.45)]',
+              statusDot
+            )}
+          />
+        )}
       </button>
       <div
         className={clsx(
-          'absolute right-0 mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150',
+          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150',
+          isHeaderVariant ? 'right-0' : 'right-0',
           open ? 'visible translate-y-0 opacity-100' : 'invisible translate-y-1 opacity-0'
         )}
       >

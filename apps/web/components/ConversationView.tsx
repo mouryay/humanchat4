@@ -13,6 +13,7 @@ import RequestForm from './RequestForm';
 import { connectNow as connectNowWithProfile } from '../services/conversationClient';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 import { SAM_DISPLAY_NAME } from '../hooks/useConversationData';
+import UserSettingsMenu from './UserSettingsMenu';
 
 interface ConversationViewProps {
   activeConversationId?: string;
@@ -182,6 +183,9 @@ export default function ConversationView({
             <div className={styles.mobileHeaderTitle}>
               <div className={styles.mobileTitle}>{summary.title}</div>
               <div className={styles.mobileSubtitle}>{summary.subtitle}</div>
+            </div>
+            <div className={styles.mobileHeaderAccount}>
+              <UserSettingsMenu variant="header" />
             </div>
           </div>
         ) : (
