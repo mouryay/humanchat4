@@ -60,7 +60,7 @@ const Icon = ({ name }: { name: string }) => {
 };
 
 const quickActions = [
-  { label: 'Open Sam Concierge', href: '/chat?focus=sam', description: 'Continue your AI-powered thread.', icon: 'sam' },
+  { label: 'Open Sam Concierge', href: '/?focus=sam', description: 'Continue your AI-powered thread.', icon: 'sam' },
   { label: 'Browse Workspace', href: '/chat', description: 'Jump back into any human chat.', icon: 'browse' },
   { label: 'My Bookings', href: '/bookings', description: 'View and manage your scheduled calls.', icon: 'bookings' },
   { label: 'Manage Availability', href: '/expert/availability', description: 'Set your calendar and available time slots.', icon: 'calendar' },
@@ -79,7 +79,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#05021b] to-[#070417] text-white">
       <header className="flex items-center justify-between gap-4 border-b border-white/[0.03] px-6 py-5">
-        <Link href="/chat?focus=sam" className="text-2xl font-bold text-white leading-tight hover:opacity-80 transition-opacity">
+        <Link href="/?focus=sam" className="text-2xl font-bold text-white leading-tight hover:opacity-80 transition-opacity">
           Human<br />Chat
         </Link>
       </header>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
                 </p>
               </div>
               <Link
-                href="/chat?focus=sam"
+                href="/?focus=sam"
                 className="rounded-full bg-white/5 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-white/8"
               >
                 Go to chat

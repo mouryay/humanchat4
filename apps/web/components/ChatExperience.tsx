@@ -41,12 +41,11 @@ const ChatShell = () => {
 
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const focus = new URLSearchParams(window.location.search).get('focus');
+    const focus = searchParams.get('focus');
     if (focus === 'sam') {
       setShouldOpenSam(true);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!shouldOpenSam) return;

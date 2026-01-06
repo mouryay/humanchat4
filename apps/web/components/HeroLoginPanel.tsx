@@ -16,7 +16,7 @@ interface HeroLoginPanelProps {}
 
 const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanelHandle>) => {
   const router = useRouter();
-  const { identity } = useAuthIdentity();
+  const { identity, refresh } = useAuthIdentity();
   const auth = firebaseAuth;
 
   const googleProvider = useMemo(() => {
@@ -47,7 +47,23 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
     setError(null);
     try {
       await signInWithPopup(auth, googleProvider);
-      router.push('/chat?focus=sam');
+      // Wait for auth state to sync - poll for identity update
+      // This ensures the overlay disappears before redirecting
+      let attempts = 0;
+      const maxAttempts = 20; // 2 seconds max wait
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const updatedIdentity = await refresh();
+        if (updatedIdentity) {
+          // Give React time to update the UI before redirecting
+          await new Promise(resolve => setTimeout(resolve, 100));
+          router.push('/?focus=sam');
+          return;
+        }
+        attempts++;
+      }
+      // Fallback: redirect even if identity check timed out
+      router.push('/?focus=sam');
     } catch (authIssue) {
       setError(authIssue instanceof Error ? authIssue.message : 'Unable to start Google sign in.');
     } finally {
@@ -66,7 +82,7 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
     setError(null);
 
     try {
-      const redirectTo = `${window.location.origin}/chat?focus=sam`;
+      const redirectTo = `${window.location.origin}/?focus=sam`;
       await sendSignInLinkToEmail(auth, email.trim(), {
         url: redirectTo,
         handleCodeInApp: true
