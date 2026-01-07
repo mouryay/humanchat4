@@ -4,7 +4,7 @@ import { addConversationMessage, ensureSamConversation, hasSamRespondedToUser } 
 import { sendToSam } from './samAPI.js';
 import { SamResponse, SamChatResult } from '../types/index.js';
 import { searchUsers } from './userService.js';
-import { logRequestedPersonInterest } from './requestedPeopleService.js';
+import { logRequestedPersonInterest, logSkillRequest } from './requestedPeopleService.js';
 import { ApiError } from '../errors/ApiError.js';
 import { logger } from '../utils/logger.js';
 import { validate as uuidValidate } from 'uuid';
@@ -115,6 +115,51 @@ const maybeHandleRequestedPerson = async (userId: string, message: string): Prom
   return null;
 };
 
+// Detect skill-based requests (e.g., "someone who knows X", "person with Y skills", "expert in Z")
+const extractSkillRequest = (message: string): string | null => {
+  const skillPatterns = [
+    /(?:someone|person|expert|professional|someone who|a person who|an expert who|a professional who)\s+(?:who\s+)?(?:knows|has|with|in|specializes?|is\s+good\s+at|can\s+help\s+with|understands?)\s+([^.?!]+)/i,
+    /(?:looking\s+for|need|want|find|connect\s+with)\s+(?:someone|a person|an expert|a professional)\s+(?:who\s+)?(?:knows|has|with|in|specializes?|is\s+good\s+at|can\s+help\s+with|understands?)\s+([^.?!]+)/i,
+    /(?:someone|person|expert|professional)\s+(?:with|in|specialized\s+in|who\s+does)\s+([^.?!]+)/i
+  ];
+
+  for (const pattern of skillPatterns) {
+    const match = message.match(pattern);
+    if (match?.[1]) {
+      const skills = match[1].trim();
+      // Only return if it's substantial (at least 3 characters) and not just a name
+      if (skills.length >= 3 && !/^[A-Z][a-z]+\s+[A-Z]/.test(skills)) {
+        return skills;
+      }
+    }
+  }
+
+  return null;
+};
+
+const maybeHandleSkillRequest = async (userId: string, message: string): Promise<void> => {
+  const skillsDescription = extractSkillRequest(message);
+  if (!skillsDescription) {
+    return;
+  }
+
+  // Check if there are users with similar skills already (basic check)
+  // If found, don't log as a skill request since we have matches
+  const existing = await searchUsers(skillsDescription, undefined);
+  if (existing.length > 0) {
+    return;
+  }
+
+  // Log the skill request for tracking
+  await logSkillRequest({
+    skillsDescription,
+    searchQuery: message,
+    userId
+  }).catch((error) => {
+    logger.warn('Failed to log skill request', { error, skillsDescription });
+  });
+};
+
 export const handleSamChat = async (conversationId: string, userId: string, payload: SamPayload): Promise<SamChatResult> => {
   const parsed = SamPayloadSchema.parse(payload);
 
@@ -155,6 +200,11 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
   const userHasHeardIntro = await hasSamRespondedToUser(userId);
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
+  
+  // Also check for skill-based requests and log them
+  // This runs regardless of whether a specific person was requested
+  await maybeHandleSkillRequest(userId, parsed.message);
+  
   logger.info('Sam concierge dispatching Gemini request', {
     conversationId: activeConversationId,
     userId,
