@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { isSignInWithEmailLink, onIdTokenChanged, signInWithEmailLink, getRedirectResult } from 'firebase/auth';
+import { isSignInWithEmailLink, onIdTokenChanged, signInWithEmailLink } from 'firebase/auth';
 import { firebaseAuth } from '../lib/firebaseClient';
 import { AUTH_UPDATED_EVENT } from '../constants/events';
 
@@ -81,7 +81,8 @@ export default function FirebaseSessionBridge() {
       }
     };
 
-    // Set up auth state listener FIRST so it's ready when getRedirectResult completes
+    void finishEmailLinkIfNeeded();
+
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       if (!mounted) return;
       if (!user) {
@@ -96,25 +97,6 @@ export default function FirebaseSessionBridge() {
         console.error('Unable to fetch Firebase ID token', error);
       }
     });
-
-    // Now handle redirect result - this will trigger onIdTokenChanged if user signed in
-    const finishRedirectIfNeeded = async () => {
-      try {
-        console.log('Checking for redirect result...');
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log('Google sign-in redirect completed, user:', result.user.email);
-          // The onIdTokenChanged listener above will handle syncing the session
-        } else {
-          console.log('No redirect result (user did not come from redirect)');
-        }
-      } catch (error) {
-        console.error('Error handling redirect result:', error);
-      }
-    };
-
-    void finishRedirectIfNeeded();
-    void finishEmailLinkIfNeeded();
 
     return () => {
       mounted = false;
