@@ -50,19 +50,6 @@ export default function FirebaseSessionBridge() {
       }
     };
 
-    const finishRedirectIfNeeded = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          // User successfully signed in via redirect
-          // The onIdTokenChanged listener below will handle syncing the session
-          console.log('Google sign-in redirect completed');
-        }
-      } catch (error) {
-        console.error('Error handling redirect result:', error);
-      }
-    };
-
     const syncSession = async (idToken: string | null) => {
       if (!idToken || inflight.current || lastToken.current === idToken) {
         return;
@@ -94,9 +81,7 @@ export default function FirebaseSessionBridge() {
       }
     };
 
-    void finishRedirectIfNeeded();
-    void finishEmailLinkIfNeeded();
-
+    // Set up auth state listener FIRST so it's ready when getRedirectResult completes
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       if (!mounted) return;
       if (!user) {
@@ -111,6 +96,25 @@ export default function FirebaseSessionBridge() {
         console.error('Unable to fetch Firebase ID token', error);
       }
     });
+
+    // Now handle redirect result - this will trigger onIdTokenChanged if user signed in
+    const finishRedirectIfNeeded = async () => {
+      try {
+        console.log('Checking for redirect result...');
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('Google sign-in redirect completed, user:', result.user.email);
+          // The onIdTokenChanged listener above will handle syncing the session
+        } else {
+          console.log('No redirect result (user did not come from redirect)');
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+      }
+    };
+
+    void finishRedirectIfNeeded();
+    void finishEmailLinkIfNeeded();
 
     return () => {
       mounted = false;
