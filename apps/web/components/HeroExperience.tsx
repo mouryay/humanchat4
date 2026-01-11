@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
 
 import HeroLoginPanel, { type HeroLoginPanelHandle } from './HeroLoginPanel';
 
@@ -23,6 +24,16 @@ export default function HeroExperience() {
       </div>
 
       <HeroLoginPanel ref={loginPanelRef} />
+      <footer className="mt-8 pt-6 border-t border-white/10 lg:col-span-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/60">
+          <Link href="/privacy" className="hover:text-white/80 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-white/80 transition-colors">
+            Terms of Service
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
