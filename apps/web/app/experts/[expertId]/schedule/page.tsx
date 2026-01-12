@@ -3,6 +3,8 @@
 /**
  * Booking Page - Schedule a call with an expert
  * URL: /experts/[expertId]/schedule
+ * 
+ * Force dynamic rendering to prevent build-time errors in production
  */
 
 import { useState, useEffect } from 'react';
@@ -10,11 +12,17 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getExpertAvailability, createBooking, type TimeSlot } from '../../../../services/bookingApi';
 import { ProfileSummary } from '@/src/lib/db';
+import { useAuthIdentity } from '../../../../hooks/useAuthIdentity';
+
+// Force dynamic rendering - disable static optimization
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function BookingPage() {
   const router = useRouter();
   const params = useParams();
   const expertId = params?.expertId as string;
+  const { identity, loading: authLoading } = useAuthIdentity();
 
   const [expert, setExpert] = useState<ProfileSummary | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -28,6 +36,15 @@ export default function BookingPage() {
 
   // Initialize timezone and default date
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !identity) {
+      console.warn('User not authenticated, redirecting to home');
+      router.push('/?focus=sam');
+      return;
+    }
+
+    if (!identity) return;
+
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setTimezone(userTimezone);
 
@@ -35,25 +52,33 @@ export default function BookingPage() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     setSelectedDate(tomorrow.toISOString().split('T')[0]);
 
-    // Fetch expert details (you'll need to implement fetchExpertProfile)
+    // Fetch expert details
     fetchExpertProfile(expertId);
-  }, [expertId]);
+  }, [expertId, identity, authLoading, router]);
 
   // Fetch availability when date changes
   useEffect(() => {
-    if (selectedDate && timezone) {
+    if (selectedDate && timezone && identity) {
       fetchAvailability();
     }
-  }, [selectedDate, timezone]);
+  }, [selectedDate, timezone, identity]);
 
   const fetchExpertProfile = async (id: string) => {
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${API_BASE}/api/users/${id}`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          console.warn('User not authenticated, redirecting to home');
+          router.push('/?focus=sam');
+          return;
+        }
         throw new Error('Failed to fetch expert profile');
       }
       
@@ -119,6 +144,16 @@ export default function BookingPage() {
       day: 'numeric'
     });
   };
+
+  if (authLoading || !identity) {
+    return (
+      <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
+        <div className="text-white">
+          {authLoading ? 'Loading...' : 'Redirecting to login...'}
+        </div>
+      </div>
+    );
+  }
 
   if (!expert) {
     return (

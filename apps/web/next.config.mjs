@@ -7,6 +7,15 @@ const appDir = dirname(fileURLToPath(new URL('.', import.meta.url)));
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+    ],
+  },
   async redirects() {
     return [
       {
