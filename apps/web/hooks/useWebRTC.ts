@@ -117,13 +117,18 @@ export function useWebRTC(options: UseWebRTCOptions) {
             track.mediaStreamTrack.enabled = true;
             
             setRemoteStream((prevStream) => {
-              // Create new stream or use existing
-              const mediaStream = prevStream || new MediaStream();
+              // CRITICAL: Create a NEW MediaStream to trigger React re-render
+              const mediaStream = new MediaStream();
+              
+              // Add existing tracks from previous stream
+              if (prevStream) {
+                prevStream.getTracks().forEach(t => mediaStream.addTrack(t));
+              }
               
               // Add the new track
               mediaStream.addTrack(track.mediaStreamTrack);
               
-              console.log('[useWebRTC] Remote stream updated:', {
+              console.log('[useWebRTC] Remote stream updated (NEW OBJECT):', {
                 audioTracks: mediaStream.getAudioTracks().length,
                 videoTracks: mediaStream.getVideoTracks().length,
                 audioEnabled: mediaStream.getAudioTracks()[0]?.enabled,
@@ -202,10 +207,18 @@ export function useWebRTC(options: UseWebRTCOptions) {
                     track.mediaStreamTrack.enabled = true;
                     
                     setRemoteStream((prevStream) => {
-                      const mediaStream = prevStream || new MediaStream();
+                      // CRITICAL: Create a NEW MediaStream to trigger React re-render
+                      const mediaStream = new MediaStream();
+                      
+                      // Add existing tracks
+                      if (prevStream) {
+                        prevStream.getTracks().forEach(t => mediaStream.addTrack(t));
+                      }
+                      
+                      // Add new track
                       mediaStream.addTrack(track.mediaStreamTrack);
                       
-                      console.log('[useWebRTC] Added existing track to remote stream:', {
+                      console.log('[useWebRTC] Added existing track to remote stream (NEW OBJECT):', {
                         audioTracks: mediaStream.getAudioTracks().length,
                         videoTracks: mediaStream.getVideoTracks().length
                       });
@@ -237,10 +250,18 @@ export function useWebRTC(options: UseWebRTCOptions) {
                   track.mediaStreamTrack.enabled = true;
                   
                   setRemoteStream((prevStream) => {
-                    const mediaStream = prevStream || new MediaStream();
+                    // CRITICAL: Create a NEW MediaStream to trigger React re-render
+                    const mediaStream = new MediaStream();
+                    
+                    // Add existing tracks
+                    if (prevStream) {
+                      prevStream.getTracks().forEach(t => mediaStream.addTrack(t));
+                    }
+                    
+                    // Add new track
                     mediaStream.addTrack(track.mediaStreamTrack);
                     
-                    console.log('[useWebRTC] Remote stream updated:', {
+                    console.log('[useWebRTC] Remote stream updated (NEW OBJECT):', {
                       audioTracks: mediaStream.getAudioTracks().length,
                       videoTracks: mediaStream.getVideoTracks().length
                     });
