@@ -322,7 +322,16 @@ export class VideoCall {
       this.setState('connecting');
       this.startConnectionTimeout();
       if (this.isInitiator) {
-        this.createAndSendOffer().catch((error) => this.emit('error', error.message));
+        // Add a small delay to ensure peer connection is fully ready
+        setTimeout(() => {
+          console.log('[VideoCall] WebSocket opened, creating offer after delay:', {
+            sessionId: this.sessionId,
+            userId: this.userId,
+            pcState: this.pc?.connectionState,
+            senders: this.pc?.getSenders().length
+          });
+          this.createAndSendOffer().catch((error) => this.emit('error', error.message));
+        }, 100);
       }
     };
 
@@ -504,7 +513,7 @@ export class VideoCall {
     }
     
     const senders = this.pc.getSenders();
-    console.log('[VideoCall] Creating offer:', {
+    console.log('[VideoCall] 📤 Creating offer:', {
       sessionId: this.sessionId,
       userId: this.userId,
       isInitiator: this.isInitiator,
@@ -513,7 +522,9 @@ export class VideoCall {
         audio: this.localStream.getAudioTracks().length,
         video: this.localStream.getVideoTracks().length,
         audioTrackId: this.localStream.getAudioTracks()[0]?.id,
-        videoTrackId: this.localStream.getVideoTracks()[0]?.id
+        videoTrackId: this.localStream.getVideoTracks()[0]?.id,
+        audioEnabled: this.localStream.getAudioTracks()[0]?.enabled,
+        videoEnabled: this.localStream.getVideoTracks()[0]?.enabled
       } : 'no local stream',
       sendersCount: senders.length,
       sendersDetails: senders.map(s => ({
@@ -523,21 +534,32 @@ export class VideoCall {
       }))
     });
     
+    if (senders.length === 0) {
+      console.error('[VideoCall] ❌ CRITICAL: No senders when creating offer! Tracks were not added properly!');
+    }
+    
     const offer = await this.pc.createOffer({ iceRestart });
     await this.pc.setLocalDescription(offer);
     
     // Check if SDP contains audio and video
     const hasAudio = offer.sdp?.includes('m=audio');
     const hasVideo = offer.sdp?.includes('m=video');
+    const sdpLines = offer.sdp?.split('\n') || [];
+    const mediaLines = sdpLines.filter(line => line.startsWith('m='));
     
-    console.log('[VideoCall] Sending offer:', {
+    console.log('[VideoCall] 📤 Sending offer:', {
       sessionId: this.sessionId,
       userId: this.userId,
       sendersCount: senders.length,
       hasAudioInSDP: hasAudio,
       hasVideoInSDP: hasVideo,
-      sdpPreview: offer.sdp?.substring(0, 300)
+      mediaLines: mediaLines,
+      sdpPreview: offer.sdp?.substring(0, 400)
     });
+    
+    if (!hasAudio || !hasVideo) {
+      console.error('[VideoCall] ❌ CRITICAL: Offer SDP missing media!', { hasAudio, hasVideo });
+    }
     
     this.sendSignal({ type: 'offer', offer });
   }
