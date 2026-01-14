@@ -168,8 +168,8 @@ export function useWebRTC(options: UseWebRTCOptions) {
         // Add a small delay to ensure room state is fully synced
         setTimeout(() => {
           // Now check for existing participants (works after room is fully connected)
-          if (room.participants && room.participants.size > 0) {
-            const existingParticipants = Array.from(room.participants.values());
+          if (room.remoteParticipants && room.remoteParticipants.size > 0) {
+            const existingParticipants = Array.from(room.remoteParticipants.values());
             console.log('[useWebRTC] Found existing participants:', {
               count: existingParticipants.length,
               identities: existingParticipants.map(p => p.identity)
