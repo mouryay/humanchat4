@@ -245,6 +245,14 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                           </button>
                         </>
                       )}
+                      {activeTab === 'upcoming' && booking.status === 'awaiting_payment' && (
+                        <button
+                          onClick={() => handleCancel(booking.bookingId)}
+                          className="rounded-full border border-rose-400/50 px-4 py-2 text-xs font-semibold text-rose-200 transition hover:border-rose-300"
+                        >
+                          Cancel
+                        </button>
+                      )}
                       {activeTab === 'canceled' && (
                         <button
                           onClick={() => router.push(`/experts/${booking.expertId}/schedule`)}

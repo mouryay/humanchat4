@@ -9,6 +9,7 @@ import {
   transferToHost,
   processDonation,
   createStripeConnectLink,
+  disconnectStripeAccount,
   generateReceipt
 } from '../services/stripeService.js';
 import { z } from 'zod';
@@ -93,6 +94,15 @@ router.post('/connect-link', authenticate, authenticatedLimiter, async (req, res
     const { returnPath } = schema.parse(req.body ?? {});
     const link = await createStripeConnectLink(req.user!.id, returnPath);
     success(res, link);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/disconnect-stripe', authenticate, authenticatedLimiter, async (req, res, next) => {
+  try {
+    await disconnectStripeAccount(req.user!.id);
+    success(res, { message: 'Stripe account disconnected successfully' });
   } catch (error) {
     next(error);
   }

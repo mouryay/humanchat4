@@ -58,6 +58,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
   const [availabilityNotice, setAvailabilityNotice] = useState<string | null>(null);
   const [promptToReenable, setPromptToReenable] = useState(false);
   const [integrationsMessage, setIntegrationsMessage] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<PreferenceSection | null>('availability-status');
 
   useEffect(() => {
     if (!settings) return;
@@ -141,6 +142,20 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
   const handleSaveConnection = async () => {
     if (!settings) return;
     setConnectionMessage(null);
+    
+    // Special handling for Stripe not connected
+    if ((connectionType === 'paid' || connectionType === 'charity') && !settings?.stripeConnected) {
+      const confirmConnect = window.confirm(
+        'You need to connect Stripe first to accept paid or charity conversations. Click OK to connect now.'
+      );
+      if (confirmConnect) {
+        await startStripeConnect();
+      } else {
+        setConnectionMessage('Stripe connection required. Please connect Stripe in the Integrations section below.');
+      }
+      return;
+    }
+    
     if (connectionErrors.length > 0) {
       setConnectionMessage(connectionErrors[0]);
       return;
@@ -200,7 +215,6 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
   }
 
   const sectionCardClass = embedded ? 'rounded-3xl border border-white/12 bg-white/5' : 'rounded-3xl border border-white/10 bg-white/5';
-  const [openSection, setOpenSection] = useState<PreferenceSection | null>('availability-status');
 
   const sections: Array<{
     id: PreferenceSection;

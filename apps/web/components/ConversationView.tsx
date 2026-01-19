@@ -168,8 +168,13 @@ export default function ConversationView({
   }, [conversation, currentUserId]);
 
   const handleScheduleClick = () => {
-    if (!otherParticipant) return;
-    router.push(`/experts/${otherParticipant.id}/schedule`);
+    if (!otherParticipant) {
+      console.error('[ConversationView] No other participant found for scheduling');
+      return;
+    }
+    const scheduleUrl = `/experts/${otherParticipant.id}/schedule`;
+    console.log('[ConversationView] Navigating to schedule page:', scheduleUrl, 'participant:', otherParticipant);
+    router.push(scheduleUrl);
   };
 
   return (

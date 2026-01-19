@@ -11,12 +11,26 @@ import Link from 'next/link';
 import { getExpertAvailability, createBooking, type TimeSlot } from '../../../../services/bookingApi';
 import { ProfileSummary } from '@/src/lib/db';
 import { useAuthIdentity } from '../../../../hooks/useAuthIdentity';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import PaymentForm from '../../../../components/PaymentForm';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function BookingPage() {
   const router = useRouter();
   const params = useParams();
   const expertId = params?.expertId as string;
   const { identity, loading: authLoading } = useAuthIdentity();
+
+  // Debug logs
+  useEffect(() => {
+    console.log('[Schedule] Component mounted, expertId:', expertId);
+  }, [expertId]);
+
+  useEffect(() => {
+    console.log('[Schedule] Auth state changed - authLoading:', authLoading, 'identity:', identity?.email || 'null', 'identity object:', identity);
+  }, [authLoading, identity]);
 
   const [expert, setExpert] = useState<ProfileSummary | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -25,20 +39,23 @@ export default function BookingPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [meetingNotes, setMeetingNotes] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [profileLoading, setProfileLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  
+  // Payment flow state
+  const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
+  const [bookingAmount, setBookingAmount] = useState<number>(0);
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
 
   // Initialize timezone and default date
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!authLoading && !identity) {
-      console.warn('User not authenticated, redirecting to home');
-      router.push('/?focus=sam');
+    if (!identity) {
+      console.log('[Schedule] Waiting for auth...', { authLoading, hasIdentity: !!identity });
       return;
     }
 
-    if (!identity) return;
-
+    console.log('[Schedule] User authenticated, initializing...', identity.email);
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setTimezone(userTimezone);
 
@@ -46,9 +63,12 @@ export default function BookingPage() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     setSelectedDate(tomorrow.toISOString().split('T')[0]);
 
-    // Fetch expert details
-    fetchExpertProfile(expertId);
-  }, [expertId, identity, authLoading, router]);
+    // Fetch expert details only once when identity is available
+    if (!expert) {
+      fetchExpertProfile(expertId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity, expertId]);
 
   // Fetch availability when date changes
   useEffect(() => {
@@ -58,6 +78,7 @@ export default function BookingPage() {
   }, [selectedDate, timezone, identity]);
 
   const fetchExpertProfile = async (id: string) => {
+    setProfileLoading(true);
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${API_BASE}/api/users/${id}`, {
@@ -73,14 +94,20 @@ export default function BookingPage() {
           router.push('/?focus=sam');
           return;
         }
-        throw new Error('Failed to fetch expert profile');
+        throw new Error(`Failed to fetch expert profile: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Expert profile loaded:', data.data);
+      console.log('Expert conversationType:', data.data?.conversationType);
+      console.log('Expert instantRatePerMinute:', data.data?.instantRatePerMinute);
+      console.log('Expert minPricePer15Min:', data.data?.minPricePer15Min);
       setExpert(data.data);
     } catch (err) {
       console.error('Failed to fetch expert:', err);
-      setError('Failed to load expert profile');
+      setError('Failed to load expert profile. Please try again.');
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -113,9 +140,21 @@ export default function BookingPage() {
         idempotencyKey: `${expertId}-${selectedSlot.start}-${Date.now()}`
       });
 
-      // Navigate to confirmation page
-      router.push(`/bookings/${booking.bookingId}/confirmation`);
+      // Check if payment is required
+      if (booking.requiresPayment && booking.paymentIntentClientSecret) {
+        // Show payment form
+        console.log('[Schedule] Payment required, showing payment form');
+        setPaymentIntentClientSecret(booking.paymentIntentClientSecret);
+        setBookingAmount(booking.priceCents || 0);
+        setPendingBookingId(booking.bookingId);
+        setSubmitting(false);
+      } else {
+        // Free booking - navigate to confirmation page
+        console.log('[Schedule] Free booking confirmed:', booking.bookingId);
+        router.push(`/bookings/${booking.bookingId}/confirmation`);
+      }
     } catch (err: any) {
+      console.error('[Schedule] Booking failed:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -128,6 +167,20 @@ export default function BookingPage() {
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const handlePaymentSuccess = () => {
+    console.log('[Schedule] Payment successful, redirecting to confirmation');
+    if (pendingBookingId) {
+      router.push(`/bookings/${pendingBookingId}/confirmation`);
+    }
+  };
+
+  const handlePaymentError = (errorMessage: string) => {
+    console.error('[Schedule] Payment failed:', errorMessage);
+    setError(`Payment failed: ${errorMessage}`);
+    setPaymentIntentClientSecret(null);
+    setSubmitting(false);
   };
 
   const formatDate = (dateStr: string) => {
@@ -143,8 +196,16 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
         <div className="text-white">
-          {authLoading ? 'Loading...' : 'Redirecting to login...'}
+          {authLoading ? 'Checking authentication...' : 'Please log in to continue'}
         </div>
+      </div>
+    );
+  }
+
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
+        <div className="text-white">Loading expert profile...</div>
       </div>
     );
   }
@@ -152,7 +213,15 @@ export default function BookingPage() {
   if (!expert) {
     return (
       <div className="min-h-screen bg-[#0a0e27] flex items-center justify-center">
-        <div className="text-white">Loading expert profile...</div>
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error || 'Expert not found'}</p>
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -273,14 +342,49 @@ export default function BookingPage() {
           </div>
         )}
 
-        {/* Book Button */}
-        <button
-          onClick={handleBooking}
-          disabled={!selectedSlot || submitting}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-lg transition-colors"
-        >
-          {submitting ? 'Booking...' : `Book Call (30 min)`}
-        </button>
+        {/* Book Button / Payment Form */}
+        {paymentIntentClientSecret && pendingBookingId ? (
+          <div className="bg-[#1a1f3a] rounded-lg p-6 mb-6">
+            <h3 className="text-xl font-semibold mb-4">Complete Payment</h3>
+            <Elements 
+              stripe={stripePromise} 
+              options={{ 
+                clientSecret: paymentIntentClientSecret,
+                appearance: {
+                  theme: 'night',
+                  variables: {
+                    colorPrimary: '#3b82f6',
+                  }
+                }
+              }}
+            >
+              <PaymentForm 
+                bookingId={pendingBookingId!}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+                amount={bookingAmount}
+              />
+            </Elements>
+            <button
+              onClick={() => {
+                setPaymentIntentClientSecret(null);
+                setPendingBookingId(null);
+                setSubmitting(false);
+              }}
+              className="w-full mt-4 text-gray-400 hover:text-white text-sm"
+            >
+              Cancel and go back
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleBooking}
+            disabled={!selectedSlot || submitting}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-lg transition-colors"
+          >
+            {submitting ? 'Processing...' : 'Continue to Payment'}
+          </button>
+        )}
       </div>
     </div>
   );

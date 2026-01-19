@@ -42,7 +42,10 @@ export interface CreateBookingRequest {
 
 export interface BookingResponse {
   success: boolean;
-  data: Booking;
+  data: Booking & {
+    requiresPayment?: boolean;
+    paymentIntentClientSecret?: string;  // For Stripe Elements
+  };
 }
 
 export interface BookingsListResponse {

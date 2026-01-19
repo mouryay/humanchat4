@@ -18,24 +18,38 @@ const handleResponse = async (response: Response) => {
 };
 
 export const fetchCurrentUser = async (): Promise<AuthUser | null> => {
-  const result = await fetch(`${API_BASE_URL}/api/auth/me`, {
-    method: 'GET',
-    credentials: 'include'
-  });
-  if (result.status === 401) {
+  try {
+    const result = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'GET',
+      credentials: 'include'
+    });
+    if (result.status === 401) {
+      console.log('[authApi] User not authenticated (401)');
+      return null;
+    }
+    if (!result.ok) {
+      console.error('[authApi] Failed to fetch user:', result.status);
+      return null;
+    }
+    const payload = await handleResponse(result);
+    if (payload?.user) {
+      console.log('[authApi] User authenticated:', payload.user.email);
+      return payload.user as AuthUser;
+    }
+    if (payload?.data?.user) {
+      console.log('[authApi] User authenticated:', payload.data.user.email);
+      return payload.data.user as AuthUser;
+    }
+    if (payload?.data && 'id' in payload.data) {
+      console.log('[authApi] User authenticated:', payload.data.email);
+      return payload.data as AuthUser;
+    }
+    console.warn('[authApi] Unexpected payload format:', payload);
+    return null;
+  } catch (error) {
+    console.error('[authApi] Error fetching current user:', error);
     return null;
   }
-  const payload = await handleResponse(result);
-  if (payload?.user) {
-    return payload.user as AuthUser;
-  }
-  if (payload?.data?.user) {
-    return payload.data.user as AuthUser;
-  }
-  if (payload?.data && 'id' in payload.data) {
-    return payload.data as AuthUser;
-  }
-  return null;
 };
 
 export const logout = async (): Promise<void> => {

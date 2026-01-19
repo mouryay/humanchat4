@@ -53,6 +53,7 @@ export interface ProfileSummary {
   managerName?: string | null;
   displayMode?: 'normal' | 'by_request' | 'confidential';
   instantRatePerMinute?: number;
+  minPricePer15Min?: number;
   scheduledRates?: ScheduledRate[];
   availability?: string;
   isOnline?: boolean;
