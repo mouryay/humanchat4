@@ -143,7 +143,7 @@ export const disconnectStripe = async (): Promise<UserSettingsRecord> => {
     await fetch(`${API_BASE_URL}/api/payments/disconnect-stripe`, withCredentials({ method: 'POST' }))
   );
   // After disconnecting, fetch fresh settings
-  return (await getSettings()).settings;
+  return (await fetchUserSettings()).settings;
 };
 
 export const markOnboardingComplete = async (): Promise<UserSettingsRecord> => {

@@ -12,7 +12,7 @@ import { logger } from '../utils/logger.js';
 
 // Initialize Stripe client for bookings
 const stripe = new Stripe(env.stripeSecretKey, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-01-27.acacia' as Stripe.LatestApiVersion,
   typescript: true,
   appInfo: {
     name: 'HumanChat-Bookings',
@@ -356,6 +356,9 @@ export function constructBookingWebhookEvent(
   payload: string | Buffer,
   signature: string
 ): Stripe.Event {
+  if (!env.stripeWebhookSecret) {
+    throw new ApiError(500, 'Stripe webhook secret not configured');
+  }
   try {
     return stripe.webhooks.constructEvent(
       payload,
@@ -375,6 +378,9 @@ export function verifyBookingWebhookSignature(
   payload: string | Buffer,
   signature: string
 ): boolean {
+  if (!env.stripeWebhookSecret) {
+    throw new ApiError(500, 'Stripe webhook secret not configured');
+  }
   try {
     stripe.webhooks.constructEvent(payload, signature, env.stripeWebhookSecret);
     return true;
@@ -454,7 +460,7 @@ export function getStripeClient(): Stripe {
  * Fetches booking details and creates checkout session
  */
 export async function createCheckoutSession(bookingId: string): Promise<{ url: string; sessionId: string }> {
-  const { query } = await import('../db/index.js');
+  const { query } = await import('../db/postgres.js');
   
   // Fetch booking details
   const result = await query(

@@ -36,6 +36,7 @@ const buildUser = (overrides: Partial<User>): User => {
     charity_id: null,
     charity_name: null,
     instant_rate_per_minute: 5,
+    min_price_per_15_min: null,
     scheduled_rates: null,
     is_online: true,
     has_active_session: false,

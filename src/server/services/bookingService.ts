@@ -56,6 +56,11 @@ export interface Booking {
   calendarEventId: string | null;
   price: number | null;
   paymentStatus: string;
+  priceCents?: number | null;
+  platformFeeCents?: number | null;
+  responderPayoutCents?: number | null;
+  requiresPayment?: boolean;
+  paymentIntentClientSecret?: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -68,6 +73,7 @@ export interface BookingWithDetails extends Booking {
   userName: string;
   userAvatar: string | null;
   userEmail: string;
+  requesterEmail?: string;
 }
 
 export interface CreateBookingInput {

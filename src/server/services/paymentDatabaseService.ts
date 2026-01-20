@@ -79,6 +79,7 @@ export interface UpdatePaymentParams {
   paymentId: string;
   status?: PaymentStatus;
   stripeChargeId?: string;
+  stripePaymentIntentId?: string;
   paymentMethodId?: string;
   paymentMethodType?: string;
   paidAt?: Date;

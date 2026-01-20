@@ -430,7 +430,7 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 	if (!accountId) {
 		// TEMPORARY DEV MODE: Skip Connect account creation for testing
 		// In production, you MUST enable Stripe Connect at https://dashboard.stripe.com/connect
-		if (env.nodeEnv === 'development' || env.nodeEnv === 'localhost') {
+		if (env.nodeEnv === 'development' || env.nodeEnv === 'test') {
 			// Use a mock account ID for dev/testing
 			accountId = 'acct_dev_mock_' + userId.substring(0, 8);
 			await query('UPDATE users SET stripe_account_id = $2 WHERE id = $1', [userId, accountId]);

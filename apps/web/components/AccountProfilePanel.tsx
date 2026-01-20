@@ -213,11 +213,11 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">Conversation type</p>
-              <p className="mt-1 text-lg fo
+              <p className="mt-1 text-lg font-semibold text-white">
                 {profile.conversationType === 'free' ? 'No charge · tips optional' : 
                  profile.minPricePer15Min ? `$${profile.minPricePer15Min}/15min minimum` : 
                  profile.instantRatePerMinute ? `$${profile.instantRatePerMinute.toFixed(2)}/min` : 'not set'}
-              
+              </p>
               <p className="text-white/60">Instant rate {profile.instantRatePerMinute ? `$${profile.instantRatePerMinute.toFixed(2)}/min` : 'not set'}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -327,11 +327,7 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
                   placeholder="120"
                 />
               </div>
-              <span className="text-xs text-white/50">For instant connects</span value={form.instantRatePerMinute}
-                onChange={(event) => handleFieldChange('instantRatePerMinute', event.target.value)}
-                className="rounded-xl border border-white/15 bg-black/20 px-3 py-2 text-white placeholder-white/30 focus:border-white/60 focus:outline-none"
-                placeholder="120"
-              />
+              <span className="text-xs text-white/50">For instant connects</span>
             </label>
             <label className="flex flex-col gap-2 text-sm">
               <span className="text-white/70">Display mode</span>

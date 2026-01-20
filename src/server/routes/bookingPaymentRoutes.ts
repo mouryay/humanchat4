@@ -7,7 +7,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { ApiError } from '../errors/ApiError.js';
-import { authenticate } from '../middleware/authenticate.js';
+import { authenticate } from '../middleware/auth.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import * as bookingService from '../services/bookingStateMachineService.js';
 import * as paymentService from '../services/paymentDatabaseService.js';
@@ -182,8 +182,8 @@ router.post(
         durationMinutes: booking.duration_minutes,
         successUrl:
           successUrl ||
-          `${env.frontendUrl}/bookings/${bookingId}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: cancelUrl || `${env.frontendUrl}/bookings/${bookingId}/cancel`,
+          `${env.appUrl}/bookings/${bookingId}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: cancelUrl || `${env.appUrl}/bookings/${bookingId}/cancel`,
         metadata: {
           bookingId,
           requesterId: userId,

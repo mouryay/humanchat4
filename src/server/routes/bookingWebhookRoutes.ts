@@ -35,7 +35,7 @@ const router = Router();
 router.post('/stripe', async (req: Request, res: Response, next: NextFunction) => {
   const signature = req.headers['stripe-signature'];
 
-  if (!signature) {
+  if (!signature || Array.isArray(signature)) {
     logger.error('Missing Stripe signature header');
     return res.status(400).json({ error: 'Missing signature' });
   }
