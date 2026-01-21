@@ -24,6 +24,7 @@ interface FormState {
   bio: string;
   conversationType: ConversationCategory;
   instantRatePerMinute: string;
+  minPricePer15Min: string;
   displayMode: 'normal' | 'by_request' | 'confidential';
   isOnline: boolean;
   scheduledRates: ScheduledRateEntry[];
@@ -35,6 +36,7 @@ const buildFormState = (profile: UseProfileDetailsResult['profile']): FormState 
   bio: profile?.bio ?? '',
   conversationType: profile?.conversationType ?? 'free',
   instantRatePerMinute: profile?.instantRatePerMinute ? String(profile.instantRatePerMinute) : '',
+  minPricePer15Min: profile?.minPricePer15Min ? String(profile.minPricePer15Min) : '',
   displayMode: profile?.displayMode ?? 'normal',
   isOnline: Boolean(profile?.isOnline),
   scheduledRates: profile?.scheduledRates?.length ? profile.scheduledRates : []
@@ -124,6 +126,7 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
         headline: form.headline.trim() || null,
         bio: form.bio.trim() || null,
         conversationType: form.conversationType,
+        minPricePer15Min: form.minPricePer15Min ? Number(form.minPricePer15Min) : null,
         instantRatePerMinute: form.instantRatePerMinute ? Number(form.instantRatePerMinute) : null,
         scheduledRates: cleanedRates.length ? cleanedRates : null,
         displayMode: form.displayMode,
@@ -210,7 +213,11 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-white/50">Conversation type</p>
-              <p className="mt-1 text-lg font-semibold text-white capitalize">{profile.conversationType}</p>
+              <p className="mt-1 text-lg font-semibold text-white">
+                {profile.conversationType === 'free' ? 'No charge · tips optional' : 
+                 profile.minPricePer15Min ? `$${profile.minPricePer15Min}/15min minimum` : 
+                 profile.instantRatePerMinute ? `$${profile.instantRatePerMinute.toFixed(2)}/min` : 'not set'}
+              </p>
               <p className="text-white/60">Instant rate {profile.instantRatePerMinute ? `$${profile.instantRatePerMinute.toFixed(2)}/min` : 'not set'}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -289,18 +296,38 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
             ))}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <label className="flex flex-col gap-2 text-sm">
+              <span className="text-white/70">Min price per 15 min</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="5"
+                  value={form.minPricePer15Min}
+                  onChange={(event) => handleFieldChange('minPricePer15Min', event.target.value)}
+                  className="w-full rounded-xl border border-white/15 bg-black/20 px-3 py-2 pl-7 text-white placeholder-white/30 focus:border-white/60 focus:outline-none"
+                  placeholder="50"
+                />
+              </div>
+              <span className="text-xs text-white/50">Your base rate for scheduled bookings</span>
+            </label>
             <label className="flex flex-col gap-2 text-sm">
               <span className="text-white/70">Instant rate (per min)</span>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={form.instantRatePerMinute}
-                onChange={(event) => handleFieldChange('instantRatePerMinute', event.target.value)}
-                className="rounded-xl border border-white/15 bg-black/20 px-3 py-2 text-white placeholder-white/30 focus:border-white/60 focus:outline-none"
-                placeholder="120"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.instantRatePerMinute}
+                  onChange={(event) => handleFieldChange('instantRatePerMinute', event.target.value)}
+                  className="w-full rounded-xl border border-white/15 bg-black/20 px-3 py-2 pl-7 text-white placeholder-white/30 focus:border-white/60 focus:outline-none"
+                  placeholder="120"
+                />
+              </div>
+              <span className="text-xs text-white/50">For instant connects</span>
             </label>
             <label className="flex flex-col gap-2 text-sm">
               <span className="text-white/70">Display mode</span>

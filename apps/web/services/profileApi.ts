@@ -18,6 +18,7 @@ export interface UserProfile {
   bio: string | null;
   conversationType: ConversationCategory;
   instantRatePerMinute: number | null;
+  minPricePer15Min: number | null;
   scheduledRates: ScheduledRateEntry[];
   donationPreference: 'on' | 'off' | null;
   charityId: string | null;
@@ -48,6 +49,7 @@ interface UserProfileApiResponse {
   bio: string | null;
   conversation_type: ConversationCategory;
   instant_rate_per_minute: number | null;
+  min_price_per_15_min: number | null;
   scheduled_rates: Record<string, number> | null;
   donation_preference: 'on' | 'off' | null;
   charity_id: string | null;
@@ -133,6 +135,7 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   headline: record.headline,
   bio: record.bio,
   conversationType: record.conversation_type,
+  minPricePer15Min: record.min_price_per_15_min ?? null,
   instantRatePerMinute: record.instant_rate_per_minute,
   scheduledRates: toScheduledRateArray(record.scheduled_rates),
   donationPreference: record.donation_preference ?? null,
@@ -168,6 +171,7 @@ const mapRecordToProfileSummary = (record: UserProfileApiResponse): ProfileSumma
   managerName: record.manager_display_name ?? undefined,
   displayMode: record.display_mode ?? undefined,
   instantRatePerMinute: record.instant_rate_per_minute ?? undefined,
+  minPricePer15Min: record.min_price_per_15_min ?? undefined,
   scheduledRates: toScheduledRateArray(record.scheduled_rates),
   isOnline: record.is_online,
   hasActiveSession: record.has_active_session,
@@ -184,6 +188,7 @@ export interface ProfileUpdateInput {
   bio?: string | null;
   conversationType?: ConversationCategory;
   instantRatePerMinute?: number | null;
+  minPricePer15Min?: number | null;
   scheduledRates?: ScheduledRateEntry[] | null;
   isOnline?: boolean;
   hasActiveSession?: boolean;
@@ -220,6 +225,9 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   }
   if ('instantRatePerMinute' in updates) {
     payload.instant_rate_per_minute = updates.instantRatePerMinute ?? null;
+  }
+  if ('minPricePer15Min' in updates) {
+    payload.min_price_per_15_min = updates.minPricePer15Min ?? null;
   }
   if ('scheduledRates' in updates) {
     payload.scheduled_rates = toScheduledRateRecord(updates.scheduledRates ?? null);

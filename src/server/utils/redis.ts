@@ -20,6 +20,11 @@ export async function publishToRedis(channel: string, message: string | object):
 }
 
 /**
+ * Alias for publishToRedis - publishes an event to Redis channel
+ */
+export const publishEvent = publishToRedis;
+
+/**
  * Subscribe to a Redis channel
  * @param channel - Redis channel name
  * @param handler - Message handler function

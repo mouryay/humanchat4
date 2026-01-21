@@ -9,6 +9,7 @@ import { ApiError } from '../errors/ApiError.js';
 import * as bookingService from '../services/bookingService.js';
 import * as googleCalendarService from '../services/googleCalendarService.js';
 import * as expertAvailabilityService from '../services/expertAvailabilityService.js';
+import * as bookingPaymentService from '../services/bookingPaymentService.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -434,7 +435,7 @@ router.get(
 
 /**
  * POST /api/experts/:expertId/bookings
- * Create a new booking
+ * Create a new booking (with payment if required)
  */
 router.post(
   '/experts/:expertId/bookings',
@@ -466,10 +467,49 @@ router.post(
         idempotencyKey: validation.data.idempotencyKey
       });
 
-      res.status(201).json({
-        success: true,
-        data: booking
-      });
+      // If booking requires payment, create Stripe Payment Intent
+      if (booking.priceCents && booking.priceCents > 0 && booking.status === 'awaiting_payment') {
+        // Create Payment Intent for in-app payment
+        const paymentIntent = await bookingPaymentService.createBookingPaymentIntent({
+          bookingId: booking.bookingId,
+          amountCents: booking.priceCents,
+          currency: 'usd',
+          requesterEmail: booking.requesterEmail || 'user@example.com',
+          metadata: {
+            bookingId: booking.bookingId,
+            expertId: booking.expertId,
+            userId: booking.userId
+          }
+        });
+        
+        // Store payment intent in database for refund tracking
+        await bookingService.createPaymentRecord({
+          bookingId: booking.bookingId,
+          stripePaymentIntentId: paymentIntent.id,
+          amountCents: booking.priceCents,
+          currency: 'usd',
+          platformFeeCents: booking.platformFeeCents || 0,
+          responderPayoutCents: booking.responderPayoutCents || 0
+        });
+        
+        res.status(201).json({
+          success: true,
+          data: {
+            ...booking,
+            requiresPayment: true,
+            paymentIntentClientSecret: paymentIntent.client_secret
+          }
+        });
+      } else {
+        // Free booking - confirmed immediately
+        res.status(201).json({
+          success: true,
+          data: {
+            ...booking,
+            requiresPayment: false
+          }
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -631,6 +671,45 @@ router.get(
 
       // Redirect to success page
       res.redirect(`${process.env.APP_URL}/expert/availability?calendar=connected`);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/bookings/:bookingId/confirm-payment
+ * Confirm payment and update booking status from awaiting_payment to scheduled
+ */
+router.post(
+  '/bookings/:bookingId/confirm-payment',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { bookingId } = req.params;
+      const userId = req.user!.id;
+
+      // Get booking to verify ownership
+      const booking = await bookingService.getBookingById(bookingId);
+      
+      if (booking.userId !== userId) {
+        throw new ApiError(403, 'FORBIDDEN', 'You can only confirm payment for your own bookings');
+      }
+
+      if (booking.status !== 'awaiting_payment') {
+        throw new ApiError(400, 'INVALID_STATUS', `Booking status is ${booking.status}, expected awaiting_payment`);
+      }
+
+      // Update booking status to scheduled
+      await bookingService.updateBookingStatus(bookingId, 'scheduled', userId);
+
+      // Update payment status to succeeded
+      await bookingService.updatePaymentStatus(bookingId, 'succeeded');
+
+      res.json({
+        success: true,
+        message: 'Payment confirmed, booking is now scheduled'
+      });
     } catch (error) {
       next(error);
     }

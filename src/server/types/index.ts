@@ -20,6 +20,7 @@ export interface User {
   charity_id: string | null;
   charity_name: string | null;
   instant_rate_per_minute: number | null;
+  min_price_per_15_min: number | null;
   scheduled_rates: Record<string, number> | null;
   is_online: boolean;
   has_active_session: boolean;

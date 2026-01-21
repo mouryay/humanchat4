@@ -56,6 +56,11 @@ export interface Booking {
   calendarEventId: string | null;
   price: number | null;
   paymentStatus: string;
+  priceCents?: number | null;
+  platformFeeCents?: number | null;
+  responderPayoutCents?: number | null;
+  requiresPayment?: boolean;
+  paymentIntentClientSecret?: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -68,6 +73,7 @@ export interface BookingWithDetails extends Booking {
   userName: string;
   userAvatar: string | null;
   userEmail: string;
+  requesterEmail?: string;
 }
 
 export interface CreateBookingInput {
@@ -143,6 +149,7 @@ export const getExpertAvailabilityOverrides = async (
 
 /**
  * Get expert's existing bookings for a date range (private helper)
+ * Updated to support both old (expert_id/user_id) and new (responder_id/requester_id) column names
  */
 const getExpertBookingsBusyTimes = async (
   expertId: string,
@@ -150,13 +157,15 @@ const getExpertBookingsBusyTimes = async (
   endDate: Date
 ): Promise<{ start: Date; end: Date }[]> => {
   const result = await query(
-    `SELECT start_time, end_time
+    `SELECT 
+       COALESCE(scheduled_start, start_time) as start_time,
+       COALESCE(scheduled_end, end_time) as end_time
      FROM bookings
-     WHERE expert_id = $1
-     AND status IN ('scheduled', 'in_progress')
-     AND start_time < $3
-     AND end_time > $2
-     ORDER BY start_time`,
+     WHERE COALESCE(responder_id, expert_id) = $1
+     AND status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment')
+     AND COALESCE(scheduled_start, start_time) < $3
+     AND COALESCE(scheduled_end, end_time) > $2
+     ORDER BY COALESCE(scheduled_start, start_time)`,
     [expertId, startDate, endDate]
   );
 
@@ -395,7 +404,10 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
 
     // Get expert and user details
     const expertResult = await client.query(
-      'SELECT name, email, avatar_url, headline FROM users WHERE id = $1',
+      `SELECT name, email, avatar_url, headline, 
+              instant_rate_per_minute, min_price_per_15_min,
+              conversation_type
+       FROM users WHERE id = $1`,
       [input.expertId]
     );
 
@@ -411,12 +423,32 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     const expert = expertResult.rows[0];
     const user = userResult.rows[0];
 
+    // Calculate price based on expert's rates
+    let priceCents = 0;
+    if (expert.conversation_type === 'paid') {
+      // Use instant_rate_per_minute if set, otherwise use min_price_per_15_min
+      if (expert.instant_rate_per_minute && expert.instant_rate_per_minute > 0) {
+        // Rate is in dollars per minute, convert to cents
+        priceCents = Math.round(expert.instant_rate_per_minute * input.durationMinutes * 100);
+      } else if (expert.min_price_per_15_min && expert.min_price_per_15_min > 0) {
+        // Calculate based on 15-minute minimum
+        const blocks = Math.ceil(input.durationMinutes / 15);
+        priceCents = expert.min_price_per_15_min * blocks;
+      }
+    }
+
     // Create booking
+    // Support both old (expert_id/user_id/start_time/end_time) and new (responder_id/requester_id/scheduled_start/scheduled_end) columns
+    // Set status to 'awaiting_payment' if price > 0, otherwise 'scheduled'
+    const initialStatus = priceCents > 0 ? 'awaiting_payment' : 'scheduled';
+    
     const bookingResult = await client.query(
       `INSERT INTO bookings 
-       (expert_id, user_id, start_time, end_time, duration_minutes, timezone, 
-        status, meeting_title, meeting_notes, idempotency_key)
-       VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
+       (expert_id, user_id, responder_id, requester_id, 
+        start_time, end_time, scheduled_start, scheduled_end,
+        duration_minutes, timezone, 
+        status, meeting_title, notes, idempotency_key, price_cents)
+       VALUES ($1, $2, $1, $2, $3, $4, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         input.expertId,
@@ -425,9 +457,11 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
         input.endTime,
         input.durationMinutes,
         input.timezone,
+        initialStatus,
         `Call with ${user.name}`,
         input.meetingNotes,
-        input.idempotencyKey
+        input.idempotencyKey,
+        priceCents
       ]
     );
 
@@ -497,11 +531,16 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
 
 /**
  * Get booking by ID with full details
+ * Updated to support both old and new column names
  */
 export const getBookingById = async (bookingId: string): Promise<BookingWithDetails> => {
   const result = await query(
     `SELECT 
       b.*,
+      COALESCE(b.expert_id, b.responder_id) as expert_id,
+      COALESCE(b.user_id, b.requester_id) as user_id,
+      COALESCE(b.start_time, b.scheduled_start) as start_time,
+      COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
       e.avatar_url as expert_avatar,
       e.headline as expert_headline,
@@ -509,8 +548,8 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON b.expert_id = e.id
-     JOIN users u ON b.user_id = u.id
+     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
+     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
      WHERE b.id = $1`,
     [bookingId]
   );
@@ -533,10 +572,11 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.meeting_notes,
+    meetingNotes: row.notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
+    priceCents: row.price_cents, // Add price in cents for payment
     paymentStatus: row.payment_status,
     createdAt: new Date(row.created_at).getTime(),
     updatedAt: new Date(row.updated_at).getTime(),
@@ -545,12 +585,14 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
     expertHeadline: row.expert_headline,
     userName: row.user_name,
     userAvatar: row.user_avatar,
+    requesterEmail: row.user_email, // Add requester email for payment
     userEmail: row.user_email
   };
 };
 
 /**
  * Get user's bookings with filters
+ * Updated to support both old and new column names
  */
 export const getUserBookings = async (
   userId: string,
@@ -560,16 +602,20 @@ export const getUserBookings = async (
   const params: any[] = [userId];
 
   if (status === 'upcoming') {
-    statusFilter = `AND b.status IN ('scheduled', 'in_progress') AND b.start_time > NOW()`;
+    statusFilter = `AND b.status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment') AND COALESCE(b.scheduled_start, b.start_time) > NOW()`;
   } else if (status === 'past') {
-    statusFilter = `AND b.status = 'completed' OR (b.start_time < NOW() AND b.status != 'scheduled')`;
+    statusFilter = `AND b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW() AND b.status::VARCHAR != 'scheduled')`;
   } else if (status === 'canceled') {
-    statusFilter = `AND b.status IN ('cancelled_by_user', 'cancelled_by_expert')`;
+    statusFilter = `AND b.status::VARCHAR IN ('cancelled_by_user', 'cancelled_by_expert', 'canceled')`;
   }
 
   const result = await query(
     `SELECT 
       b.*,
+      COALESCE(b.expert_id, b.responder_id) as expert_id,
+      COALESCE(b.user_id, b.requester_id) as user_id,
+      COALESCE(b.start_time, b.scheduled_start) as start_time,
+      COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
       e.avatar_url as expert_avatar,
       e.headline as expert_headline,
@@ -577,10 +623,10 @@ export const getUserBookings = async (
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON b.expert_id = e.id
-     JOIN users u ON b.user_id = u.id
-     WHERE b.user_id = $1 ${statusFilter}
-     ORDER BY b.start_time DESC`,
+     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
+     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
+     WHERE COALESCE(b.user_id, b.requester_id) = $1 ${statusFilter}
+     ORDER BY COALESCE(b.scheduled_start, b.start_time) DESC`,
     params
   );
 
@@ -596,7 +642,7 @@ export const getUserBookings = async (
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.meeting_notes,
+    meetingNotes: row.notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
@@ -614,6 +660,7 @@ export const getUserBookings = async (
 
 /**
  * Get expert's bookings
+ * Updated to support both old and new column names
  */
 export const getExpertBookings = async (
   expertId: string,
@@ -622,16 +669,20 @@ export const getExpertBookings = async (
   let statusFilter = '';
 
   if (status === 'upcoming') {
-    statusFilter = `AND b.status IN ('scheduled', 'in_progress') AND b.start_time > NOW()`;
+    statusFilter = `AND b.status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment') AND COALESCE(b.scheduled_start, b.start_time) > NOW()`;
   } else if (status === 'past') {
-    statusFilter = `AND b.status = 'completed' OR (b.start_time < NOW())`;
+    statusFilter = `AND b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW())`;
   } else if (status === 'canceled') {
-    statusFilter = `AND b.status IN ('cancelled_by_user', 'cancelled_by_expert')`;
+    statusFilter = `AND b.status::VARCHAR IN ('cancelled_by_user', 'cancelled_by_expert', 'canceled')`;
   }
 
   const result = await query(
     `SELECT 
       b.*,
+      COALESCE(b.expert_id, b.responder_id) as expert_id,
+      COALESCE(b.user_id, b.requester_id) as user_id,
+      COALESCE(b.start_time, b.scheduled_start) as start_time,
+      COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
       e.avatar_url as expert_avatar,
       e.headline as expert_headline,
@@ -639,10 +690,10 @@ export const getExpertBookings = async (
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON b.expert_id = e.id
-     JOIN users u ON b.user_id = u.id
-     WHERE b.expert_id = $1 ${statusFilter}
-     ORDER BY b.start_time DESC`,
+     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
+     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
+     WHERE COALESCE(b.expert_id, b.responder_id) = $1 ${statusFilter}
+     ORDER BY COALESCE(b.scheduled_start, b.start_time) DESC`,
     [expertId]
   );
 
@@ -658,7 +709,7 @@ export const getExpertBookings = async (
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.meeting_notes,
+    meetingNotes: row.notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
@@ -684,18 +735,66 @@ export const cancelBooking = async (
 ): Promise<BookingWithDetails> => {
   const booking = await getBookingById(bookingId);
 
-  if (!['scheduled', 'in_progress'].includes(booking.status)) {
+  if (!['scheduled', 'in_progress', 'awaiting_payment'].includes(booking.status)) {
     throw new ApiError(400, 'INVALID_REQUEST', 'Booking cannot be cancelled');
   }
 
-  // Check cancellation policy (e.g., no cancel within 1 hour)
-  const oneHourFromNow = Date.now() + 60 * 60 * 1000;
-  if (booking.startTime < oneHourFromNow) {
-    throw new ApiError(
-      400,
-      'INVALID_REQUEST',
-      'Cannot cancel booking less than 1 hour before start time'
+  // Check cancellation policy (e.g., no cancel within 1 hour) - skip for unpaid bookings
+  if (booking.status !== 'awaiting_payment') {
+    const oneHourFromNow = Date.now() + 60 * 60 * 1000;
+    if (booking.startTime < oneHourFromNow) {
+      throw new ApiError(
+        400,
+        'INVALID_REQUEST',
+        'Cannot cancel booking less than 1 hour before start time'
+      );
+    }
+  }
+
+  // Process refund if booking was paid
+  if (booking.priceCents && booking.priceCents > 0) {
+    const { createBookingRefund } = await import('./bookingPaymentService.js');
+    
+    // Get payment intent ID from payments table
+    const paymentResult = await query(
+      `SELECT stripe_payment_intent_id, status FROM payments WHERE booking_id = $1 AND status = 'succeeded' ORDER BY created_at DESC LIMIT 1`,
+      [bookingId]
     );
+
+    if (paymentResult.rows.length > 0) {
+      const paymentIntentId = paymentResult.rows[0].stripe_payment_intent_id;
+      
+      try {
+        // Create refund in Stripe
+        const refund = await createBookingRefund({
+          paymentIntentId,
+          reason: reason || 'Booking cancelled by user',
+          metadata: {
+            bookingId,
+            cancelledBy
+          }
+        });
+
+        // Record refund in database
+        await query(
+          `INSERT INTO refunds (payment_id, booking_id, stripe_refund_id, amount_cents, currency, status, reason, requested_by)
+           SELECT p.id, $1, $2, $3, 'USD', 'succeeded', $4, $5
+           FROM payments p WHERE p.stripe_payment_intent_id = $6`,
+          [bookingId, refund.id, booking.priceCents, reason, cancelledBy, paymentIntentId]
+        );
+
+        // Update payment status
+        await query(
+          `UPDATE payments SET status = 'refunded', updated_at = NOW() WHERE stripe_payment_intent_id = $1`,
+          [paymentIntentId]
+        );
+
+        console.log(`Refund processed for booking ${bookingId}: ${refund.id}`);
+      } catch (refundError) {
+        console.error('Failed to process refund:', refundError);
+        // Continue with cancellation even if refund fails - admin can process manually
+      }
+    }
   }
 
   const isExpert = booking.expertId === cancelledBy;
@@ -796,7 +895,7 @@ export const rescheduleBooking = async (
     const newBooking = await client.query(
       `INSERT INTO bookings 
        (expert_id, user_id, start_time, end_time, duration_minutes, timezone, 
-        status, meeting_title, meeting_notes, price)
+        status, meeting_title, notes, price)
        VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
        RETURNING *`,
       [
@@ -850,4 +949,80 @@ export const rescheduleBooking = async (
   } finally {
     client.release();
   }
+};
+
+/**
+ * Update booking status (e.g., from awaiting_payment to scheduled)
+ */
+export const updateBookingStatus = async (
+  bookingId: string,
+  newStatus: string,
+  userId: string
+): Promise<void> => {
+  const result = await query(
+    `UPDATE bookings 
+     SET status = $1, updated_at = NOW() 
+     WHERE id = $2
+     RETURNING *`,
+    [newStatus, bookingId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new ApiError(404, 'NOT_FOUND', 'Booking not found');
+  }
+
+  // Create audit log
+  await query(
+    `INSERT INTO booking_audit_log (booking_id, action, performed_by, new_values)
+     VALUES ($1, $2, $3, $4)`,
+    [bookingId, 'status_updated', userId, JSON.stringify({ status: newStatus })]
+  );
+};
+
+/**
+ * Create payment record in database
+ */
+export const createPaymentRecord = async (params: {
+  bookingId: string;
+  stripePaymentIntentId: string;
+  amountCents: number;
+  currency: string;
+  platformFeeCents: number;
+  responderPayoutCents: number;
+}): Promise<void> => {
+  await query(
+    `INSERT INTO payments (
+      booking_id,
+      stripe_payment_intent_id,
+      amount_cents,
+      currency,
+      platform_fee_cents,
+      responder_payout_cents,
+      status
+    ) VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
+    [
+      params.bookingId,
+      params.stripePaymentIntentId,
+      params.amountCents,
+      params.currency.toUpperCase(),
+      params.platformFeeCents,
+      params.responderPayoutCents
+    ]
+  );
+};
+
+/**
+ * Update payment status
+ */
+export const updatePaymentStatus = async (
+  bookingId: string,
+  status: string
+): Promise<void> => {
+  const timestamp = status === 'succeeded' ? ', paid_at = NOW()' : '';
+  await query(
+    `UPDATE payments 
+     SET status = $1, updated_at = NOW()${timestamp}
+     WHERE booking_id = $2`,
+    [status, bookingId]
+  );
 };

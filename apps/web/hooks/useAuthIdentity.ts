@@ -29,20 +29,20 @@ export const useAuthIdentity = (): UseAuthIdentityResult => {
     }
     setLoading(true);
     try {
+      console.log('[useAuthIdentity] Fetching current user...');
       const user = await fetchCurrentUser();
-      if (mountedRef.current) {
-        setIdentity(user);
-      }
+      console.log('[useAuthIdentity] Fetch complete:', user ? 'Authenticated' : 'Not authenticated');
+      // Always set identity - React will ignore if unmounted
+      setIdentity(user);
       return user;
-    } catch {
-      if (mountedRef.current) {
-        setIdentity(null);
-      }
+    } catch (error) {
+      console.error('[useAuthIdentity] Error during refresh:', error);
+      setIdentity(null);
       return null;
     } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
+      // Always set loading to false, React will ignore if unmounted
+      console.log('[useAuthIdentity] Setting loading to false');
+      setLoading(false);
     }
   }, []);
 

@@ -10,6 +10,7 @@ export type PaymentMode = 'free' | 'paid' | 'charity';
 export type InstantInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
 export type BookingStatus =
   | 'scheduled'
+  | 'awaiting_payment'
   | 'in_progress'
   | 'completed'
   | 'cancelled_by_user'
@@ -53,6 +54,7 @@ export interface ProfileSummary {
   managerName?: string | null;
   displayMode?: 'normal' | 'by_request' | 'confidential';
   instantRatePerMinute?: number;
+  minPricePer15Min?: number;
   scheduledRates?: ScheduledRate[];
   availability?: string;
   isOnline?: boolean;
@@ -238,6 +240,12 @@ export interface Booking {
   cancelledBy: string | null;
   createdAt: number;
   updatedAt: number;
+  // Payment properties
+  priceCents?: number | null;
+  platformFeeCents?: number | null;
+  responderPayoutCents?: number | null;
+  requiresPayment?: boolean;
+  paymentIntentClientSecret?: string | null;
 }
 
 type MessageInput = Omit<Message, 'id' | 'conversationId' | 'timestamp'> & {

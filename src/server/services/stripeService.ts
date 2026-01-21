@@ -428,6 +428,7 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 
 	let accountId = user.stripe_account_id ?? null;
 	if (!accountId) {
+		// Create actual Express Connect account (even in development with test keys)
 		const account = await stripe.accounts.create({
 			type: 'express',
 			email: user.email
@@ -436,8 +437,8 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 		await query('UPDATE users SET stripe_account_id = $2 WHERE id = $1', [userId, accountId]);
 	}
 
-	const refreshUrl = `${env.appUrl}${returnPath ?? '/settings/payments'}?status=refresh`;
-	const returnUrl = `${env.appUrl}${returnPath ?? '/settings/payments'}?status=success`;
+	const refreshUrl = `${env.appUrl}${returnPath ?? '/account'}?status=refresh`;
+	const returnUrl = `${env.appUrl}${returnPath ?? '/account'}?status=success`;
 	const link = await stripe.accountLinks.create({
 		account: accountId,
 		refresh_url: refreshUrl,
@@ -446,6 +447,30 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 	});
 
 	return { url: link.url };
+};
+
+export const disconnectStripeAccount = async (userId: string): Promise<void> => {
+	const userResult = await query<{ stripe_account_id: string | null }>(
+		'SELECT stripe_account_id FROM users WHERE id = $1',
+		[userId]
+	);
+	const user = userResult.rows[0];
+	if (!user) {
+		throw new ApiError(404, 'NOT_FOUND', 'User not found');
+	}
+
+	// Clear the stripe_account_id and reset conversation type to free
+	await query(
+		`UPDATE users 
+		 SET stripe_account_id = NULL, 
+		     conversation_type = 'free',
+		     instant_rate_per_minute = NULL,
+		     charity_id = NULL
+		 WHERE id = $1`,
+		[userId]
+	);
+
+	logger.info('Stripe account disconnected', { userId });
 };
 
 export const generateReceipt = async (sessionId: string) => {

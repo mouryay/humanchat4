@@ -133,16 +133,17 @@ export const disconnectCalendar = async (): Promise<UserSettingsRecord> => {
 };
 
 export const connectStripe = async (): Promise<{ redirectUrl?: string }> => {
-  const payload = await handleResponse(await fetch(`${API_BASE_URL}/api/stripe/connect`, withCredentials({ method: 'POST' })));
+  const payload = await handleResponse(await fetch(`${API_BASE_URL}/api/payments/connect-link`, withCredentials({ method: 'POST' })));
   const data = (payload.data ?? payload) as Record<string, unknown>;
   return { redirectUrl: (data.url ?? data.redirectUrl ?? null) as string | undefined };
 };
 
 export const disconnectStripe = async (): Promise<UserSettingsRecord> => {
   const payload = await handleResponse(
-    await fetch(`${API_BASE_URL}/api/stripe/disconnect`, withCredentials({ method: 'POST' }))
+    await fetch(`${API_BASE_URL}/api/payments/disconnect-stripe`, withCredentials({ method: 'POST' }))
   );
-  return normalizeSettingsPayload(payload).settings;
+  // After disconnecting, fetch fresh settings
+  return (await fetchUserSettings()).settings;
 };
 
 export const markOnboardingComplete = async (): Promise<UserSettingsRecord> => {

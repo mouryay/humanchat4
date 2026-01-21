@@ -4,6 +4,9 @@ import { logger } from '../utils/logger.js';
 
 export const pool = new Pool({ connectionString: env.databaseUrl, max: 10 });
 
+// Alias for pool getter
+export const getPool = () => pool;
+
 pool.on('connect', (client) => {
   if (!env.postgresCryptoKey) {
     return;

@@ -58,5 +58,5 @@ export const env = {
   // LiveKit configuration
   liveKitApiKey: process.env.LIVEKIT_API_KEY ?? '',
   liveKitApiSecret: process.env.LIVEKIT_API_SECRET ?? '',
-  liveKitServerUrl: process.env.LIVEKIT_URL ?? 'wss://humanchat-grwb5joy.livekit.cloud'
+  liveKitServerUrl: process.env.LIVEKIT_SERVER_URL ?? process.env.LIVEKIT_URL ?? 'wss://humanchat-grwb5joy.livekit.cloud'
 };
