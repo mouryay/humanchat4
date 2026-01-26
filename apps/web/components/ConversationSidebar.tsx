@@ -3,7 +3,6 @@
 import clsx from 'clsx';
 import { useMemo, useRef, useState } from 'react';
 import ConversationListItem from './ConversationListItem';
-import styles from './ConversationSidebar.module.css';
 import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
 import { deleteConversationCascade, type ChatRequest } from '../../../src/lib/db';
@@ -45,7 +44,7 @@ export default function ConversationSidebar({
   const [deleteCandidate, setDeleteCandidate] = useState<ConversationListEntry | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(10); // Start with 10 conversations
+  const [visibleCount, setVisibleCount] = useState(10);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const touchStart = useRef<number>(0);
   const pulling = useRef(false);
@@ -79,17 +78,13 @@ export default function ConversationSidebar({
   const humanEntries = conversations.slice(1).filter((entry) => !isArchived(entry.conversation.conversationId));
   const archivedEntries = conversations.slice(1).filter((entry) => isArchived(entry.conversation.conversationId));
   
-  // Paginated human entries (show first N)
   const visibleHumanEntries = humanEntries.slice(0, visibleCount);
   const hasMore = humanEntries.length > visibleCount;
   
-  // Handle infinite scroll
   const handleScroll = (event: React.UIEvent<HTMLUListElement>) => {
     if (!hasMore) return;
-
     const target = event.currentTarget;
-    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100; // 100px threshold
-    
+    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
     if (scrolledToBottom && !refreshing) {
       setVisibleCount((prev) => prev + 10);
     }
@@ -101,294 +96,245 @@ export default function ConversationSidebar({
       return;
     }
     setDeleteCandidate(target);
-    setDeleteError(null);
   };
 
-  const handleCancelDelete = () => {
-    if (deletingId) {
-      return;
-    }
-    setDeleteCandidate(null);
-    setDeleteError(null);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deleteCandidate) {
-      return;
-    }
-    const targetId = deleteCandidate.conversation.conversationId;
-    setDeletingId(targetId);
+  const confirmDelete = async () => {
+    if (!deleteCandidate) return;
+    const id = deleteCandidate.conversation.conversationId;
+    setDeletingId(id);
     setDeleteError(null);
     try {
-      await deleteConversationCascade(targetId);
-      unarchive(targetId);
-      if (activeConversationId === targetId) {
-        onSelectConversation?.(samEntry?.conversation.conversationId ?? SAM_CONCIERGE_ID);
-      }
+      await deleteConversationCascade(id);
       setDeleteCandidate(null);
-    } catch (deleteErr) {
-      const message = deleteErr instanceof Error ? deleteErr.message : 'Failed to delete conversation. Please try again.';
-      setDeleteError(message);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
-      setDeletingId((prev) => (prev === targetId ? null : prev));
+      setDeletingId(null);
     }
-  };
-
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (!scrollerRef.current) return;
-    if (scrollerRef.current.scrollTop > 0) return;
-    pulling.current = true;
-    touchStart.current = event.touches[0].clientY;
-  };
-
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (!pulling.current) return;
-    const delta = event.touches[0].clientY - touchStart.current;
-    if (delta < 0) {
-      pulling.current = false;
-      setPullHint('idle');
-      return;
-    }
-    if (delta > 80) {
-      setPullHint('ready');
-    } else {
-      setPullHint('idle');
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (pullHint === 'ready') {
-      setPullHint('refreshing');
-      await reload();
-    }
-    setPullHint('idle');
-    pulling.current = false;
   };
 
   return (
-    <aside className={clsx(styles.sidebar, collapsed && styles.sidebarCollapsed)}>
-      <div className={styles.header}>
-        <div>
-          <span className={clsx(styles.timestamp, styles.headerTimestamp)}>{formattedDate}</span>
-          <span className={styles.headerTitle}>Conversations</span>
-          <p className={styles.headerSubtitle}>Your concierge plus every human connection</p>
-        </div>
-      </div>
-      <div
-        className={styles.scroller}
-        ref={scrollerRef}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {(pullHint === 'ready' || pullHint === 'refreshing' || refreshing) && (
-          <div className={styles.pullIndicator}>{pullHint === 'refreshing' || refreshing ? 'Refreshing…' : 'Release to refresh'}</div>
+    <aside className={clsx(
+      "flex flex-col h-full bg-background-secondary border-r border-border-subtle transition-all duration-base",
+      collapsed ? "w-24" : "w-[300px]"
+    )}>
+      {/* Premium Header */}
+      <div className="p-6 border-b border-border-subtle">
+        {!collapsed && (
+          <>
+            <p className="text-xs uppercase tracking-[0.3em] text-text-tertiary mb-2">Today</p>
+            <h1 className="text-2xl font-semibold text-text-primary mb-1">{formattedDate}</h1>
+            <p className="text-sm text-text-secondary">Your conversations</p>
+          </>
         )}
-        <section className={styles.conciergeSection}>
-          <div className={styles.sectionMeta}>
-            <p className={styles.sectionTitle}>AI Concierge</p>
-            <span className={styles.sectionTag}>Always on</span>
-          </div>
-          <div className={styles.conciergeCard}>
-            <ul className={clsx(styles.list, styles.conciergeList)}>
-              {samEntry && (
-                <ConversationListItem
-                  key={samEntry.conversation.conversationId}
-                  entry={samEntry}
-                  isActive={activeConversationId === samEntry.conversation.conversationId}
-                  onSelect={handleSelect}
-                  onArchive={archive}
-                  showMetadata={!collapsed}
-                />
-              )}
-            </ul>
-            <p className={styles.conciergeHint}>Sam keeps the room warm 24/7—drop back in whenever you want.</p>
-          </div>
+      </div>
+
+      {/* Premium Scrollable Content */}
+      <div className="flex-1 overflow-y-auto" ref={scrollerRef}>
+        {/* Sam Section */}
+        <section className="p-4">
+          {samEntry && (
+            <ConversationListItem
+              entry={samEntry}
+              isActive={activeConversationId === samEntry.conversation.conversationId}
+              onSelect={handleSelect}
+              onArchive={archive}
+              showMetadata={!collapsed}
+            />
+          )}
+          {!collapsed && (
+            <p className="mt-4 px-4 text-xs text-text-tertiary leading-relaxed">
+              Sam keeps the room warm 24/7—drop back in whenever you want.
+            </p>
+          )}
         </section>
 
-        <section className={styles.humansSection}>
-          <div className={styles.sectionMeta}>
-            <p className={styles.sectionTitle}>Humans</p>
-            <span className={styles.sectionTag}>
-              {humanEntries.length} active{unreadCount > 0 ? ` · ${unreadCount} unread` : ''}
-            </span>
+        {/* Humans Section */}
+        <section>
+          <div className="flex items-center justify-between px-6 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary font-semibold">Humans</p>
+            {!collapsed && unreadCount > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary text-xs font-semibold">
+                {unreadCount} unread
+              </span>
+            )}
           </div>
 
-          <ul className={styles.list} onScroll={handleScroll}>
+          <ul className="list-none p-0 m-0" onScroll={handleScroll}>
             {visibleHumanEntries.map((entry) => (
-              <ConversationListItem
-                key={entry.conversation.conversationId}
-                entry={entry}
-                isActive={activeConversationId === entry.conversation.conversationId}
-                onSelect={handleSelect}
-                onArchive={archive}
-                onDelete={handleDeleteRequest}
-                deletePending={deletingId === entry.conversation.conversationId}
-                showMetadata={!collapsed}
-              />
+              <li key={entry.conversation.conversationId} className="px-4 mb-2">
+                <div className={clsx(
+                  "rounded-xl p-4 cursor-pointer transition-all duration-base",
+                  activeConversationId === entry.conversation.conversationId
+                    ? "bg-background-elevated border border-accent-primary/30 shadow-glow-blue"
+                    : "bg-background-tertiary/50 border border-border-subtle hover:bg-background-hover hover:border-border-medium"
+                )}>
+                  <ConversationListItem
+                    entry={entry}
+                    isActive={activeConversationId === entry.conversation.conversationId}
+                    onSelect={handleSelect}
+                    onArchive={archive}
+                    onDelete={handleDeleteRequest}
+                    deletePending={deletingId === entry.conversation.conversationId}
+                    showMetadata={!collapsed}
+                  />
+                </div>
+              </li>
             ))}
           </ul>
 
           {hasMore && (
-            <div className={styles.loadingMore}>
+            <div className="px-6 py-4 text-center text-sm text-text-tertiary">
               Loading more conversations...
             </div>
           )}
 
           {!hasHumanConversations && (
-            <div className={styles.emptyState}>
-              <strong>No human conversations yet.</strong>
-              <p style={{ marginTop: '8px', marginBottom: 0 }}>
-                Once you connect with guests, they will appear here with their latest activity.
+            <div className="px-6 py-12 text-center">
+              <p className="text-sm font-medium text-text-primary mb-2">No human conversations yet.</p>
+              <p className="text-xs text-text-tertiary">
+                Once you connect with guests, they will appear here.
               </p>
             </div>
           )}
 
-          <div className={styles.requestsSection}>
-            <div className={styles.sectionMeta}>
-              <p className={styles.sectionTitle}>Requests</p>
-              <span className={styles.sectionTag}>{pendingRequests.length} pending</span>
-            </div>
-            <div className={styles.pendingPanel}>
-              {requestLoading && <div className={styles.requestNotice}>Loading requests…</div>}
-              {requestError && !requestLoading && <div className={clsx(styles.requestNotice, styles.requestNoticeError)}>{requestError}</div>}
-
-              {pendingRequests.length === 0 && !requestLoading ? (
-                <div className={styles.emptyState}>
-                  <strong>No one is in line.</strong>
-                  <p style={{ marginTop: '8px', marginBottom: 0 }}>You will see requests here the moment someone taps your card.</p>
-                </div>
-              ) : (
-                <ul className={clsx(styles.list, styles.requestList)}>
-                  {pendingRequests.map((request) => {
-                    const profile = requestProfiles?.[request.requesterId];
-                    const displayName = profile?.name ?? 'New request';
-                    const subtitle = profile?.headline ?? 'Waiting for your response';
-                    const initials = displayName
-                      .split(' ')
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((segment) => segment[0]?.toUpperCase() ?? '')
-                      .join('') || 'RQ';
-                    const isUpdating = requestActionPendingId === request.requestId;
-
-                    const handleAction = (status: ChatRequest['status']) => {
-                      if (!onRequestAction) {
-                        return;
-                      }
-                      const outcome = onRequestAction(request.requestId, status);
-                      if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
-                        (outcome as Promise<unknown>).catch((actionError) => {
-                          console.warn('Request action failed', actionError);
-                        });
-                      }
-                    };
-
-                    return (
-                      <li key={request.requestId} className={styles.requestItem}>
-                        <div className={styles.requestAvatar}>
-                          {profile?.avatarUrl ? (
-                            <img src={profile.avatarUrl} alt={displayName} />
-                          ) : (
-                            initials
-                          )}
-                        </div>
-                        <div className={styles.requestBody}>
-                          <div className={styles.requestHeader}>
-                            <div>
-                              <p className={styles.requestName}>{displayName}</p>
-                              <p className={styles.requestMeta}>{subtitle}</p>
-                            </div>
-                            <span className={styles.requestTimestamp}>{formatRelativeTime(request.createdAt)}</span>
-                          </div>
-                          {request.message && <p className={styles.requestMessage}>{request.message}</p>}
-                          <div className={styles.requestActions}>
-                            <button
-                              type="button"
-                              className={styles.requestButton}
-                              onClick={() => handleAction('declined')}
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? 'Updating…' : 'Decline'}
-                            </button>
-                            <button
-                              type="button"
-                              className={clsx(styles.requestButton, styles.requestButtonPrimary)}
-                              onClick={() => handleAction('approved')}
-                              disabled={isUpdating}
-                            >
-                              {isUpdating ? 'Processing…' : 'Accept'}
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+          {/* Requests Section */}
+          <div className="mt-6 px-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary font-semibold">Requests</p>
+              {!collapsed && pendingRequests.length > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">
+                  {pendingRequests.length} pending
+                </span>
               )}
             </div>
+
+            {requestLoading && (
+              <div className="p-4 rounded-xl bg-background-tertiary/50 border border-border-subtle text-sm text-text-secondary">
+                Loading requests…
+              </div>
+            )}
+
+            {requestError && !requestLoading && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+                {requestError}
+              </div>
+            )}
+
+            {pendingRequests.length === 0 && !requestLoading && (
+              <div className="p-6 rounded-xl border border-dashed border-border-medium text-center">
+                <p className="text-sm font-medium text-text-primary mb-1">No one is in line.</p>
+                <p className="text-xs text-text-tertiary">
+                  You will see requests here the moment someone taps your card.
+                </p>
+              </div>
+            )}
+
+            {pendingRequests.length > 0 && (
+              <ul className="space-y-2">
+                {pendingRequests.map((request) => {
+                  const profile = requestProfiles?.[request.requesterId];
+                  const displayName = profile?.name ?? 'New request';
+                  const subtitle = profile?.headline ?? 'Waiting for your response';
+                  const initials = displayName
+                    .split(' ')
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((segment) => segment[0]?.toUpperCase() ?? '')
+                    .join('') || 'RQ';
+                  const isUpdating = requestActionPendingId === request.requestId;
+
+                  const handleAction = (status: ChatRequest['status']) => {
+                    if (!onRequestAction) return;
+                    const outcome = onRequestAction(request.requestId, status);
+                    if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
+                      (outcome as Promise<unknown>).catch((actionError) => {
+                        console.warn('Request action failed', actionError);
+                      });
+                    }
+                  };
+
+                  return (
+                    <li 
+                      key={request.requestId} 
+                      className="rounded-xl p-4 bg-background-tertiary/50 border border-border-subtle hover:bg-background-hover transition-all duration-base"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        {profile?.avatarUrl ? (
+                          <img 
+                            src={profile.avatarUrl} 
+                            alt={displayName} 
+                            className="h-10 w-10 rounded-lg object-cover ring-1 ring-border-subtle"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                            {initials}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-text-primary truncate">{displayName}</p>
+                          <p className="text-xs text-text-secondary truncate">{subtitle}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          className="flex-1 btn-premium btn-premium-primary text-sm py-2 disabled:opacity-50"
+                          onClick={() => handleAction('accepted')}
+                          disabled={isUpdating}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="flex-1 btn-premium btn-premium-secondary text-sm py-2 disabled:opacity-50"
+                          onClick={() => handleAction('declined')}
+                          disabled={isUpdating}
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </section>
-
-        {error && (
-          <div className={clsx(styles.emptyState)} style={{ borderColor: '#f87171', color: '#fecaca' }}>
-            Failed to load conversations. Please refresh.
-          </div>
-        )}
-
-        {archivedEntries.length > 0 && (
-          <div className={styles.archivedSection}>
-            <div className={styles.sectionMeta}>
-              <p className={styles.sectionTitle}>Archived</p>
-              <span className={styles.sectionTag}>{archivedEntries.length}</span>
-            </div>
-            <ul className={styles.list}>
-              {archivedEntries.map((entry) => (
-                <li key={entry.conversation.conversationId} className={styles.archivedItem}>
-                  <ConversationListItem
-                    entry={entry}
-                    isActive={false}
-                    onSelect={handleSelect}
-                    showMetadata={!collapsed}
-                    disableGestures
-                    onDelete={handleDeleteRequest}
-                    deletePending={deletingId === entry.conversation.conversationId}
-                  />
-                  <button type="button" className={styles.unarchiveButton} onClick={() => unarchive(entry.conversation.conversationId)}>
-                    Unarchive
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
+
+      {/* Delete Confirmation Modal */}
       {deleteCandidate && (
-        <div className={styles.deleteConfirm} role="alertdialog" aria-live="assertive">
-          <div>
-            <p className={styles.deleteTitle}>Delete conversation?</p>
-            <p className={styles.deleteMessage}>
-              This removes every message with <strong>{deleteCandidate.meta.displayName}</strong>. This action cannot be undone.
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+          onClick={() => setDeleteCandidate(null)}
+        >
+          <div 
+            className="card-premium p-6 max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-text-primary mb-2">Delete conversation?</h3>
+            <p className="text-sm text-text-secondary mb-6">
+              This will permanently delete the conversation and all messages. This action cannot be undone.
             </p>
-            {deleteError && <p className={styles.deleteError}>{deleteError}</p>}
-          </div>
-          <div className={styles.deleteActions}>
-            <button
-              type="button"
-              className={styles.deleteCancelButton}
-              onClick={handleCancelDelete}
-              disabled={Boolean(deletingId)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.deleteDangerButton}
-              onClick={handleConfirmDelete}
-              disabled={deletingId === deleteCandidate.conversation.conversationId}
-            >
-              {deletingId === deleteCandidate.conversation.conversationId ? 'Deleting...' : 'Delete'}
-            </button>
+            {deleteError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                className="flex-1 btn-premium btn-premium-secondary"
+                onClick={() => setDeleteCandidate(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 btn-premium bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
+                onClick={confirmDelete}
+                disabled={Boolean(deletingId)}
+              >
+                {deletingId ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

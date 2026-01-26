@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { Conversation, Message } from '../../../src/lib/db';
-import styles from './ConversationView.module.css';
 
 interface MessageBubbleProps {
   message: Message;
@@ -87,21 +86,39 @@ export default function MessageBubble({
     conversation ?? null
   );
 
+  // Premium message bubble styling
   const rowClass = clsx(
-    styles.bubbleRow,
-    isSystemMessage ? styles.systemRow : variant === 'sam' ? styles.samRow : styles.userRow
+    "flex w-full mb-3",
+    isSystemMessage ? "justify-center" : variant === 'sam' ? "justify-start" : "justify-end"
   );
 
-  const stackClass = clsx(styles.messageBubble, isSystemMessage && styles.systemMessage);
-  const bubbleClass = clsx(styles.bubble, isSystemMessage && styles.systemBubble);
-  const metaClass = clsx(styles.messageMeta, isSystemMessage && styles.systemMeta);
+  const bubbleClass = clsx(
+    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[75%] md:max-w-[65%] transition-all duration-base",
+    isSystemMessage
+      ? "bg-background-tertiary/50 border border-dashed border-border-medium text-text-secondary text-sm text-center"
+      : variant === 'user'
+      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm shadow-lg shadow-blue-500/20"
+      : "bg-background-elevated border border-border-subtle text-text-primary rounded-bl-sm shadow-md"
+  );
+
+  const timeClass = clsx(
+    "text-xs text-text-tertiary mt-1.5 px-1",
+    variant === 'user' ? "text-right" : "text-left"
+  );
 
   return (
-    <div className={rowClass} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-      <div className={stackClass}>
-        <div className={bubbleClass}>{content}</div>
+    <div 
+      className={rowClass} 
+      onTouchStart={handleTouchStart} 
+      onTouchMove={handleTouchMove} 
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="flex flex-col gap-1.5">
+        <div className={bubbleClass}>
+          {content}
+        </div>
         {children}
-        <span className={metaClass}>
+        <span className={timeClass}>
           {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>

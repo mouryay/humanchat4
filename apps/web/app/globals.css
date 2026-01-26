@@ -9,6 +9,14 @@
 @font-face {
   font-family: 'Inter';
   font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/assets/fonts/Inter-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
   font-weight: 600;
   font-display: swap;
   src: url('/assets/fonts/Inter-SemiBold.woff2') format('woff2');
@@ -28,8 +36,8 @@
 
 :root {
   color-scheme: dark;
-  background-color: #040615;
-  color: #f8fafc;
+  background-color: #0A0A0A;
+  color: #FFFFFF;
   --font-scale: 1;
 }
 
@@ -43,9 +51,12 @@ html[data-contrast='high'] {
   }
 
   body {
-    @apply m-0 min-h-screen bg-midnight text-white antialiased;
-    font-size: calc(16px * var(--font-scale, 1));
+    @apply m-0 min-h-screen bg-background-primary text-text-primary antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+    font-size: calc(15px * var(--font-scale, 1));
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   @supports (height: 100dvh) {
@@ -75,11 +86,25 @@ html[data-contrast='high'] {
     min-height: 44px;
     min-width: 44px;
     touch-action: manipulation;
+    @apply transition-all duration-base ease-out;
   }
 
+  /* Premium focus states */
   *:focus-visible {
-    outline: 2px solid #38bdf8;
+    outline: 2px solid #3B82F6;
     outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: #FFFFFF;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -91,5 +116,108 @@ html[data-contrast='high'] {
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+@layer components {
+  /* Premium card base */
+  .card-premium {
+    @apply bg-gradient-to-br from-gray-900 to-gray-800;
+    @apply backdrop-blur-xl;
+    @apply border border-white/10;
+    @apply rounded-2xl;
+    @apply shadow-2xl shadow-black/20;
+    @apply transition-all duration-slow ease-out;
+  }
+
+  .card-premium:hover {
+    @apply shadow-blue-500/20 shadow-2xl;
+    @apply border-white/20;
+    @apply -translate-y-1;
+  }
+
+  .card-premium:active {
+    @apply scale-[0.98];
+  }
+
+  /* Premium button base */
+  .btn-premium {
+    @apply font-semibold;
+    @apply rounded-xl;
+    @apply px-6 py-3;
+    @apply transition-all duration-base ease-out;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-premium-primary {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600;
+    @apply text-white;
+    @apply shadow-lg shadow-blue-500/30;
+  }
+
+  .btn-premium-primary:hover {
+    @apply shadow-xl shadow-blue-500/40;
+    @apply scale-[1.02];
+  }
+
+  .btn-premium-primary:active {
+    @apply scale-[0.98];
+  }
+
+  .btn-premium-secondary {
+    @apply bg-background-tertiary;
+    @apply text-text-primary;
+    @apply border border-border-medium;
+  }
+
+  .btn-premium-secondary:hover {
+    @apply bg-background-hover;
+    @apply border-border-strong;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    @apply backdrop-blur-xl;
+    @apply bg-white/5;
+    @apply border border-white/10;
+  }
+
+  /* Premium input */
+  .input-premium {
+    @apply bg-background-tertiary;
+    @apply border border-border-medium;
+    @apply rounded-xl;
+    @apply px-4 py-3;
+    @apply text-text-primary;
+    @apply transition-all duration-base;
+    @apply focus:border-accent-primary;
+    @apply focus:ring-2 focus:ring-accent-primary/20;
+    @apply focus:outline-none;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse;
+    @apply bg-background-tertiary;
+    @apply rounded-lg;
+  }
+}
+
+@layer utilities {
+  /* Text gradients */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-400 to-blue-600;
+    @apply bg-clip-text;
+    @apply text-transparent;
+  }
+
+  /* Glow effects */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), 0 0 40px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Smooth transitions */
+  .transition-premium {
+    @apply transition-all duration-base ease-out;
   }
 }
