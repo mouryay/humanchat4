@@ -120,7 +120,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
         <img src={avatarSrc} alt={meta?.displayName ?? 'Conversation'} loading="lazy" decoding="async" />
       </div>
       {onDelete && !isSam && (
-        <div className={styles.menuContainer} ref={menuRef}>
+        <div className={clsx(styles.menuContainer, styles.menuContainerHidden)} ref={menuRef}>
           <button
             type="button"
             className={styles.menuButton}

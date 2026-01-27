@@ -121,18 +121,14 @@ export default function ConversationSidebar({
       {/* Premium Header */}
       <div className="p-6 border-b border-border-subtle">
         {!collapsed && (
-          <>
-            <p className="text-xs uppercase tracking-[0.3em] text-text-tertiary mb-2">Today</p>
-            <h1 className="text-2xl font-semibold text-text-primary mb-1">{formattedDate}</h1>
-            <p className="text-sm text-text-secondary">Your conversations</p>
-          </>
+          <h1 className="text-2xl font-semibold text-text-primary">{formattedDate}</h1>
         )}
       </div>
 
       {/* Premium Scrollable Content */}
       <div className="flex-1 overflow-y-auto" ref={scrollerRef}>
         {/* Sam Section */}
-        <section className="p-4">
+        <section className="p-4 pb-6">
           {samEntry && (
             <ConversationListItem
               entry={samEntry}
@@ -142,23 +138,17 @@ export default function ConversationSidebar({
               showMetadata={!collapsed}
             />
           )}
-          {!collapsed && (
-            <p className="mt-4 px-4 text-xs text-text-tertiary leading-relaxed">
-              Sam keeps the room warm 24/7—drop back in whenever you want.
-            </p>
-          )}
         </section>
 
         {/* Humans Section */}
-        <section>
-          <div className="flex items-center justify-between px-6 py-3">
-            <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary font-semibold">Humans</p>
-            {!collapsed && unreadCount > 0 && (
+        <section className="pt-2">
+          {!collapsed && unreadCount > 0 && (
+            <div className="px-6 pb-3">
               <span className="px-2.5 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary text-xs font-semibold">
                 {unreadCount} unread
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
               <ul className="list-none p-0 m-0" onScroll={handleScroll}>
                 {visibleHumanEntries.map((entry) => (
@@ -166,8 +156,8 @@ export default function ConversationSidebar({
                 <div className={clsx(
                   "rounded-xl p-3 cursor-pointer transition-all duration-base",
                   activeConversationId === entry.conversation.conversationId
-                    ? "bg-background-elevated border border-accent-primary/30 shadow-glow-blue"
-                    : "bg-background-tertiary/50 border border-border-subtle hover:bg-background-hover hover:border-border-medium"
+                    ? "bg-gradient-to-br from-background-elevated to-background-tertiary border border-border-medium shadow-lg"
+                    : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 border border-border-subtle hover:bg-background-hover hover:border-border-medium"
                 )}>
                   <ConversationListItem
                     entry={entry}
@@ -191,23 +181,19 @@ export default function ConversationSidebar({
 
           {!hasHumanConversations && (
             <div className="px-6 py-12 text-center">
-              <p className="text-sm font-medium text-text-primary mb-2">No human conversations yet.</p>
-              <p className="text-xs text-text-tertiary">
-                Once you connect with guests, they will appear here.
-              </p>
+              <p className="text-sm font-medium text-text-primary">No human conversations yet.</p>
             </div>
           )}
 
           {/* Requests Section */}
-          <div className="mt-6 px-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary font-semibold">Requests</p>
-              {!collapsed && pendingRequests.length > 0 && (
+          <div className="mt-8 px-4">
+            {!collapsed && pendingRequests.length > 0 && (
+              <div className="mb-3">
                 <span className="px-2.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">
                   {pendingRequests.length} pending
                 </span>
-              )}
-            </div>
+              </div>
+            )}
 
             {requestLoading && (
               <div className="p-4 rounded-xl bg-background-tertiary/50 border border-border-subtle text-sm text-text-secondary">
@@ -223,10 +209,7 @@ export default function ConversationSidebar({
 
             {pendingRequests.length === 0 && !requestLoading && (
               <div className="p-6 rounded-xl border border-dashed border-border-medium text-center">
-                <p className="text-sm font-medium text-text-primary mb-1">No one is in line.</p>
-                <p className="text-xs text-text-tertiary">
-                  You will see requests here the moment someone taps your card.
-                </p>
+                <p className="text-sm font-medium text-text-primary">No requests</p>
               </div>
             )}
 

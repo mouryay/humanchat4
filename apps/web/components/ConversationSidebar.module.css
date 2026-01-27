@@ -131,8 +131,13 @@
 }
 
 .active {
-  border-color: rgba(99, 102, 241, 0.65);
-  box-shadow: 0 40px 90px rgba(99, 102, 241, 0.28);
+  background: linear-gradient(135deg, rgba(31, 31, 31, 0.8), rgba(26, 26, 26, 0.6)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.samItem.active {
+  background: linear-gradient(135deg, rgba(31, 31, 31, 0.8), rgba(26, 26, 26, 0.6)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .samItem {
@@ -243,6 +248,16 @@
   right: 8px;
   display: inline-block;
   z-index: 50;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.menuContainerHidden {
+  opacity: 0;
+}
+
+.listItem:hover .menuContainerHidden {
+  opacity: 1;
 }
 
 .menuButton {
@@ -306,7 +321,7 @@
 
 .preview {
   font-size: 13px;
-  color: rgba(148, 163, 184, 0.9);
+  color: rgba(161, 161, 170, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

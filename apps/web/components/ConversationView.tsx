@@ -237,7 +237,7 @@ export default function ConversationView({
       </div>
       {connectError && <div className={styles.error}>{connectError}</div>}
       <div className={styles.viewArea}>
-        {!activeConversationId && <div className={styles.placeholder}>Choose a conversation to see the full history and context.</div>}
+        {!activeConversationId && <div className={styles.placeholder}>Select a conversation</div>}
         {activeConversationId && loading && <div className={styles.loading}>Loading conversation…</div>}
         {activeConversationId && error && !loading && (
           <div className={styles.error}>Failed to load conversation. Please retry.</div>

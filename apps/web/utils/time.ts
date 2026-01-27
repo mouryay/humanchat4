@@ -6,18 +6,22 @@ const WEEK = 7 * DAY;
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
 export const formatRelativeTimestamp = (timestamp: number): string => {
-  const delta = timestamp - Date.now();
-  if (Math.abs(delta) < MINUTE) {
-    return 'just now';
+  const delta = Date.now() - timestamp;
+  if (delta < MINUTE) {
+    return 'now';
   }
-  if (Math.abs(delta) < HOUR) {
-    return rtf.format(Math.round(delta / MINUTE), 'minute');
+  if (delta < HOUR) {
+    const minutes = Math.round(delta / MINUTE);
+    return `${minutes}m`;
   }
-  if (Math.abs(delta) < DAY) {
-    return rtf.format(Math.round(delta / HOUR), 'hour');
+  if (delta < DAY) {
+    const hours = Math.round(delta / HOUR);
+    return `${hours}h`;
   }
-  if (Math.abs(delta) < WEEK) {
-    return rtf.format(Math.round(delta / DAY), 'day');
+  if (delta < WEEK) {
+    const days = Math.round(delta / DAY);
+    return `${days}d`;
   }
-  return rtf.format(Math.round(delta / WEEK), 'week');
+  const weeks = Math.round(delta / WEEK);
+  return `${weeks}w`;
 };
