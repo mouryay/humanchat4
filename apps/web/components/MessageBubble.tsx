@@ -98,7 +98,7 @@ export default function MessageBubble({
   );
 
   const bubbleClass = clsx(
-    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[80%] transition-all duration-base",
+    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[80%] w-fit transition-all duration-base",
     isSystemMessage
       ? "bg-background-tertiary/50 border border-dashed border-border-medium text-text-secondary text-sm text-center"
       : variant === 'user'
