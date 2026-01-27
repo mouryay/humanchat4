@@ -279,7 +279,7 @@ export default function ConversationSidebar({
                       <div className="flex gap-2">
                         <button
                           className="flex-1 btn-premium btn-premium-primary text-sm py-2 disabled:opacity-50"
-                          onClick={() => handleAction('accepted')}
+                          onClick={() => handleAction('approved')}
                           disabled={isUpdating}
                         >
                           Accept
