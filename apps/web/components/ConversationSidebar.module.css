@@ -113,10 +113,10 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   cursor: pointer;
   border-radius: 20px;
-  margin: 10px 16px;
+  margin: 4px 16px;
   border: 1px solid rgba(148, 163, 184, 0.22);
   background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.78));
   box-shadow: 0 28px 64px rgba(2, 6, 23, 0.55);
@@ -186,31 +186,30 @@
   flex: 1;
 }
 
-.topRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.topRowMeta {
+.nameRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 2px;
 }
 
 .name {
   font-size: 15px;
   font-weight: 600;
   color: #f8fafc;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Remove truncation - name gets full width */
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .timestamp {
-  font-size: 12px;
-  color: rgba(148, 163, 184, 0.9);
+  font-size: 11px;
+  color: rgba(148, 163, 184, 0.7);
   white-space: nowrap;
 }
 
@@ -317,7 +316,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
 }
 
 .badge {

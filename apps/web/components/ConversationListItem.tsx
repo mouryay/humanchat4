@@ -145,20 +145,21 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
       )}
       {showMetadata && (
         <div className={styles.content}>
-          <div className={styles.topRow}>
+          <div className={styles.nameRow}>
             <span className={styles.name}>{meta?.displayName ?? 'Unknown'}</span>
-            <div className={styles.topRowMeta}>
-              <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>            </div>
+          </div>
+          <div className={styles.metaRow}>
+            <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
+            <div className={styles.badges}>
+              {statusVariant && statusClass && (
+                <span className={clsx(styles.status, statusClass)}>
+                  {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
+                </span>
+              )}
+              {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
+            </div>
           </div>
           <div className={styles.preview}>{meta?.lastMessage ?? 'No messages yet'}</div>
-          <div className={styles.badges}>
-            {statusVariant && statusClass && (
-              <span className={clsx(styles.status, statusClass)}>
-                {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
-              </span>
-            )}
-            {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
-          </div>
         </div>
       )}
     </li>

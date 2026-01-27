@@ -162,9 +162,9 @@ export default function ConversationSidebar({
 
           <ul className="list-none p-0 m-0" onScroll={handleScroll}>
             {visibleHumanEntries.map((entry) => (
-              <li key={entry.conversation.conversationId} className="px-4 mb-2">
+              <li key={entry.conversation.conversationId} className="px-4 mb-1">
                 <div className={clsx(
-                  "rounded-xl p-4 cursor-pointer transition-all duration-base",
+                  "rounded-xl p-3 cursor-pointer transition-all duration-base",
                   activeConversationId === entry.conversation.conversationId
                     ? "bg-background-elevated border border-accent-primary/30 shadow-glow-blue"
                     : "bg-background-tertiary/50 border border-border-subtle hover:bg-background-hover hover:border-border-medium"
