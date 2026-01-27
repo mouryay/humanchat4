@@ -264,10 +264,10 @@ export default function ConversationSidebar({
                           <img 
                             src={profile.avatarUrl} 
                             alt={displayName} 
-                            className="h-10 w-10 rounded-lg object-cover ring-1 ring-border-subtle"
+                            className="h-10 w-10 avatar-chamfered object-cover ring-1 ring-border-subtle"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                          <div className="h-10 w-10 avatar-chamfered bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                             {initials}
                           </div>
                         )}

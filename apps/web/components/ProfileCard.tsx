@@ -165,7 +165,7 @@ export default function ProfileCard({
           <img 
             src={avatarSrc} 
             alt={profile.name} 
-            className="h-16 w-16 rounded-xl object-cover ring-2 ring-border-subtle" 
+            className="h-16 w-16 avatar-chamfered object-cover ring-2 ring-border-subtle" 
             loading="lazy" 
           />
           <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ export default function ProfileCard({
               <img 
                 src={avatarSrc} 
                 alt={profile.name} 
-                className="h-20 w-20 rounded-2xl object-cover ring-2 ring-border-medium" 
+                className="h-20 w-20 avatar-chamfered object-cover ring-2 ring-border-medium" 
               />
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold text-text-primary mb-1">{profile.name}</h2>

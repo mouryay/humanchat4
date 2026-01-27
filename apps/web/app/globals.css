@@ -220,4 +220,28 @@ html[data-contrast='high'] {
   .transition-premium {
     @apply transition-all duration-base ease-out;
   }
+
+  /* Custom chamfered avatar shape */
+  /* Square with 4 corners cut (10% each), then 8 corners cut again */
+  /* First cut: remove equilateral triangles of side 10% from 4 corners */
+  /* Second cut: remove smaller triangles from the 8 resulting corners */
+  .avatar-chamfered {
+    clip-path: polygon(
+      /* Top-left corner: first cut at 10%, second cut creates 2 points at ~12% */
+      12% 0%,
+      0% 12%,
+      /* Top edge */
+      88% 0%,
+      /* Top-right corner: first cut at 10%, second cut creates 2 points at ~12% */
+      100% 12%,
+      /* Right edge */
+      100% 88%,
+      /* Bottom-right corner: first cut at 10%, second cut creates 2 points at ~12% */
+      88% 100%,
+      /* Bottom edge */
+      12% 100%,
+      /* Bottom-left corner: first cut at 10%, second cut creates 2 points at ~12% */
+      0% 88%
+    );
+  }
 }
