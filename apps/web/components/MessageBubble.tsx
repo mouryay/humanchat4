@@ -86,14 +86,19 @@ export default function MessageBubble({
     conversation ?? null
   );
 
+  // Don't render empty bubbles
+  if (!content || content.trim().length === 0) {
+    return null;
+  }
+
   // Premium message bubble styling
   const rowClass = clsx(
-    "flex w-full mb-3",
+    "flex w-full mb-2",
     isSystemMessage ? "justify-center" : variant === 'sam' ? "justify-start" : "justify-end"
   );
 
   const bubbleClass = clsx(
-    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[75%] md:max-w-[65%] transition-all duration-base",
+    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[80%] transition-all duration-base",
     isSystemMessage
       ? "bg-background-tertiary/50 border border-dashed border-border-medium text-text-secondary text-sm text-center"
       : variant === 'user'

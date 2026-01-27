@@ -380,7 +380,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
 @media (max-width: 767px) {
