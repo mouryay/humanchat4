@@ -62,12 +62,6 @@ const config: Config = {
         '3xl': ['30px', { lineHeight: '38px', letterSpacing: '-0.02em' }],
         '4xl': ['36px', { lineHeight: '44px', letterSpacing: '-0.02em' }],
       },
-      fontWeight: {
-        normal: 400,
-        medium: 500,
-        semibold: 600,
-        bold: 700,
-      },
       boxShadow: {
         // Premium shadow system
         sm: '0 1px 2px rgba(0, 0, 0, 0.3)',
