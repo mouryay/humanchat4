@@ -24,7 +24,7 @@ const personas = [
     title: 'Community builders',
     items: [
       'Offer drop-in office hours for your members.',
-      'Route requests to the right human with Sam's receptionist workflow.',
+      'Route requests to the right human with Sam\'s receptionist workflow.',
       'Track usage, outcomes, and follow-on actions in real time.'
     ]
   }
