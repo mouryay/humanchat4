@@ -130,13 +130,20 @@ export default function ConversationSidebar({
         {/* Sam Section */}
         <section className="p-4 pb-6">
           {samEntry && (
-            <ConversationListItem
-              entry={samEntry}
-              isActive={activeConversationId === samEntry.conversation.conversationId}
-              onSelect={handleSelect}
-              onArchive={archive}
-              showMetadata={!collapsed}
-            />
+            <div className={clsx(
+              "rounded-xl p-3 cursor-pointer transition-all duration-base",
+              activeConversationId === samEntry.conversation.conversationId
+                ? "bg-gradient-to-br from-background-elevated to-background-tertiary shadow-lg shadow-accent-primary/10"
+                : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 hover:bg-background-hover/80 hover:shadow-md"
+            )}>
+              <ConversationListItem
+                entry={samEntry}
+                isActive={activeConversationId === samEntry.conversation.conversationId}
+                onSelect={handleSelect}
+                onArchive={archive}
+                showMetadata={!collapsed}
+              />
+            </div>
           )}
         </section>
 
