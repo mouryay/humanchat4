@@ -205,7 +205,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
   // This runs regardless of whether a specific person was requested
   await maybeHandleSkillRequest(userId, parsed.message);
   
-  logger.info('Sam concierge dispatching Gemini request', {
+  logger.info('Sam receptionist dispatching Gemini request', {
     conversationId: activeConversationId,
     userId,
     historyCount: parsed.conversationHistory.length,
@@ -233,7 +233,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
       }));
   }
 
-  logger.info('Sam concierge response received', {
+  logger.info('Sam receptionist response received', {
     conversationId: activeConversationId,
     userId,
     actionCount: Array.isArray(response.actions) ? response.actions.length : 0,
