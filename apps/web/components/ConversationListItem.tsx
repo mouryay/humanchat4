@@ -101,7 +101,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
   const statusClass = statusVariant ? statusClassMap[statusVariant] : undefined;
   const avatarSeed = encodeURIComponent(meta?.displayName ?? conversation.conversationId);
   const avatarSrc = isSam
-    ? '/icon.svg'
+    ? '/sam-android-icon.svg'
     : `https://api.dicebear.com/8.x/initials/svg?seed=${avatarSeed}`;
 
   return (

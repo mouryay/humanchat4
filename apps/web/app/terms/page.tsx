@@ -32,7 +32,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-white">2. Description of Service</h2>
             <p className="text-white/80 leading-relaxed">
-              HumanChat is a platform that connects users with human experts for live conversations. We provide an AI concierge service (Sam) to help facilitate connections and manage bookings between users and experts.
+              HumanChat is a platform that connects users with human experts for live conversations. We provide an AI receptionist service (Sam) to help facilitate connections and manage bookings between users and experts.
             </p>
           </section>
 

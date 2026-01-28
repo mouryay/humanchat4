@@ -123,7 +123,7 @@ export default function ConversationView({
 
     return {
       title: conversation.type === 'sam' ? SAM_DISPLAY_NAME : humanTitle,
-      subtitle: conversation.type === 'sam' ? 'AI Concierge' : 'Direct chat'
+      subtitle: conversation.type === 'sam' ? 'AI Receptionist' : 'Direct chat'
     };
   }, [activeConversationId, conversation, currentUserId]);
 

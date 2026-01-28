@@ -60,7 +60,7 @@ const Icon = ({ name }: { name: string }) => {
 };
 
 const quickActions = [
-  { label: 'Open Sam Concierge', href: '/?focus=sam', description: 'Continue your AI-powered thread.', icon: 'sam' },
+  { label: 'Open Sam Receptionist', href: '/?focus=sam', description: 'Continue your AI-powered thread.', icon: 'sam' },
   { label: 'Browse Workspace', href: '/chat', description: 'Jump back into any human chat.', icon: 'browse' },
   { label: 'My Bookings', href: '/bookings', description: 'View and manage your scheduled calls.', icon: 'bookings' },
   { label: 'Manage Availability', href: '/expert/availability', description: 'Set your calendar and available time slots.', icon: 'calendar' },
@@ -121,7 +121,7 @@ export default function DashboardPage() {
           <section className="card-premium p-8">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-[0.3em] text-accent-primary mb-2 font-semibold">Sam Concierge</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-accent-primary mb-2 font-semibold">Sam Receptionist</p>
                 <h3 className="text-2xl font-semibold text-text-primary mb-2">Pick up where you left off</h3>
                 <p className="text-sm text-text-secondary" suppressHydrationWarning>
                   Last activity · {new Date(samConversation.conversation.lastActivity).toLocaleString()}
