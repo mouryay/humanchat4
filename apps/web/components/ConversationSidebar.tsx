@@ -128,22 +128,15 @@ export default function ConversationSidebar({
       {/* Premium Scrollable Content */}
       <div className="flex-1 overflow-y-auto" ref={scrollerRef}>
         {/* Sam Section */}
-        <section className="p-4 pb-6">
+        <section className="px-4 py-2">
           {samEntry && (
-            <div className={clsx(
-              "rounded-xl p-3 cursor-pointer transition-all duration-base",
-              activeConversationId === samEntry.conversation.conversationId
-                ? "bg-gradient-to-br from-background-elevated to-background-tertiary shadow-lg shadow-accent-primary/10"
-                : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 hover:bg-background-hover/80 hover:shadow-md"
-            )}>
-              <ConversationListItem
-                entry={samEntry}
-                isActive={activeConversationId === samEntry.conversation.conversationId}
-                onSelect={handleSelect}
-                onArchive={archive}
-                showMetadata={!collapsed}
-              />
-            </div>
+            <ConversationListItem
+              entry={samEntry}
+              isActive={activeConversationId === samEntry.conversation.conversationId}
+              onSelect={handleSelect}
+              onArchive={archive}
+              showMetadata={!collapsed}
+            />
           )}
         </section>
 
@@ -159,26 +152,19 @@ export default function ConversationSidebar({
 
               <ul className="list-none p-0 m-0" onScroll={handleScroll}>
                 {visibleHumanEntries.map((entry) => (
-                  <li key={entry.conversation.conversationId} className="px-4 mb-2">
-                <div className={clsx(
-                  "rounded-xl p-3 cursor-pointer transition-all duration-base",
-                  activeConversationId === entry.conversation.conversationId
-                    ? "bg-gradient-to-br from-background-elevated to-background-tertiary shadow-lg shadow-accent-primary/10"
-                    : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 hover:bg-background-hover/80 hover:shadow-md"
-                )}>
-                  <ConversationListItem
-                    entry={entry}
-                    isActive={activeConversationId === entry.conversation.conversationId}
-                    onSelect={handleSelect}
-                    onArchive={archive}
-                    onDelete={handleDeleteRequest}
-                    deletePending={deletingId === entry.conversation.conversationId}
-                    showMetadata={!collapsed}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <li key={entry.conversation.conversationId} className="px-4 mb-1">
+                    <ConversationListItem
+                      entry={entry}
+                      isActive={activeConversationId === entry.conversation.conversationId}
+                      onSelect={handleSelect}
+                      onArchive={archive}
+                      onDelete={handleDeleteRequest}
+                      deletePending={deletingId === entry.conversation.conversationId}
+                      showMetadata={!collapsed}
+                    />
+                  </li>
+                ))}
+              </ul>
 
           {hasMore && (
             <div className="px-6 py-4 text-center text-sm text-text-tertiary">

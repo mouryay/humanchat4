@@ -782,22 +782,22 @@
 
 .inputBar textarea {
   flex: 1;
-  background: rgba(26, 26, 26, 0.6);
+  background: rgba(20, 20, 20, 0.8);
   border: none;
   color: inherit;
   padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  box-shadow: none;
   border-radius: 12px;
   resize: none;
   min-height: 56px;
   font-size: 14px;
-  transition: box-shadow 0.2s ease, background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .inputBar textarea:focus {
   outline: none;
-  background: rgba(31, 31, 31, 0.7);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), 0 0 0 0 rgba(59, 130, 246, 0), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: rgba(26, 26, 26, 0.9);
+  box-shadow: none;
 }
 
 .inputBar textarea::placeholder {
@@ -989,7 +989,7 @@
 
 .chatInputBar textarea {
   flex: 1;
-  background: rgba(26, 26, 26, 0.6);
+  background: rgba(20, 20, 20, 0.8);
   border: none;
   border-radius: 12px;
   color: #f8fafc;
@@ -997,14 +997,14 @@
   resize: none;
   min-height: 60px;
   font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.05);
-  transition: box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: none;
+  transition: background 0.2s ease;
 }
 
 .chatInputBar textarea:focus {
   outline: none;
-  background: rgba(31, 31, 31, 0.7);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), 0 0 0 0 rgba(59, 130, 246, 0), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: rgba(26, 26, 26, 0.9);
+  box-shadow: none;
 }
 
 .chatInputBar textarea::placeholder {
