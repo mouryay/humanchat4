@@ -115,11 +115,11 @@ export default function ConversationSidebar({
 
   return (
     <aside className={clsx(
-      "flex flex-col h-full bg-background-secondary border-r border-border-subtle transition-all duration-base",
+      "flex flex-col h-full bg-background-secondary transition-all duration-base",
       collapsed ? "w-24" : "w-[300px]"
-    )}>
+    )} style={{ boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)' }}>
       {/* Premium Header */}
-      <div className="p-6 border-b border-border-subtle">
+      <div className="p-6 bg-background-secondary/50 backdrop-blur-sm">
         {!collapsed && (
           <h1 className="text-2xl font-semibold text-text-primary">{formattedDate}</h1>
         )}
@@ -152,12 +152,12 @@ export default function ConversationSidebar({
 
               <ul className="list-none p-0 m-0" onScroll={handleScroll}>
                 {visibleHumanEntries.map((entry) => (
-                  <li key={entry.conversation.conversationId} className="px-4 mb-0.5">
+                  <li key={entry.conversation.conversationId} className="px-4 mb-2">
                 <div className={clsx(
                   "rounded-xl p-3 cursor-pointer transition-all duration-base",
                   activeConversationId === entry.conversation.conversationId
-                    ? "bg-gradient-to-br from-background-elevated to-background-tertiary border border-border-medium shadow-lg"
-                    : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 border border-border-subtle hover:bg-background-hover hover:border-border-medium"
+                    ? "bg-gradient-to-br from-background-elevated to-background-tertiary shadow-lg shadow-accent-primary/10"
+                    : "bg-gradient-to-br from-background-tertiary/50 to-background-secondary/30 hover:bg-background-hover/80 hover:shadow-md"
                 )}>
                   <ConversationListItem
                     entry={entry}
@@ -196,22 +196,18 @@ export default function ConversationSidebar({
             )}
 
             {requestLoading && (
-              <div className="p-4 rounded-xl bg-background-tertiary/50 border border-border-subtle text-sm text-text-secondary">
+              <div className="p-4 rounded-xl bg-background-tertiary/50 shadow-sm text-sm text-text-secondary">
                 Loading requests…
               </div>
             )}
 
             {requestError && !requestLoading && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-400">
+              <div className="p-4 rounded-xl bg-red-500/10 shadow-sm text-sm text-red-400">
                 {requestError}
               </div>
             )}
 
-            {pendingRequests.length === 0 && !requestLoading && (
-              <div className="p-6 rounded-xl border border-dashed border-border-medium text-center">
-                <p className="text-sm font-medium text-text-primary">No requests</p>
-              </div>
-            )}
+            {pendingRequests.length === 0 && !requestLoading && null}
 
             {pendingRequests.length > 0 && (
               <ul className="space-y-2">
@@ -240,14 +236,14 @@ export default function ConversationSidebar({
                   return (
                     <li 
                       key={request.requestId} 
-                      className="rounded-xl p-4 bg-background-tertiary/50 border border-border-subtle hover:bg-background-hover transition-all duration-base"
+                      className="rounded-xl p-4 bg-background-tertiary/50 hover:bg-background-hover/80 hover:shadow-md transition-all duration-base"
                     >
                       <div className="flex items-center gap-3 mb-3">
                         {profile?.avatarUrl ? (
                           <img 
                             src={profile.avatarUrl} 
                             alt={displayName} 
-                            className="h-10 w-10 avatar-chamfered object-cover ring-1 ring-border-subtle"
+                            className="h-10 w-10 avatar-chamfered object-cover"
                           />
                         ) : (
                           <div className="h-10 w-10 avatar-chamfered bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
