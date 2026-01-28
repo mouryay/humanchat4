@@ -11,7 +11,7 @@ import CallNotificationListener from '../components/CallNotificationListener';
 
 export const metadata = {
   title: 'HumanChat — Talk to Anyone, About Anything',
-  description: 'Meet Sam, your AI concierge who connects you with real human experts in seconds.'
+  description: 'Meet Sam, your AI receptionist who connects you with real human experts in seconds.'
 };
 
 export const viewport = {
