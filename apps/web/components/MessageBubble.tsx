@@ -100,14 +100,14 @@ export default function MessageBubble({
   const bubbleClass = clsx(
     "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[80%] w-fit transition-all duration-base",
     isSystemMessage
-      ? "bg-background-tertiary/50 border border-dashed border-border-medium text-text-secondary text-sm text-center"
+      ? "bg-gray-100 border border-dashed border-gray-300 text-gray-600 text-sm text-center"
       : variant === 'user'
-      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm shadow-lg shadow-blue-500/20"
-      : "bg-background-elevated border border-border-subtle text-text-primary rounded-bl-sm shadow-md"
+      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm shadow-md shadow-blue-500/20"
+      : "bg-white text-gray-900 rounded-bl-sm shadow-sm border border-gray-100"
   );
 
   const timeClass = clsx(
-    "text-xs text-text-tertiary mt-1.5 px-1",
+    "text-xs text-gray-500 mt-1.5 px-1",
     variant === 'user' ? "text-right" : "text-left"
   );
 

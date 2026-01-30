@@ -22,7 +22,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  background: linear-gradient(to bottom, rgba(9, 10, 18, 1), rgba(9, 10, 18, 0.8));
+  background: transparent;
 }
 
 .headerEyebrow {
@@ -114,24 +114,31 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   cursor: pointer;
-  border-radius: 8px;
-  margin: 0;
+  border-radius: 12px;
+  margin: 0 8px 4px 8px;
   background: transparent;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .listItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .active {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.12), rgba(88, 86, 214, 0.1)) !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  transform: translateX(4px) !important;
 }
 
 .samItem.active {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.12), rgba(88, 86, 214, 0.1)) !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  transform: translateX(4px) !important;
 }
 
 .samItem {
@@ -163,19 +170,19 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 16px;
-  color: #f8fafc;
+  color: #1D1D1F;
   flex-shrink: 0;
 }
 
 .avatarSam {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: transparent;
   display: flex;
@@ -208,7 +215,7 @@
 .name {
   font-size: 15px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #1D1D1F;
   /* Remove truncation - name gets full width */
 }
 
@@ -218,6 +225,12 @@
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 4px;
+}
+
+.timestamp {
+  font-size: 11px;
+  color: #86868B;
+  white-space: nowrap;
 }
 
 .timestamp {
@@ -328,7 +341,7 @@
 
 .preview {
   font-size: 13px;
-  color: rgba(212, 212, 216, 0.95);
+  color: #6E6E73;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
