@@ -4,19 +4,19 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 45%), #0A0A0A;
+  background: #05060a;
   color: #e2e8f0;
   overflow: hidden;
   padding: 24px;
   position: relative;
 }
 
-/* Floating card for chat area - macOS style with dark theme - NO BORDER */
+/* Floating card for chat area - elevated and lighter as main focus */
 .container::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 10, 0.95);
+  background: rgba(12, 12, 15, 0.98);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 20px;

@@ -314,12 +314,13 @@ const ChatShell = () => {
               />
               <div
                 className={clsx(
-                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
+                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 shadow-2xl transition-transform duration-200 ease-out',
                   {
                     'translate-x-full': mobileDrawer !== 'profile',
                     'translate-x-0': mobileDrawer === 'profile'
                   }
                 )}
+                style={{ backgroundColor: '#05060a' }}
               >
                 <div className="flex h-full flex-col">
                   <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">

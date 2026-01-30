@@ -4,7 +4,7 @@
 
 .sidebar {
   width: var(--sidebar-width);
-  background: linear-gradient(to bottom, #090a12, #0A0A0A);
+  background: #05060a;
   height: 100%;
   min-height: 0;
   display: flex;
