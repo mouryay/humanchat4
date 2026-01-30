@@ -115,11 +115,11 @@ export default function ConversationSidebar({
 
   return (
     <aside className={clsx(
-      "flex flex-col h-full transition-all duration-base",
+      "flex flex-col h-full bg-background-secondary transition-all duration-base",
       collapsed ? "w-24" : "w-[300px]"
-    )} style={{ backgroundColor: '#E8E8ED' }}>
+    )} style={{ boxShadow: '2px 0 12px rgba(0, 0, 0, 0.15)' }}>
       {/* Premium Header */}
-      <div className="p-6">
+      <div className="p-6 bg-gradient-to-b from-background-secondary to-background-secondary/80">
         {!collapsed && (
           <h1 className="text-2xl font-semibold text-text-primary">{formattedDate}</h1>
         )}

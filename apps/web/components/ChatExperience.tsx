@@ -205,7 +205,7 @@ const ChatShell = () => {
   );
 
   return (
-    <main className={clsx('flex flex-col overflow-hidden', isMobile ? 'h-[100dvh]' : 'h-screen min-h-screen')} style={{ backgroundColor: '#F5F5F7', color: '#1D1D1F' }}>
+    <main className={clsx('flex flex-col overflow-hidden bg-midnight text-white', isMobile ? 'h-[100dvh]' : 'h-screen min-h-screen')}>
       {isTablet && (
         <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
           <button
