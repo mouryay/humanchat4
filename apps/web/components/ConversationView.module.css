@@ -4,25 +4,28 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #F5F5F7;
-  color: #1D1D1F;
+  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.08), transparent 45%), #05060a;
+  color: #e2e8f0;
   overflow: hidden;
   padding: 24px;
   position: relative;
 }
 
-/* Floating white card for chat area */
+/* Floating card for chat area - macOS style with dark theme */
 .container::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 20px;
   box-shadow: 
-    0 20px 64px rgba(0, 0, 0, 0.18),
-    0 8px 24px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08);
+    0 20px 64px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 0;
 }
 
