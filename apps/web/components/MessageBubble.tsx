@@ -107,8 +107,9 @@ export default function MessageBubble({
   );
 
   const timeClass = clsx(
-    "text-xs text-text-tertiary mt-1.5 px-1",
-    variant === 'user' ? "text-right" : "text-left"
+    "text-xs mt-1.5 px-1",
+    variant === 'user' ? "text-right text-gray-400" : "text-left text-gray-400",
+    "opacity-90"
   );
 
   return (

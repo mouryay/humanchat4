@@ -9,7 +9,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  /* Removed box-shadow to eliminate vertical border line */
 }
 
 .sidebarCollapsed {
@@ -124,23 +124,23 @@
 }
 
 .listItem:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
   transform: translateX(2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.15)) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.25)) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   transform: translateX(4px) !important;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .samItem.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.15)) !important;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.25)) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   transform: translateX(4px) !important;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .samItem {
@@ -343,7 +343,7 @@
 
 .preview {
   font-size: 13px;
-  color: rgba(212, 212, 216, 1);
+  color: rgba(226, 232, 240, 0.95);
   white-space: nowrap;
   font-weight: 400;
   overflow: hidden;
