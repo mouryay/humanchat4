@@ -143,12 +143,14 @@
 
 .subtitle {
   font-size: 13px;
-  color: rgba(148, 163, 184, 0.8);
+  color: rgba(226, 232, 240, 0.9);
+  font-weight: 500;
 }
 
 .metadata {
   font-size: 13px;
-  color: rgba(148, 163, 184, 0.8);
+  color: rgba(226, 232, 240, 0.85);
+  font-weight: 400;
 }
 
 .headerActions {
