@@ -70,21 +70,21 @@ export default function ChatHeaderCallActions({
       <button
         onClick={() => handleStartCall('video')}
         disabled={isStarting}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-blue-500/15 text-white rounded-xl hover:bg-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all backdrop-blur-sm border border-blue-500/20"
         aria-label="Start video call"
       >
-        <Video size={20} />
-        <span className="hidden sm:inline">Start video call</span>
+        <Video size={18} />
+        <span className="hidden sm:inline text-sm font-medium">Start video call</span>
       </button>
 
       <button
         onClick={() => handleStartCall('audio')}
         disabled={isStarting}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-gray-700/15 text-white rounded-xl hover:bg-gray-700/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all backdrop-blur-sm border border-gray-600/20"
         aria-label="Start audio call"
       >
-        <Phone size={20} />
-        <span className="hidden sm:inline">Start audio call</span>
+        <Phone size={18} />
+        <span className="hidden sm:inline text-sm font-medium">Start audio call</span>
       </button>
     </div>
   );
