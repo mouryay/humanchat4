@@ -451,24 +451,29 @@
 }
 
 .systemBubble {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px dashed rgba(148, 163, 184, 0.45);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
   box-shadow: none;
-  color: rgba(248, 250, 252, 0.92);
+  color: #6E6E73;
   text-align: center;
 }
 
 .userRow .bubble {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #007AFF, #0051D5);
+  color: #FFFFFF;
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 22px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
 }
 
 .samRow .bubble {
-  background: rgba(14, 165, 233, 0.18);
-  border: 1px solid rgba(14, 165, 233, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1D1D1F;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .actions {
