@@ -470,11 +470,12 @@
 }
 
 .systemBubble {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px dashed rgba(148, 163, 184, 0.45);
-  box-shadow: none;
-  color: rgba(248, 250, 252, 0.92);
+  background: rgba(30, 30, 30, 0.8);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: rgba(248, 250, 252, 0.9);
   text-align: center;
+  border-radius: 18px;
 }
 
 .userRow .bubble {
@@ -482,16 +483,17 @@
   color: #020617;
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 22px;
+  border: none;
   box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
 }
 
 .samRow .bubble {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(30, 30, 30, 0.9);
   color: #f8fafc;
-  border: 1px solid rgba(14, 165, 233, 0.3);
+  border: none;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 22px;
-  box-shadow: 0 4px 16px rgba(2, 6, 23, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .actions {
