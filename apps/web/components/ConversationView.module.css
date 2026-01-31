@@ -1314,9 +1314,13 @@
     flex-direction: row;
     gap: 8px;
     align-items: center;
-    padding: 8px 12px;
-    padding-top: calc(8px + env(safe-area-inset-top));
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
     flex-shrink: 0;
+    background: rgba(35, 35, 40, 0.7);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.05);
   }
 
   .headerTitleStack {
