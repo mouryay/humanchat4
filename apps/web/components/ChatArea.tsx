@@ -20,7 +20,12 @@ export default function ChatArea({ conversation, messages, registerScrollContain
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  const orderedMessages = useMemo(() => [...messages].sort((a, b) => a.timestamp - b.timestamp), [messages]);
+  // Filter out system messages - they'll be shown as notifications instead
+  const orderedMessages = useMemo(() => {
+    return [...messages]
+      .filter((message) => message.type !== 'system_notice')
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }, [messages]);
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDraft(event.target.value);

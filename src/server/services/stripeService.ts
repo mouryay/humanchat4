@@ -417,36 +417,93 @@ export const handleStripeEvent = async (event: Stripe.Event) => {
 };
 
 export const createStripeConnectLink = async (userId: string, returnPath?: string): Promise<{ url: string }> => {
-	const userResult = await query<{ email: string; stripe_account_id: string | null }>(
-		'SELECT email, stripe_account_id FROM users WHERE id = $1',
-		[userId]
-	);
-	const user = userResult.rows[0];
-	if (!user) {
-		throw new ApiError(404, 'NOT_FOUND', 'User not found');
+	try {
+		// Validate Stripe configuration
+		if (!env.stripeSecretKey || env.stripeSecretKey === 'sk_test_placeholder') {
+			logger.error('Stripe secret key not configured', { hasKey: Boolean(env.stripeSecretKey) });
+			throw new ApiError(500, 'SERVER_ERROR', 'Stripe is not configured. Please contact support.');
+		}
+
+		if (!env.appUrl) {
+			logger.error('APP_URL not configured');
+			throw new ApiError(500, 'SERVER_ERROR', 'Application URL not configured. Please contact support.');
+		}
+
+		const userResult = await query<{ email: string; stripe_account_id: string | null }>(
+			'SELECT email, stripe_account_id FROM users WHERE id = $1',
+			[userId]
+		);
+		const user = userResult.rows[0];
+		if (!user) {
+			throw new ApiError(404, 'NOT_FOUND', 'User not found');
+		}
+
+		if (!user.email) {
+			logger.error('User missing email', { userId });
+			throw new ApiError(400, 'INVALID_REQUEST', 'User email is required for Stripe Connect');
+		}
+
+		let accountId = user.stripe_account_id ?? null;
+		if (!accountId) {
+			// Create actual Express Connect account (even in development with test keys)
+			try {
+				logger.info('Creating Stripe Connect account', { userId, email: user.email });
+				const account = await stripe.accounts.create({
+					type: 'express',
+					email: user.email
+				});
+				accountId = account.id;
+				await query('UPDATE users SET stripe_account_id = $2 WHERE id = $1', [userId, accountId]);
+				logger.info('Stripe Connect account created', { userId, accountId });
+			} catch (stripeError: unknown) {
+				const errorMessage = stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error';
+				const stripeErrorDetails = stripeError instanceof Error && 'type' in stripeError ? (stripeError as any).type : undefined;
+				logger.error('Failed to create Stripe Connect account', { 
+					userId, 
+					email: user.email,
+					error: errorMessage,
+					stripeErrorType: stripeErrorDetails
+				});
+				throw new ApiError(500, 'SERVER_ERROR', `Failed to create Stripe account: ${errorMessage}`);
+			}
+		}
+
+		const refreshUrl = `${env.appUrl}${returnPath ?? '/account'}?status=refresh`;
+		const returnUrl = `${env.appUrl}${returnPath ?? '/account'}?status=success`;
+		
+		logger.info('Creating Stripe account link', { userId, accountId, returnUrl, refreshUrl });
+		
+		try {
+			const link = await stripe.accountLinks.create({
+				account: accountId,
+				refresh_url: refreshUrl,
+				return_url: returnUrl,
+				type: 'account_onboarding'
+			});
+
+			logger.info('Stripe account link created successfully', { userId, accountId });
+			return { url: link.url };
+		} catch (stripeError: unknown) {
+			const errorMessage = stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error';
+			const stripeErrorDetails = stripeError instanceof Error && 'type' in stripeError ? (stripeError as any).type : undefined;
+			logger.error('Failed to create Stripe account link', { 
+				userId, 
+				accountId,
+				error: errorMessage,
+				stripeErrorType: stripeErrorDetails
+			});
+			throw new ApiError(500, 'SERVER_ERROR', `Failed to create Stripe Connect link: ${errorMessage}`);
+		}
+	} catch (error) {
+		// Re-throw ApiError as-is
+		if (error instanceof ApiError) {
+			throw error;
+		}
+		// Wrap unexpected errors
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		logger.error('Unexpected error in createStripeConnectLink', { userId, error: errorMessage, stack: error instanceof Error ? error.stack : undefined });
+		throw new ApiError(500, 'SERVER_ERROR', `Failed to create Stripe Connect link: ${errorMessage}`);
 	}
-
-	let accountId = user.stripe_account_id ?? null;
-	if (!accountId) {
-		// Create actual Express Connect account (even in development with test keys)
-		const account = await stripe.accounts.create({
-			type: 'express',
-			email: user.email
-		});
-		accountId = account.id;
-		await query('UPDATE users SET stripe_account_id = $2 WHERE id = $1', [userId, accountId]);
-	}
-
-	const refreshUrl = `${env.appUrl}${returnPath ?? '/account'}?status=refresh`;
-	const returnUrl = `${env.appUrl}${returnPath ?? '/account'}?status=success`;
-	const link = await stripe.accountLinks.create({
-		account: accountId,
-		refresh_url: refreshUrl,
-		return_url: returnUrl,
-		type: 'account_onboarding'
-	});
-
-	return { url: link.url };
 };
 
 export const disconnectStripeAccount = async (userId: string): Promise<void> => {

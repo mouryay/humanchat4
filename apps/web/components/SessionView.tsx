@@ -11,6 +11,7 @@ import { sessionStatusManager } from '../services/sessionStatusManager';
 import VirtualMessageList from './VirtualMessageList';
 import MessageBubble from './MessageBubble';
 import InstantInvitePanel from './InstantInvitePanel';
+import SystemMessageNotification from './SystemMessageNotification';
 
 interface SessionViewProps {
   conversation: Conversation;
@@ -40,6 +41,8 @@ export default function SessionView({ conversation, session, invite, messages, r
   const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [callMode, setCallMode] = useState<'video' | 'audio' | null>(null);
+  const [activeSystemMessage, setActiveSystemMessage] = useState<Message | null>(null);
+  const [seenSystemMessageIds, setSeenSystemMessageIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -52,6 +55,34 @@ export default function SessionView({ conversation, session, invite, messages, r
   }, []);
 
   const orderedMessages = useMemo(() => [...messages].sort((a, b) => a.timestamp - b.timestamp), [messages]);
+  
+  // Extract system messages for notifications
+  const systemMessages = useMemo(() => {
+    return orderedMessages.filter((msg) => msg.type === 'system_notice');
+  }, [orderedMessages]);
+
+  // Show new system messages as notifications
+  useEffect(() => {
+    if (systemMessages.length === 0) {
+      setActiveSystemMessage(null);
+      return;
+    }
+
+    // Find the most recent system message that hasn't been seen
+    const unseenMessage = systemMessages
+      .filter((msg) => !seenSystemMessageIds.has(msg.id))
+      .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+    if (unseenMessage && !activeSystemMessage) {
+      setActiveSystemMessage(unseenMessage);
+      setSeenSystemMessageIds((prev) => new Set([...prev, unseenMessage.id]));
+    }
+  }, [systemMessages, seenSystemMessageIds, activeSystemMessage]);
+
+  const handleDismissSystemMessage = () => {
+    setActiveSystemMessage(null);
+  };
+
   const isInProgress = session?.status === 'in_progress';
   const isComplete = session?.status === 'complete';
   const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
@@ -81,14 +112,18 @@ export default function SessionView({ conversation, session, invite, messages, r
             <p className={styles.pendingSessionSub}>Keep chatting here while we wait.</p>
           </div>
         )}
-        <div className={styles.chatSection}>
-          <ChatArea
-            conversation={conversation}
-            messages={messages}
-            registerScrollContainer={registerScrollContainer}
-            currentUserId={currentUserId}
+        <ChatArea
+          conversation={conversation}
+          messages={messages}
+          registerScrollContainer={registerScrollContainer}
+          currentUserId={currentUserId}
+        />
+        {activeSystemMessage && (
+          <SystemMessageNotification
+            message={activeSystemMessage}
+            onDismiss={handleDismissSystemMessage}
           />
-        </div>
+        )}
       </div>
     );
   }
@@ -104,11 +139,14 @@ export default function SessionView({ conversation, session, invite, messages, r
   }
 
   if (isComplete) {
+    // Filter out system messages from archived view - they're shown as notifications
+    const archivedMessages = orderedMessages.filter((msg) => msg.type !== 'system_notice');
+    
     return (
       <div className={styles.archivedView}>
         {invitePanel}
         <div className={styles.archivedNotice}>This session has ended. Messages are read-only.</div>
-        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
+        <VirtualMessageList messages={archivedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
           {(message) => (
             <MessageBubble
               message={message}
@@ -118,6 +156,12 @@ export default function SessionView({ conversation, session, invite, messages, r
             />
           )}
         </VirtualMessageList>
+        {activeSystemMessage && (
+          <SystemMessageNotification
+            message={activeSystemMessage}
+            onDismiss={handleDismissSystemMessage}
+          />
+        )}
       </div>
     );
   }
@@ -186,6 +230,12 @@ export default function SessionView({ conversation, session, invite, messages, r
       <div className={styles.chatSection}>
         <ChatArea conversation={conversation} messages={messages} registerScrollContainer={registerScrollContainer} currentUserId={currentUserId} />
       </div>
+      {activeSystemMessage && (
+        <SystemMessageNotification
+          message={activeSystemMessage}
+          onDismiss={handleDismissSystemMessage}
+        />
+      )}
       {callSummary && (
         <EndCallFlow
           summary={callSummary}
