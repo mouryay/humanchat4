@@ -67,21 +67,23 @@ export default function ChatArea({ conversation, messages, registerScrollContain
 
   return (
     <div className={styles.chatArea}>
-      <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
-        {(message) => {
-          const isMine = currentUserId ? message.senderId === currentUserId : false;
-          return (
-            <MessageBubble
-              message={message}
-              variant={isMine ? 'user' : 'sam'}
-              onQuickReply={handleQuickReply}
-              currentUserId={currentUserId}
-              conversation={conversation}
-            />
-          );
-        }}
-      </VirtualMessageList>
-      {isTyping && <div className={styles.typingIndicator}>Typing…</div>}
+      <div className={styles.messageListContainer}>
+        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
+          {(message) => {
+            const isMine = currentUserId ? message.senderId === currentUserId : false;
+            return (
+              <MessageBubble
+                message={message}
+                variant={isMine ? 'user' : 'sam'}
+                onQuickReply={handleQuickReply}
+                currentUserId={currentUserId}
+                conversation={conversation}
+              />
+            );
+          }}
+        </VirtualMessageList>
+        {isTyping && <div className={styles.typingIndicator}>Typing…</div>}
+      </div>
       <form ref={formRef} className={styles.chatInputBar} onSubmit={handleSubmit}>
         <textarea
           placeholder="Message during session…"

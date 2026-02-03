@@ -537,38 +537,40 @@ export default function SamChatView({
 
   return (
     <div className={styles.samView}>
-      <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
-        {(message) => {
-          const fromSam = isSamMessage(message);
-          return (
-            <MessageBubble
-              message={message}
-              variant={fromSam ? 'sam' : 'user'}
-              onQuickReply={handleQuickReply}
-            >
-              {fromSam && message.actions && message.actions.length > 0 && (
-                <div className={styles.actionStack}>
-                  {message.actions.map((action, idx) => (
-                    <ActionRenderer
-                      key={action.id ?? `${message.timestamp}-${idx}`}
-                      action={action}
-                      onOpenConversation={handleOpenConversation}
-                      onCreateSession={handleCreateSessionAction}
-                      onSelectSlot={handleSlotSelection}
-                      onConnectNow={onConnectNow}
-                      onBookTime={onBookTime}
-                      connectingProfileId={connectingProfileId}
-                      directoryProfiles={onlineProfiles}
-                      currentUserId={localUserId}
-                      selfNameTokens={Array.from(selfNameTokens)}
-                    />
-                  ))}
-                </div>
-              )}
-            </MessageBubble>
-          );
-        }}
-      </VirtualMessageList>
+      <div className={styles.messageListContainer}>
+        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
+          {(message) => {
+            const fromSam = isSamMessage(message);
+            return (
+              <MessageBubble
+                message={message}
+                variant={fromSam ? 'sam' : 'user'}
+                onQuickReply={handleQuickReply}
+              >
+                {fromSam && message.actions && message.actions.length > 0 && (
+                  <div className={styles.actionStack}>
+                    {message.actions.map((action, idx) => (
+                      <ActionRenderer
+                        key={action.id ?? `${message.timestamp}-${idx}`}
+                        action={action}
+                        onOpenConversation={handleOpenConversation}
+                        onCreateSession={handleCreateSessionAction}
+                        onSelectSlot={handleSlotSelection}
+                        onConnectNow={onConnectNow}
+                        onBookTime={onBookTime}
+                        connectingProfileId={connectingProfileId}
+                        directoryProfiles={onlineProfiles}
+                        currentUserId={localUserId}
+                        selfNameTokens={Array.from(selfNameTokens)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </MessageBubble>
+            );
+          }}
+        </VirtualMessageList>
+      </div>
       <form ref={formRef} className={styles.inputBar} onSubmit={handleSubmit}>
         <textarea
           ref={textareaRef}

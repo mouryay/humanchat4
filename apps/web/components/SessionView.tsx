@@ -108,17 +108,17 @@ export default function SessionView({ conversation, session, invite, messages, r
       <div className={styles.humanView}>
         {invitePanel}
         {invite?.status === 'pending' && (
-          <div className={styles.pendingSessionNotice}>
+        <div className={styles.pendingSessionNotice}>
             <p className={styles.pendingSessionTitle}>Waiting for a host to accept</p>
             <p className={styles.pendingSessionSub}>Keep chatting here while we wait.</p>
-          </div>
+        </div>
         )}
-        <ChatArea
-          conversation={conversation}
-          messages={messages}
-          registerScrollContainer={registerScrollContainer}
-          currentUserId={currentUserId}
-        />
+          <ChatArea
+            conversation={conversation}
+            messages={messages}
+            registerScrollContainer={registerScrollContainer}
+            currentUserId={currentUserId}
+          />
         {activeSystemMessage && (
           <SystemMessageNotification
             message={activeSystemMessage}
@@ -147,16 +147,18 @@ export default function SessionView({ conversation, session, invite, messages, r
       <div className={styles.archivedView}>
         {invitePanel}
         <div className={styles.archivedNotice}>This session has ended. Messages are read-only.</div>
-        <VirtualMessageList messages={archivedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
-          {(message) => (
-            <MessageBubble
-              message={message}
-              variant={isUserMessage(message, conversation) ? 'user' : 'sam'}
-              currentUserId={currentUserId}
-              conversation={conversation}
-            />
-          )}
-        </VirtualMessageList>
+        <div className={styles.messageListContainer}>
+          <VirtualMessageList messages={archivedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
+            {(message) => (
+              <MessageBubble
+                message={message}
+                variant={isUserMessage(message, conversation) ? 'user' : 'sam'}
+                currentUserId={currentUserId}
+                conversation={conversation}
+              />
+            )}
+          </VirtualMessageList>
+        </div>
         {activeSystemMessage && (
           <SystemMessageNotification
             message={activeSystemMessage}
