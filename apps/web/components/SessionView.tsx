@@ -74,8 +74,9 @@ export default function SessionView({ conversation, session, invite, messages, r
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
     if (unseenMessage && !activeSystemMessage && unseenMessage.id !== undefined) {
+      const messageId = unseenMessage.id; // Extract to ensure type narrowing
       setActiveSystemMessage(unseenMessage);
-      setSeenSystemMessageIds((prev) => new Set([...prev, unseenMessage.id]));
+      setSeenSystemMessageIds((prev) => new Set([...prev, messageId]));
     }
   }, [systemMessages, seenSystemMessageIds, activeSystemMessage]);
 
