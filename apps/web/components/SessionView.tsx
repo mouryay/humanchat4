@@ -70,10 +70,10 @@ export default function SessionView({ conversation, session, invite, messages, r
 
     // Find the most recent system message that hasn't been seen
     const unseenMessage = systemMessages
-      .filter((msg) => !seenSystemMessageIds.has(msg.id))
+      .filter((msg) => msg.id !== undefined && !seenSystemMessageIds.has(msg.id))
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
-    if (unseenMessage && !activeSystemMessage) {
+    if (unseenMessage && !activeSystemMessage && unseenMessage.id !== undefined) {
       setActiveSystemMessage(unseenMessage);
       setSeenSystemMessageIds((prev) => new Set([...prev, unseenMessage.id]));
     }
