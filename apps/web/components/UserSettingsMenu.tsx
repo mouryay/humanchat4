@@ -164,14 +164,15 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       <div
         className={clsx(
           isMobile && isHeaderVariant 
-            ? 'fixed w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]'
+            ? 'fixed w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150'
             : 'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]',
           isHeaderVariant && !isMobile ? 'right-0' : '',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
         style={isMobile && isHeaderVariant ? {
           top: `${dropdownPosition.top}px`,
-          right: `${dropdownPosition.right}px`
+          right: `${dropdownPosition.right}px`,
+          zIndex: 99999
         } : undefined}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}

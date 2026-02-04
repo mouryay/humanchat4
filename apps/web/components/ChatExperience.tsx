@@ -263,7 +263,7 @@ const ChatShell = () => {
               />
               <div
                 className={clsx(
-                  'relative h-full w-full max-w-[min(90%,360px)] border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
+                  'relative h-full w-full border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
                   {
                     '-translate-x-full': mobileDrawer !== 'conversations',
                     'translate-x-0': mobileDrawer === 'conversations'
@@ -281,7 +281,7 @@ const ChatShell = () => {
                       Close
                     </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto -mt-3 -mr-0">
                     <ConversationSidebar
                       activeConversationId={activeConversationId}
                       onSelectConversation={handleSelectConversation}

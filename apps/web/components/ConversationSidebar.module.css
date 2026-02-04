@@ -680,6 +680,10 @@
     border-right: none;
     box-shadow: none !important;
     min-height: calc(100vh - 72px);
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-right: 0 !important;
   }
 
   /* Reduce header padding on mobile */
