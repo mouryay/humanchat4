@@ -80,6 +80,10 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     event.preventDefault();
     setMenuOpen(!menuOpen);
   };
+  
+  const handleClickWithClose = () => {
+    handleClick();
+  };
 
   // Close menu when clicking outside
   const handleOutsideClick = (event: MouseEvent) => {
@@ -109,7 +113,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
       className={clsx(styles.listItem, isActive && styles.active, isSam && styles.samItem)}
       role="button"
       tabIndex={0}
-      onClick={handleClick}
+      onClick={handleClickWithClose}
       onKeyDown={handleKeyDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

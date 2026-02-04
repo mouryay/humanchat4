@@ -13,7 +13,7 @@
 
 @media (max-width: 767px) {
   .container {
-    padding: 0 !important;
+    padding: 8px !important;
   }
 }
 
@@ -59,6 +59,7 @@
   max-height: 100dvh;
   display: flex;
   flex-direction: column;
+  padding: 8px;
 }
 
 .placeholder {
@@ -487,25 +488,30 @@
 @media (max-width: 767px) {
   .messageList {
     padding: 12px 16px 0;
+    overflow: hidden !important;
   }
   
   .messageListContainer {
-    padding: 12px 16px 0 !important;
+    padding: 8px 12px 0 !important;
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
   }
   
   .messageListContainer .messageList {
-    padding: 12px 16px 0;
+    padding: 8px 12px 0;
     padding-bottom: 0 !important;
+    overflow: hidden !important;
   }
   
   .container {
+    padding: 8px !important;
     padding-bottom: 0 !important;
   }
   
   .mobileContainer {
+    padding: 8px !important;
     padding-bottom: 0 !important;
   }
   
@@ -513,6 +519,14 @@
   .inputBar {
     padding: 12px 16px;
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  
+  .chatArea {
+    padding: 0 4px;
+  }
+  
+  .header {
+    margin: 0 4px 8px 4px;
   }
 }
 
@@ -1134,6 +1148,11 @@
 @media (max-width: 767px) {
   .chatArea {
     gap: 0;
+    padding: 0 4px;
+  }
+  
+  .header {
+    margin: 0 4px 8px 4px;
   }
 }
 

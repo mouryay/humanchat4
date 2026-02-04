@@ -254,22 +254,24 @@ const ChatShell = () => {
             >
               <button
                 type="button"
-                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200', {
-                  'opacity-0': mobileDrawer !== 'conversations',
-                  'opacity-100': mobileDrawer === 'conversations'
+                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200 z-40', {
+                  'opacity-0 pointer-events-none': mobileDrawer !== 'conversations',
+                  'opacity-100 pointer-events-auto': mobileDrawer === 'conversations'
                 })}
                 onClick={handleCloseDrawers}
+                onTouchStart={handleCloseDrawers}
                 aria-label="Close drawer"
               />
               <div
                 className={clsx(
-                  'relative h-full w-full border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out',
+                  'relative h-full w-full border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out z-50',
                   {
                     '-translate-x-full': mobileDrawer !== 'conversations',
                     'translate-x-0': mobileDrawer === 'conversations'
                   }
                 )}
                 onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               >
                 <div className="flex h-full flex-col">
                   <div className="flex-1 overflow-y-auto">
