@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { Conversation, Message } from '../../../src/lib/db';
+import styles from './ConversationView.module.css';
 
 interface MessageBubbleProps {
   message: Message;
@@ -12,6 +13,8 @@ interface MessageBubbleProps {
   onQuickReply?: (message: Message) => void;
   currentUserId?: string | null;
   conversation?: Conversation | null;
+  isGrouped?: boolean;
+  isNewSpeaker?: boolean;
 }
 
 const getVisibleMessageContent = (
@@ -56,7 +59,9 @@ export default function MessageBubble({
   children,
   onQuickReply,
   currentUserId,
-  conversation
+  conversation,
+  isGrouped = false,
+  isNewSpeaker = false
 }: MessageBubbleProps) {
   const touchStartX = useRef<number | null>(null);
   const touchDelta = useRef(0);
@@ -91,25 +96,22 @@ export default function MessageBubble({
     return null;
   }
 
-  // Premium message bubble styling
+  // Premium message bubble styling with grouping
   const rowClass = clsx(
-    "flex w-full mb-2",
-    isSystemMessage ? "justify-center" : variant === 'sam' ? "justify-start" : "justify-end"
+    styles.bubbleRow,
+    isSystemMessage ? styles.systemRow : variant === 'sam' ? styles.samRow : styles.userRow,
+    isGrouped && styles.grouped,
+    isNewSpeaker && styles.newSpeaker
   );
 
   const bubbleClass = clsx(
-    "px-4 py-3 rounded-2xl text-base leading-relaxed max-w-[80%] w-fit transition-all duration-base",
-    isSystemMessage
-      ? "bg-background-tertiary/50 border border-dashed border-border-medium text-text-secondary text-sm text-center"
-      : variant === 'user'
-      ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-sm shadow-lg shadow-blue-500/20"
-      : "bg-background-elevated border border-border-subtle text-text-primary rounded-bl-sm shadow-md"
+    styles.bubble,
+    isSystemMessage && styles.systemBubble
   );
 
   const timeClass = clsx(
-    "text-xs mt-1.5 px-1",
-    variant === 'user' ? "text-right text-gray-400" : "text-left text-gray-400",
-    "opacity-90"
+    styles.messageMeta,
+    variant === 'user' ? styles.userRow : styles.samRow
   );
 
   return (
@@ -119,7 +121,7 @@ export default function MessageBubble({
       onTouchMove={handleTouchMove} 
       onTouchEnd={handleTouchEnd}
     >
-      <div className="flex flex-col gap-1.5">
+      <div className={styles.messageBubble}>
         <div className={bubbleClass}>
           {content}
         </div>

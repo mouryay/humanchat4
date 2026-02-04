@@ -143,20 +143,41 @@ export default function SessionView({ conversation, session, invite, messages, r
     // Filter out system messages from archived view - they're shown as notifications
     const archivedMessages = orderedMessages.filter((msg) => msg.type !== 'system_notice');
     
+    // Determine message grouping for archived view
+    const getMessageGrouping = (index: number) => {
+      if (index === 0) return { isGrouped: false, isNewSpeaker: false };
+      
+      const currentMessage = archivedMessages[index];
+      const previousMessage = archivedMessages[index - 1];
+      
+      const currentIsUser = isUserMessage(currentMessage, conversation);
+      const previousIsUser = isUserMessage(previousMessage, conversation);
+      
+      const isGrouped = currentIsUser === previousIsUser;
+      const isNewSpeaker = !isGrouped;
+      
+      return { isGrouped, isNewSpeaker };
+    };
+    
     return (
       <div className={styles.archivedView}>
         {invitePanel}
         <div className={styles.archivedNotice}>This session has ended. Messages are read-only.</div>
         <div className={styles.messageListContainer}>
           <VirtualMessageList messages={archivedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
-            {(message) => (
-              <MessageBubble
-                message={message}
-                variant={isUserMessage(message, conversation) ? 'user' : 'sam'}
-                currentUserId={currentUserId}
-                conversation={conversation}
-              />
-            )}
+            {(message, index) => {
+              const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
+              return (
+                <MessageBubble
+                  message={message}
+                  variant={isUserMessage(message, conversation) ? 'user' : 'sam'}
+                  currentUserId={currentUserId}
+                  conversation={conversation}
+                  isGrouped={isGrouped}
+                  isNewSpeaker={isNewSpeaker}
+                />
+              );
+            }}
           </VirtualMessageList>
         </div>
         {activeSystemMessage && (

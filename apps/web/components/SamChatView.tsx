@@ -535,17 +535,36 @@ export default function SamChatView({
     }
   };
 
+  // Determine message grouping for better spacing
+  const getMessageGrouping = (index: number) => {
+    if (index === 0) return { isGrouped: false, isNewSpeaker: false };
+    
+    const currentMessage = orderedMessages[index];
+    const previousMessage = orderedMessages[index - 1];
+    
+    const currentFromSam = isSamMessage(currentMessage);
+    const previousFromSam = isSamMessage(previousMessage);
+    
+    const isGrouped = currentFromSam === previousFromSam;
+    const isNewSpeaker = !isGrouped;
+    
+    return { isGrouped, isNewSpeaker };
+  };
+
   return (
     <div className={styles.samView}>
       <div className={styles.messageListContainer}>
         <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
-          {(message) => {
+          {(message, index) => {
             const fromSam = isSamMessage(message);
+            const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
             return (
               <MessageBubble
                 message={message}
                 variant={fromSam ? 'sam' : 'user'}
                 onQuickReply={handleQuickReply}
+                isGrouped={isGrouped}
+                isNewSpeaker={isNewSpeaker}
               >
                 {fromSam && message.actions && message.actions.length > 0 && (
                   <div className={styles.actionStack}>

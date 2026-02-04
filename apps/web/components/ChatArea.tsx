@@ -65,12 +65,29 @@ export default function ChatArea({ conversation, messages, registerScrollContain
     setDraft((prev) => (prev ? `${prev}\n${message.content}` : message.content));
   };
 
+  // Determine message grouping for better spacing
+  const getMessageGrouping = (index: number) => {
+    if (index === 0) return { isGrouped: false, isNewSpeaker: false };
+    
+    const currentMessage = orderedMessages[index];
+    const previousMessage = orderedMessages[index - 1];
+    
+    const currentIsMine = currentUserId ? currentMessage.senderId === currentUserId : false;
+    const previousIsMine = currentUserId ? previousMessage.senderId === currentUserId : false;
+    
+    const isGrouped = currentIsMine === previousIsMine;
+    const isNewSpeaker = !isGrouped;
+    
+    return { isGrouped, isNewSpeaker };
+  };
+
   return (
     <div className={styles.chatArea}>
       <div className={styles.messageListContainer}>
         <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
-          {(message) => {
+          {(message, index) => {
             const isMine = currentUserId ? message.senderId === currentUserId : false;
+            const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
             return (
               <MessageBubble
                 message={message}
@@ -78,6 +95,8 @@ export default function ChatArea({ conversation, messages, registerScrollContain
                 onQuickReply={handleQuickReply}
                 currentUserId={currentUserId}
                 conversation={conversation}
+                isGrouped={isGrouped}
+                isNewSpeaker={isNewSpeaker}
               />
             );
           }}
