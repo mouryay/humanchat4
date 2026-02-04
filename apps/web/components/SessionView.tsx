@@ -145,18 +145,26 @@ export default function SessionView({ conversation, session, invite, messages, r
     
     // Determine message grouping for archived view
     const getMessageGrouping = (index: number) => {
-      if (index === 0) return { isGrouped: false, isNewSpeaker: true };
-      
       const currentMessage = archivedMessages[index];
-      const previousMessage = archivedMessages[index - 1];
-      
       const currentIsUser = isUserMessage(currentMessage, conversation);
-      const previousIsUser = isUserMessage(previousMessage, conversation);
       
-      const isGrouped = currentIsUser === previousIsUser;
+      // Check previous message
+      const isGrouped = index > 0 && (() => {
+        const previousMessage = archivedMessages[index - 1];
+        const previousIsUser = isUserMessage(previousMessage, conversation);
+        return currentIsUser === previousIsUser;
+      })();
+      
+      // Check next message to determine if this is the last in group
+      const isLastInGroup = index === archivedMessages.length - 1 || (() => {
+        const nextMessage = archivedMessages[index + 1];
+        const nextIsUser = isUserMessage(nextMessage, conversation);
+        return currentIsUser !== nextIsUser;
+      })();
+      
       const isNewSpeaker = !isGrouped;
       
-      return { isGrouped, isNewSpeaker };
+      return { isGrouped: !!isGrouped, isNewSpeaker, isLastInGroup };
     };
     
     return (
@@ -166,7 +174,7 @@ export default function SessionView({ conversation, session, invite, messages, r
         <div className={styles.messageListContainer}>
           <VirtualMessageList messages={archivedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
             {(message, index) => {
-              const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
+              const { isGrouped, isNewSpeaker, isLastInGroup } = getMessageGrouping(index ?? 0);
               return (
                 <MessageBubble
                   message={message}
@@ -175,6 +183,7 @@ export default function SessionView({ conversation, session, invite, messages, r
                   conversation={conversation}
                   isGrouped={isGrouped}
                   isNewSpeaker={isNewSpeaker}
+                  isLastInGroup={isLastInGroup}
                 />
               );
             }}

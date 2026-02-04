@@ -537,18 +537,26 @@ export default function SamChatView({
 
   // Determine message grouping for better spacing
   const getMessageGrouping = (index: number) => {
-    if (index === 0) return { isGrouped: false, isNewSpeaker: true };
-    
     const currentMessage = orderedMessages[index];
-    const previousMessage = orderedMessages[index - 1];
-    
     const currentFromSam = isSamMessage(currentMessage);
-    const previousFromSam = isSamMessage(previousMessage);
     
-    const isGrouped = currentFromSam === previousFromSam;
+    // Check previous message
+    const isGrouped = index > 0 && (() => {
+      const previousMessage = orderedMessages[index - 1];
+      const previousFromSam = isSamMessage(previousMessage);
+      return currentFromSam === previousFromSam;
+    })();
+    
+    // Check next message to determine if this is the last in group
+    const isLastInGroup = index === orderedMessages.length - 1 || (() => {
+      const nextMessage = orderedMessages[index + 1];
+      const nextFromSam = isSamMessage(nextMessage);
+      return currentFromSam !== nextFromSam;
+    })();
+    
     const isNewSpeaker = !isGrouped;
     
-    return { isGrouped, isNewSpeaker };
+    return { isGrouped: !!isGrouped, isNewSpeaker, isLastInGroup };
   };
 
   return (
@@ -557,7 +565,7 @@ export default function SamChatView({
         <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
           {(message, index) => {
             const fromSam = isSamMessage(message);
-            const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
+            const { isGrouped, isNewSpeaker, isLastInGroup } = getMessageGrouping(index ?? 0);
             return (
               <MessageBubble
                 message={message}
@@ -565,6 +573,7 @@ export default function SamChatView({
                 onQuickReply={handleQuickReply}
                 isGrouped={isGrouped}
                 isNewSpeaker={isNewSpeaker}
+                isLastInGroup={isLastInGroup}
               >
                 {fromSam && message.actions && message.actions.length > 0 && (
                   <div className={styles.actionStack}>

@@ -15,6 +15,7 @@ interface MessageBubbleProps {
   conversation?: Conversation | null;
   isGrouped?: boolean;
   isNewSpeaker?: boolean;
+  isLastInGroup?: boolean;
 }
 
 const getVisibleMessageContent = (
@@ -61,7 +62,8 @@ export default function MessageBubble({
   currentUserId,
   conversation,
   isGrouped = false,
-  isNewSpeaker = false
+  isNewSpeaker = false,
+  isLastInGroup = false
 }: MessageBubbleProps) {
   const touchStartX = useRef<number | null>(null);
   const touchDelta = useRef(0);
@@ -101,7 +103,8 @@ export default function MessageBubble({
     styles.bubbleRow,
     isSystemMessage ? styles.systemRow : variant === 'sam' ? styles.samRow : styles.userRow,
     isGrouped && styles.grouped,
-    isNewSpeaker && styles.newSpeaker
+    isNewSpeaker && styles.newSpeaker,
+    isLastInGroup && styles.lastInGroup
   );
 
   const bubbleClass = clsx(

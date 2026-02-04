@@ -163,14 +163,15 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;
-  max-width: min(50vw, 400px);
+  flex-wrap: nowrap;
+  max-width: min(60vw, 500px);
   text-align: right;
   flex-shrink: 0;
 }
 
 .headerActionsMetadata {
-  flex: 1 1 100%;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 767px) {
@@ -351,8 +352,9 @@
 
 .callButtons {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .callButtonPrimary,
@@ -539,19 +541,6 @@
   position: relative;
 }
 
-/* Message tail for right bubbles - only show on first message from speaker */
-.userRow.newSpeaker .bubble::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: -8px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0 12px 8px;
-  border-color: transparent transparent transparent #38bdf8;
-}
-
 .samRow .bubble {
   background: #3a3a3a;
   color: #f8fafc;
@@ -564,8 +553,8 @@
   position: relative;
 }
 
-/* Message tail for left bubbles - only show on first message from speaker */
-.samRow.newSpeaker .bubble::after {
+/* Message tail for left bubbles - only show on last message in group */
+.samRow.lastInGroup .bubble::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -575,6 +564,19 @@
   border-style: solid;
   border-width: 0 8px 12px 0;
   border-color: transparent #3a3a3a transparent transparent;
+}
+
+/* Message tail for right bubbles - only show on last message in group */
+.userRow.lastInGroup .bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 12px 8px;
+  border-color: transparent transparent transparent #38bdf8;
 }
 
 .actions {

@@ -75,7 +75,7 @@ export default function ChatHeaderCallActions({
         aria-label="Start video call"
       >
         <Video size={18} />
-        <span>Start video call</span>
+        <span>Video call</span>
       </button>
 
       <button
@@ -85,7 +85,7 @@ export default function ChatHeaderCallActions({
         aria-label="Start audio call"
       >
         <Phone size={18} />
-        <span>Start audio call</span>
+        <span>Audio call</span>
       </button>
     </div>
   );

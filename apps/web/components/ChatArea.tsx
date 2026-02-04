@@ -67,18 +67,26 @@ export default function ChatArea({ conversation, messages, registerScrollContain
 
   // Determine message grouping for better spacing
   const getMessageGrouping = (index: number) => {
-    if (index === 0) return { isGrouped: false, isNewSpeaker: true };
-    
     const currentMessage = orderedMessages[index];
-    const previousMessage = orderedMessages[index - 1];
-    
     const currentIsMine = currentUserId ? currentMessage.senderId === currentUserId : false;
-    const previousIsMine = currentUserId ? previousMessage.senderId === currentUserId : false;
     
-    const isGrouped = currentIsMine === previousIsMine;
+    // Check previous message
+    const isGrouped = index > 0 && (() => {
+      const previousMessage = orderedMessages[index - 1];
+      const previousIsMine = currentUserId ? previousMessage.senderId === currentUserId : false;
+      return currentIsMine === previousIsMine;
+    })();
+    
+    // Check next message to determine if this is the last in group
+    const isLastInGroup = index === orderedMessages.length - 1 || (() => {
+      const nextMessage = orderedMessages[index + 1];
+      const nextIsMine = currentUserId ? nextMessage.senderId === currentUserId : false;
+      return currentIsMine !== nextIsMine;
+    })();
+    
     const isNewSpeaker = !isGrouped;
     
-    return { isGrouped, isNewSpeaker };
+    return { isGrouped: !!isGrouped, isNewSpeaker, isLastInGroup };
   };
 
   return (
@@ -87,7 +95,7 @@ export default function ChatArea({ conversation, messages, registerScrollContain
         <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={registerScrollContainer}>
           {(message, index) => {
             const isMine = currentUserId ? message.senderId === currentUserId : false;
-            const { isGrouped, isNewSpeaker } = getMessageGrouping(index ?? 0);
+            const { isGrouped, isNewSpeaker, isLastInGroup } = getMessageGrouping(index ?? 0);
             return (
               <MessageBubble
                 message={message}
@@ -97,6 +105,7 @@ export default function ChatArea({ conversation, messages, registerScrollContain
                 conversation={conversation}
                 isGrouped={isGrouped}
                 isNewSpeaker={isNewSpeaker}
+                isLastInGroup={isLastInGroup}
               />
             );
           }}
