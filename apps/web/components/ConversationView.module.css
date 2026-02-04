@@ -539,8 +539,8 @@
   position: relative;
 }
 
-/* Message tail for right bubbles */
-.userRow .bubble::after {
+/* Message tail for right bubbles - only show on first message from speaker */
+.userRow.newSpeaker .bubble::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -550,11 +550,6 @@
   border-style: solid;
   border-width: 0 0 12px 8px;
   border-color: transparent transparent transparent #38bdf8;
-}
-
-/* Hide tail on grouped messages (middle messages in a sequence) */
-.userRow.grouped .bubble::after {
-  display: none;
 }
 
 .samRow .bubble {
@@ -569,22 +564,17 @@
   position: relative;
 }
 
-/* Message tail for left bubbles - positioned to avoid overlap with rounded corner */
-.samRow .bubble::after {
+/* Message tail for left bubbles - only show on first message from speaker */
+.samRow.newSpeaker .bubble::after {
   content: '';
   position: absolute;
-  bottom: 1px;
-  left: -7px;
+  bottom: 0;
+  left: -8px;
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 0 7px 10px 0;
+  border-width: 0 8px 12px 0;
   border-color: transparent #3a3a3a transparent transparent;
-}
-
-/* Hide tail on grouped messages (middle messages in a sequence) */
-.samRow.grouped .bubble::after {
-  display: none;
 }
 
 .actions {
@@ -953,8 +943,8 @@
   background: linear-gradient(135deg, #0ea5e9, #38bdf8);
   border: none;
   color: #020617;
-  padding: 0 24px;
-  border-radius: 16px;
+  padding: 0 20px;
+  border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

@@ -145,7 +145,7 @@ export default function SessionView({ conversation, session, invite, messages, r
     
     // Determine message grouping for archived view
     const getMessageGrouping = (index: number) => {
-      if (index === 0) return { isGrouped: false, isNewSpeaker: false };
+      if (index === 0) return { isGrouped: false, isNewSpeaker: true };
       
       const currentMessage = archivedMessages[index];
       const previousMessage = archivedMessages[index - 1];

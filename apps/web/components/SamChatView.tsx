@@ -537,7 +537,7 @@ export default function SamChatView({
 
   // Determine message grouping for better spacing
   const getMessageGrouping = (index: number) => {
-    if (index === 0) return { isGrouped: false, isNewSpeaker: false };
+    if (index === 0) return { isGrouped: false, isNewSpeaker: true };
     
     const currentMessage = orderedMessages[index];
     const previousMessage = orderedMessages[index - 1];

@@ -183,14 +183,15 @@
 }
 
 .avatarSam {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .avatarSam img {
