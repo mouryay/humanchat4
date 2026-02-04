@@ -269,19 +269,10 @@ const ChatShell = () => {
                     'translate-x-0': mobileDrawer === 'conversations'
                   }
                 )}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
-                    <span>Inbox</span>
-                    <button
-                      type="button"
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
-                      onClick={handleCloseDrawers}
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto -mt-3 -mr-0">
+                  <div className="flex-1 overflow-y-auto">
                     <ConversationSidebar
                       activeConversationId={activeConversationId}
                       onSelectConversation={handleSelectConversation}

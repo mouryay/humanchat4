@@ -493,6 +493,7 @@
     padding: 12px 16px 0 !important;
     margin-bottom: 0 !important;
     padding-bottom: 0 !important;
+    margin: 0 !important;
   }
   
   .messageListContainer .messageList {
@@ -521,6 +522,16 @@
   padding: 2px 8px;
   margin-bottom: 4px;
   overflow: visible;
+}
+
+@media (max-width: 767px) {
+  .bubbleRow {
+    margin-bottom: 2px;
+  }
+  
+  .bubbleRow:last-child {
+    margin-bottom: 0;
+  }
 }
 
 /* Grouped messages - less space between same speaker */
@@ -1118,6 +1129,12 @@
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .chatArea {
+    gap: 0;
+  }
 }
 
 .messageListContainer {

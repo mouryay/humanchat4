@@ -39,8 +39,8 @@ export default function VirtualMessageList({ messages, className, registerScroll
   }, [messages.length, virtualizer]);
 
   return (
-    <div ref={handleRef} className={className}>
-      <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+    <div ref={handleRef} className={className} style={{ overflow: 'hidden' }}>
+      <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%', paddingBottom: 0 }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const message = messages[virtualRow.index];
           if (!message) {
