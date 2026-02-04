@@ -693,17 +693,33 @@
 
   .listItem,
   .samItem {
-    margin: 0 8px 2px 8px;
+    margin: 0 0 2px 0 !important;
     padding: 8px 12px;
     border-radius: 12px;
   }
 
   /* Reduce section padding on mobile */
   .sidebar section {
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     padding-top: 4px !important;
     padding-bottom: 4px !important;
+  }
+  
+  /* Remove all horizontal padding from sidebar sections and lists on mobile */
+  .sidebar section,
+  .sidebar ul,
+  .sidebar li,
+  .sidebar > div > div > section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  /* Override Tailwind px-* classes on mobile */
+  .sidebar [class*="px-4"],
+  .sidebar [class*="px-6"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .sectionMeta {

@@ -30,8 +30,10 @@ interface UserSettingsMenuProps {
 
 export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMenuProps) {
   const [open, setOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { identity, loading } = useAuthIdentity();
   const pathname = usePathname();
   const { isMobile } = useBreakpoint();
@@ -124,11 +126,19 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       }}
     >
       <button
+        ref={buttonRef}
         type="button"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           clearHoverTimeout();
+          if (isMobile && isHeaderVariant && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setDropdownPosition({
+              top: rect.bottom + 8,
+              right: window.innerWidth - rect.right
+            });
+          }
           setOpen((prev) => !prev);
         }}
         onTouchStart={(e) => {
@@ -153,10 +163,16 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]',
-          isHeaderVariant ? 'right-0' : 'right-0',
+          isMobile && isHeaderVariant 
+            ? 'fixed w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]'
+            : 'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]',
+          isHeaderVariant && !isMobile ? 'right-0' : '',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
+        style={isMobile && isHeaderVariant ? {
+          top: `${dropdownPosition.top}px`,
+          right: `${dropdownPosition.right}px`
+        } : undefined}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
