@@ -678,6 +678,7 @@
   .sidebar {
     width: 100%;
     border-right: none;
+    box-shadow: none !important;
     min-height: calc(100vh - 72px);
   }
 

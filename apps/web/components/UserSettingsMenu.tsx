@@ -153,7 +153,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[100]',
+          'absolute mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[9999]',
           isHeaderVariant ? 'right-0' : 'right-0',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
@@ -179,7 +179,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
             <>
               <Link
                 href="/account"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10 min-h-[44px] flex items-center touch-action: manipulation relative z-[101]"
+                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10 min-h-[44px] flex items-center touch-action: manipulation relative z-[10000]"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Close menu after a short delay to allow navigation
@@ -188,7 +188,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
               >
                 Account
               </Link>
-              <div className="relative z-[101]">
+              <div className="relative z-[10000]">
                 <LogoutButton className="w-full rounded-xl border border-white/10 px-3 py-2 text-left text-white/90 hover:bg-white/10 min-h-[44px] touch-action: manipulation" />
               </div>
             </>
