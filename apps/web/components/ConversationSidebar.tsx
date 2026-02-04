@@ -123,21 +123,21 @@ export default function ConversationSidebar({
         {!collapsed && (
           <h1 className="text-2xl font-semibold text-text-primary">{formattedDate}</h1>
         )}
-      </div>
+          </div>
 
       {/* Premium Scrollable Content */}
       <div className="flex-1 overflow-y-auto" ref={scrollerRef}>
         {/* Sam Section */}
         <section className="px-4 py-2">
-          {samEntry && (
-            <ConversationListItem
-              entry={samEntry}
-              isActive={activeConversationId === samEntry.conversation.conversationId}
-              onSelect={handleSelect}
-              onArchive={archive}
-              showMetadata={!collapsed}
-            />
-          )}
+              {samEntry && (
+                <ConversationListItem
+                  entry={samEntry}
+                  isActive={activeConversationId === samEntry.conversation.conversationId}
+                  onSelect={handleSelect}
+                  onArchive={archive}
+                  showMetadata={!collapsed}
+                />
+              )}
         </section>
 
         {/* Humans Section */}
@@ -146,25 +146,25 @@ export default function ConversationSidebar({
             <div className="px-6 pb-3">
               <span className="px-2.5 py-0.5 rounded-full bg-accent-primary/20 text-accent-primary text-xs font-semibold">
                 {unreadCount} unread
-              </span>
-            </div>
+            </span>
+          </div>
           )}
 
               <ul className="list-none p-0 m-0" onScroll={handleScroll}>
-                {visibleHumanEntries.map((entry) => (
+            {visibleHumanEntries.map((entry) => (
                   <li key={entry.conversation.conversationId} className="px-4 mb-1">
-                    <ConversationListItem
-                      entry={entry}
-                      isActive={activeConversationId === entry.conversation.conversationId}
-                      onSelect={handleSelect}
-                      onArchive={archive}
-                      onDelete={handleDeleteRequest}
-                      deletePending={deletingId === entry.conversation.conversationId}
-                      showMetadata={!collapsed}
-                    />
+              <ConversationListItem
+                entry={entry}
+                isActive={activeConversationId === entry.conversation.conversationId}
+                onSelect={handleSelect}
+                onArchive={archive}
+                onDelete={handleDeleteRequest}
+                deletePending={deletingId === entry.conversation.conversationId}
+                showMetadata={!collapsed}
+              />
                   </li>
-                ))}
-              </ul>
+            ))}
+          </ul>
 
           {hasMore && (
             <div className="px-6 py-4 text-center text-sm text-text-tertiary">
@@ -191,54 +191,54 @@ export default function ConversationSidebar({
             {requestLoading && (
               <div className="p-4 rounded-xl bg-background-tertiary/50 shadow-sm text-sm text-text-secondary">
                 Loading requests…
-              </div>
+            </div>
             )}
 
             {requestError && !requestLoading && (
               <div className="p-4 rounded-xl bg-red-500/10 shadow-sm text-sm text-red-400">
                 {requestError}
-              </div>
+                </div>
             )}
 
             {pendingRequests.length === 0 && !requestLoading && null}
 
             {pendingRequests.length > 0 && (
               <ul className="space-y-2">
-                {pendingRequests.map((request) => {
-                  const profile = requestProfiles?.[request.requesterId];
-                  const displayName = profile?.name ?? 'New request';
-                  const subtitle = profile?.headline ?? 'Waiting for your response';
-                  const initials = displayName
-                    .split(' ')
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((segment) => segment[0]?.toUpperCase() ?? '')
-                    .join('') || 'RQ';
-                  const isUpdating = requestActionPendingId === request.requestId;
+                  {pendingRequests.map((request) => {
+                    const profile = requestProfiles?.[request.requesterId];
+                    const displayName = profile?.name ?? 'New request';
+                    const subtitle = profile?.headline ?? 'Waiting for your response';
+                    const initials = displayName
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((segment) => segment[0]?.toUpperCase() ?? '')
+                      .join('') || 'RQ';
+                    const isUpdating = requestActionPendingId === request.requestId;
 
-                  const handleAction = (status: ChatRequest['status']) => {
+                    const handleAction = (status: ChatRequest['status']) => {
                     if (!onRequestAction) return;
-                    const outcome = onRequestAction(request.requestId, status);
-                    if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
-                      (outcome as Promise<unknown>).catch((actionError) => {
-                        console.warn('Request action failed', actionError);
-                      });
-                    }
-                  };
+                      const outcome = onRequestAction(request.requestId, status);
+                      if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
+                        (outcome as Promise<unknown>).catch((actionError) => {
+                          console.warn('Request action failed', actionError);
+                        });
+                      }
+                    };
 
-                  return (
+                    return (
                     <li 
                       key={request.requestId} 
                       className="rounded-xl p-4 bg-background-tertiary/50 hover:bg-background-hover/80 hover:shadow-md transition-all duration-base"
                     >
                       <div className="flex items-center gap-3 mb-3">
-                        {profile?.avatarUrl ? (
+                          {profile?.avatarUrl ? (
                           <img 
                             src={profile.avatarUrl} 
                             alt={displayName} 
                             className="h-10 w-10 avatar-chamfered object-cover"
                           />
-                        ) : (
+                          ) : (
                           <div className="h-10 w-10 avatar-chamfered bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                             {initials}
                           </div>
@@ -247,28 +247,28 @@ export default function ConversationSidebar({
                           <p className="text-sm font-semibold text-text-primary truncate">{displayName}</p>
                           <p className="text-xs text-text-secondary truncate">{subtitle}</p>
                         </div>
-                      </div>
+                            </div>
                       <div className="flex gap-2">
-                        <button
+                            <button
                           className="flex-1 btn-premium btn-premium-primary text-sm py-2 disabled:opacity-50"
                           onClick={() => handleAction('approved')}
-                          disabled={isUpdating}
-                        >
+                              disabled={isUpdating}
+                            >
                           Accept
-                        </button>
-                        <button
+                            </button>
+                            <button
                           className="flex-1 btn-premium btn-premium-secondary text-sm py-2 disabled:opacity-50"
                           onClick={() => handleAction('declined')}
-                          disabled={isUpdating}
-                        >
+                              disabled={isUpdating}
+                            >
                           Decline
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                            </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
           </div>
         </section>
       </div>
@@ -290,22 +290,22 @@ export default function ConversationSidebar({
             {deleteError && (
               <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400">
                 {deleteError}
-              </div>
+          </div>
             )}
             <div className="flex gap-3">
-              <button
+            <button
                 className="flex-1 btn-premium btn-premium-secondary"
                 onClick={() => setDeleteCandidate(null)}
-              >
-                Cancel
-              </button>
-              <button
+            >
+              Cancel
+            </button>
+            <button
                 className="flex-1 btn-premium bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30"
                 onClick={confirmDelete}
                 disabled={Boolean(deletingId)}
-              >
+            >
                 {deletingId ? 'Deleting...' : 'Delete'}
-              </button>
+            </button>
             </div>
           </div>
         </div>

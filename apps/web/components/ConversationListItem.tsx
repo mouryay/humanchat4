@@ -150,14 +150,14 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
           </div>
           <div className={styles.metaRow}>
             <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
-            <div className={styles.badges}>
-              {statusVariant && statusClass && (
-                <span className={clsx(styles.status, statusClass)}>
-                  {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
-                </span>
-              )}
-              {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
-            </div>
+          <div className={styles.badges}>
+            {statusVariant && statusClass && (
+              <span className={clsx(styles.status, statusClass)}>
+                {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
+              </span>
+            )}
+            {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
+          </div>
           </div>
           <div className={styles.preview}>{meta?.lastMessage ?? 'No messages yet'}</div>
         </div>

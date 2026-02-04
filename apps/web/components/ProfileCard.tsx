@@ -176,7 +176,7 @@ export default function ProfileCard({
 
         {/* Status Badge */}
         <div className="mb-4">
-          <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
+        <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
         </div>
 
         {/* Actions */}

@@ -106,8 +106,8 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
     <div
       ref={menuRef}
       className="relative user-settings-menu-container"
-      onMouseEnter={openWithHover}
-      onMouseLeave={closeWithDelay}
+      onMouseEnter={!isMobile ? openWithHover : undefined}
+      onMouseLeave={!isMobile ? closeWithDelay : undefined}
       onFocusCapture={() => {
         clearHoverTimeout();
         setOpen(true);
@@ -125,12 +125,19 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
     >
       <button
         type="button"
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
           clearHoverTimeout();
           setOpen((prev) => !prev);
         }}
+        onTouchStart={(e) => {
+          // Prevent mouse events from firing on touch devices
+          e.stopPropagation();
+        }}
         className={buttonClassName}
         aria-label={statusLabel}
+        style={{ touchAction: 'manipulation' }}
       >
         <span className="sr-only">{statusLabel}</span>
         <span aria-hidden>{initials}</span>
@@ -152,6 +159,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         )}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
       >
         <div className="mb-3 rounded-xl bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.35em] text-white/70">
           Account status
