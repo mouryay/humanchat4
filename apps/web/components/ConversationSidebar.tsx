@@ -6,6 +6,7 @@ import ConversationListItem from './ConversationListItem';
 import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
 import { deleteConversationCascade, type ChatRequest } from '../../../src/lib/db';
+import styles from './ConversationSidebar.module.css';
 
 interface ConversationSidebarProps {
   activeConversationId?: string;
@@ -115,6 +116,7 @@ export default function ConversationSidebar({
 
   return (
     <aside className={clsx(
+      styles.sidebar,
       "flex flex-col h-full bg-background-secondary transition-all duration-base",
       collapsed ? "w-24" : "w-[300px]"
     )}>
