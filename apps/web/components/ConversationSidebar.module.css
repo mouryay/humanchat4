@@ -693,9 +693,14 @@
     padding: 0;
   }
 
-  .listItem,
-  .samItem {
+  .listItem {
     margin: 0 8px 2px 8px !important;
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+  
+  .samItem {
+    margin: 8px 8px 2px 8px !important;
     padding: 10px 12px;
     border-radius: 14px;
   }
