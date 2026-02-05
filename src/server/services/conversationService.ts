@@ -179,6 +179,49 @@ export const hasSamRespondedToUser = async (userId: string): Promise<boolean> =>
   return result.rows[0]?.exists ?? false;
 };
 
+export interface SamActivityInfo {
+  hasHeardIntro: boolean;
+  lastActivityAt: Date | null;
+  hoursIdle: number | null;
+  isReturningAfterLongIdle: boolean;
+}
+
+export const getSamActivityForUser = async (userId: string): Promise<SamActivityInfo> => {
+  ensureUserIdIsUuid(userId, 'User id');
+
+  const result = await query<{ last_activity: string | null; message_count: number }>(
+    `SELECT 
+        MAX(m.created_at) AS last_activity,
+        COUNT(*)::int AS message_count
+     FROM messages m
+     JOIN conversations c ON m.conversation_id = c.id
+     WHERE c.type = 'sam'
+       AND $1 = ANY(c.participants)
+       AND m.message_type = 'sam_response'`,
+    [userId]
+  );
+
+  const row = result.rows[0];
+  const hasHeardIntro = (row?.message_count ?? 0) > 0;
+  const lastActivityAt = row?.last_activity ? new Date(row.last_activity) : null;
+  
+  let hoursIdle: number | null = null;
+  let isReturningAfterLongIdle = false;
+  
+  if (lastActivityAt) {
+    const now = new Date();
+    hoursIdle = Math.floor((now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60));
+    isReturningAfterLongIdle = hoursIdle >= 12;
+  }
+
+  return {
+    hasHeardIntro,
+    lastActivityAt,
+    hoursIdle,
+    isReturningAfterLongIdle
+  };
+};
+
 const findHumanConversationBetween = async (userA: string, userB: string): Promise<Conversation | null> => {
   const result = await query<Conversation>(
     `SELECT *

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { addConversationMessage, ensureSamConversation, hasSamRespondedToUser } from './conversationService.js';
+import { addConversationMessage, ensureSamConversation, getSamActivityForUser } from './conversationService.js';
 import { sendToSam } from './samAPI.js';
 import { SamResponse, SamChatResult } from '../types/index.js';
 import { searchUsers } from './userService.js';
@@ -43,7 +43,7 @@ export type SamPayload = z.infer<typeof SamPayloadSchema>;
 const REQUEST_REGEX = /(?:talk|speak|chat|connect|book)\s+(?:to|with)\s+([A-Za-z][A-Za-z\s.'-]{2,})/i;
 const SAM_CONCIERGE_ID = 'sam-concierge';
 const SAM_INTRO_MESSAGE =
-  "I'm Sam, an AI assistant. HumanChat connects you with real humans for live conversations. What are you looking for?";
+  "Hello. I am Sam, the AI receptionist at HumanChat. I can chat with you about anything, or help you connect with real humans for live conversations. We are in early testing, so our network is small but growing. What brings you here today?";
 
 const normalizeSamActions = (
   actions: unknown
@@ -197,7 +197,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
 
   await persistMessage(userId, parsed.message, 'user_text');
 
-  const userHasHeardIntro = await hasSamRespondedToUser(userId);
+  const samActivity = await getSamActivityForUser(userId);
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
   
@@ -209,11 +209,15 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
     conversationId: activeConversationId,
     userId,
     historyCount: parsed.conversationHistory.length,
-    hasContext: Boolean(parsed.userContext)
+    hasContext: Boolean(parsed.userContext),
+    isFirstTime: !samActivity.hasHeardIntro,
+    isReturningAfterIdle: samActivity.isReturningAfterLongIdle,
+    hoursIdle: samActivity.hoursIdle
   });
 
   let response: SamResponse;
-  if (!userHasHeardIntro) {
+  if (!samActivity.hasHeardIntro) {
+    // First-time user - give a clear intro
     response = {
       text: SAM_INTRO_MESSAGE,
       actions: [
@@ -224,12 +228,22 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
       ]
     };
   } else {
+    // Returning user - pass activity context to Sam
+    const enrichedContext = {
+      ...parsed.userContext,
+      sessionContext: {
+        isReturningAfterLongIdle: samActivity.isReturningAfterLongIdle,
+        hoursIdle: samActivity.hoursIdle,
+        lastActivityAt: samActivity.lastActivityAt?.toISOString() ?? null
+      }
+    };
+    
     response =
       intercepted ??
       (await sendToSam({
         userMessage: parsed.message,
         conversationHistory: parsed.conversationHistory,
-        userContext: parsed.userContext
+        userContext: enrichedContext
       }));
   }
 
