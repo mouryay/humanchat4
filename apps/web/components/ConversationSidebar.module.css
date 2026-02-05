@@ -643,9 +643,9 @@
 .conciergeCard {
   border-radius: 28px;
   padding: 12px 0 16px;
-  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.25), rgba(2, 6, 23, 0.9));
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  box-shadow: 0 45px 90px rgba(2, 6, 23, 0.65);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .conciergeList {
@@ -695,8 +695,7 @@
 
   .listItem,
   .samItem {
-    margin: 0 !important;
-    margin-bottom: 2px !important;
+    margin: 0 8px 2px 8px !important;
     padding: 10px 12px;
     border-radius: 14px;
   }
@@ -789,10 +788,9 @@
     border-radius: 0;
   }
 
-  /* Remove extra spacing from list items */
+  /* Add consistent spacing to list items */
   .sidebar li {
-    margin: 0 !important;
-    margin-bottom: 2px !important;
+    margin: 0 8px 2px 8px !important;
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
