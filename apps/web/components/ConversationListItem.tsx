@@ -34,17 +34,24 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
   const unreadCount = conversation.unreadCount ?? 0;
   const touchStart = useRef<number | null>(null);
   const touchDelta = useRef(0);
+  const touchHandled = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = () => {
+  const handleClick = (event: React.MouseEvent<HTMLLIElement>) => {
+    // If touch already handled the selection, skip click
+    if (touchHandled.current) {
+      touchHandled.current = false;
+      event.preventDefault();
+      return;
+    }
     onSelect(conversation.conversationId);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLLIElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      handleClick();
+      onSelect(conversation.conversationId);
     }
   };
 
@@ -52,6 +59,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     if (disableGestures) return;
     touchStart.current = event.touches[0].clientX;
     touchDelta.current = 0;
+    touchHandled.current = false;
   };
 
   const handleTouchMove = (event: React.TouchEvent<HTMLLIElement>) => {
@@ -68,9 +76,11 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     
     // Check if this was a swipe gesture (more than 60px horizontal movement)
     if (touchDelta.current < -60 && onArchive) {
+      touchHandled.current = true;
       onArchive(conversation.conversationId);
-    } else if (Math.abs(touchDelta.current) < 10) {
+    } else if (Math.abs(touchDelta.current) < 15) {
       // This was a tap (minimal movement) - trigger selection immediately
+      touchHandled.current = true;
       event.preventDefault();
       onSelect(conversation.conversationId);
     }
@@ -93,10 +103,6 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     event.stopPropagation();
     event.preventDefault();
     setMenuOpen(!menuOpen);
-  };
-  
-  const handleClickWithClose = () => {
-    handleClick();
   };
 
   // Close menu when clicking outside
@@ -127,12 +133,12 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
       className={clsx(styles.listItem, isActive && styles.active, isSam && styles.samItem)}
       role="button"
       tabIndex={0}
-      onClick={handleClickWithClose}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', touchAction: 'pan-y' }}
     >
       <div className={clsx(styles.avatar, isSam && styles.avatarSam)}>
         <img src={avatarSrc} alt={meta?.displayName ?? 'Conversation'} loading="lazy" decoding="async" />

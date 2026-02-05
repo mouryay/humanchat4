@@ -205,7 +205,7 @@ const ChatShell = () => {
   );
 
   return (
-    <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] overflow-hidden' : 'h-screen overflow-hidden')}>
+    <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden')}>
       {isTablet && (
         <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
           <button
@@ -236,7 +236,7 @@ const ChatShell = () => {
         )}
 
         {isMobile ? (
-          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden">
+          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden max-h-full">
             <ConversationView
               key={`mobile-${activeConversationId ?? samConversationId}`}
               activeConversationId={activeConversationId ?? samConversationId}
@@ -253,19 +253,16 @@ const ChatShell = () => {
               aria-hidden={mobileDrawer !== 'conversations'}
             >
               {/* Backdrop - closes drawer when tapped */}
-              <div
-                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200 z-40', {
+              <button
+                type="button"
+                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200 z-40 border-none', {
                   'opacity-0 pointer-events-none': mobileDrawer !== 'conversations',
                   'opacity-100 pointer-events-auto': mobileDrawer === 'conversations'
                 })}
                 onClick={handleCloseDrawers}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  handleCloseDrawers();
-                }}
-                role="button"
-                tabIndex={-1}
+                onTouchStart={(e) => e.stopPropagation()}
                 aria-label="Close drawer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               />
               <div
                 className={clsx(
@@ -276,7 +273,7 @@ const ChatShell = () => {
                   }
                 )}
                 onClick={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               >
                 <div className="flex h-full flex-col">
                   <div className="flex-1 overflow-y-auto">
