@@ -255,7 +255,7 @@ const ChatShell = () => {
               {/* Backdrop - closes drawer when tapped */}
               <button
                 type="button"
-                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200 z-40 border-none', {
+                className={clsx('absolute inset-0 bg-black/80 transition-opacity duration-200 z-40 border-none', {
                   'opacity-0 pointer-events-none': mobileDrawer !== 'conversations',
                   'opacity-100 pointer-events-auto': mobileDrawer === 'conversations'
                 })}

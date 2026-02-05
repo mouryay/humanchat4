@@ -682,48 +682,52 @@
     min-height: calc(100vh - 72px);
     margin: 0 !important;
     padding: 0 !important;
-    padding-top: 0 !important;
-    padding-right: 0 !important;
   }
 
-  /* Reduce header padding on mobile */
+  /* Remove header padding on mobile */
   .sidebar > div:first-child {
-    padding: 12px 16px !important;
+    padding: 0 !important;
   }
 
   .header {
-    padding: 12px 16px;
+    padding: 0;
   }
 
   .listItem,
   .samItem {
-    margin: 0 0 2px 0 !important;
-    padding: 8px 12px;
-    border-radius: 12px;
+    margin: 0 !important;
+    margin-bottom: 2px !important;
+    padding: 10px 12px;
+    border-radius: 0;
   }
 
-  /* Reduce section padding on mobile */
+  /* Remove section padding on mobile */
   .sidebar section {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
+    padding: 0 !important;
   }
   
-  /* Remove all horizontal padding from sidebar sections and lists on mobile */
+  /* Remove all padding from sidebar elements on mobile */
   .sidebar section,
   .sidebar ul,
   .sidebar li,
+  .sidebar > div,
+  .sidebar > div > div,
   .sidebar > div > div > section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  /* Override Tailwind px-* classes on mobile */
+  .sidebar [class*="px-"] {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
   
-  /* Override Tailwind px-* classes on mobile */
-  .sidebar [class*="px-4"],
-  .sidebar [class*="px-6"] {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+  .sidebar [class*="mx-"] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .sectionMeta {
@@ -731,12 +735,14 @@
   }
 
   .requestList {
-    padding: 0 8px 8px;
+    padding: 0 !important;
   }
 
   .requestItem {
     flex-direction: column;
     padding: 10px 12px;
+    border-radius: 0;
+    margin: 0 !important;
   }
 
   .sectionTitle {
@@ -744,7 +750,18 @@
   }
 
   .conciergeSection {
-    margin: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .conciergeCard {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .conciergeList {
+    padding: 0 !important;
   }
 
   .conciergeSection .sectionMeta {
@@ -752,36 +769,41 @@
   }
 
   .humansSection {
-    padding-bottom: 8px;
+    padding: 0 !important;
   }
 
   .requestsSection {
-    margin-top: 12px;
-    padding-top: 8px;
+    margin: 0 !important;
+    padding: 0 !important;
     border-top: none !important;
   }
 
-  /* Remove all borders on mobile */
   .archivedSection {
     border-top: none !important;
-    padding: 8px 12px !important;
+    padding: 0 !important;
   }
 
   .requestNotice {
-    margin: 0 8px 8px !important;
+    margin: 0 !important;
     padding: 10px 12px !important;
+    border-radius: 0;
   }
 
   /* Remove extra spacing from list items */
   .sidebar li {
+    margin: 0 !important;
     margin-bottom: 2px !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 
-  /* Reduce spacing in request sections */
+  /* Remove spacing in request sections */
   .sidebar > div:last-child {
-    padding: 0 8px 8px !important;
+    padding: 0 !important;
+  }
+  
+  .scroller {
+    padding: 0 !important;
   }
 }
 
