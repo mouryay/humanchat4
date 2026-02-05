@@ -161,48 +161,13 @@ const generationConfig = {
   responseMimeType: 'application/json'
 } as const;
 
-const MAX_SAM_SENTENCES = 6; // Increased to allow more conversational responses
-const MAX_SAM_WORDS = 150; // Increased to allow more detailed information
-const MAX_SAM_CHARACTERS = 800; // Increased to allow longer responses
-
+// No word/character limits - let Sam respond with full responses
 export const enforceConciseText = (text: string): string => {
   if (!text) {
     return '';
   }
-
-  const normalized = text.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return '';
-  }
-
-  const sentenceChunks = normalized.split(/(?<=[.!?])\s+/);
-  const selectedSentences: string[] = [];
-  for (const chunk of sentenceChunks) {
-    if (!chunk) {
-      continue;
-    }
-    selectedSentences.push(chunk.trim());
-    if (selectedSentences.length === MAX_SAM_SENTENCES) {
-      break;
-    }
-  }
-
-  let condensed = selectedSentences.length > 0 ? selectedSentences.join(' ') : normalized;
-
-  const words = condensed.split(/\s+/).filter(Boolean);
-  if (words.length > MAX_SAM_WORDS) {
-    condensed = `${words.slice(0, MAX_SAM_WORDS).join(' ')}...`;
-  }
-
-  if (condensed.length > MAX_SAM_CHARACTERS) {
-    condensed = condensed.slice(0, MAX_SAM_CHARACTERS).trimEnd();
-    if (!condensed.endsWith('...')) {
-      condensed = condensed.replace(/[.,!?]$/, '').trimEnd();
-      condensed = `${condensed}...`;
-    }
-  }
-
-  return condensed;
+  // Just normalize whitespace, no truncation
+  return text.replace(/\s+/g, ' ').trim();
 };
 
 const buildFallbackResponse = (text: string): SamResponse => ({
