@@ -19,7 +19,7 @@ export default function HeroExperience() {
         </div>
 
         <p className="mt-3 sm:mt-4 max-w-2xl text-sm text-white/70 lg:mt-6 lg:text-lg">
-          AI can do a lot of things, but can it ever be truly human? We don't think so, and that's why we are working to bring all the humans on Earth together to talk to each other instead of just AI bots.
+          AI can do a lot of things, but can it ever be truly human? Of course not! And that's why we are working to bring all the humans on Earth together to talk to each other instead of just AI bots.
         </p>
       </div>
 

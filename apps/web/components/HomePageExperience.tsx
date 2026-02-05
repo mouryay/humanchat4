@@ -32,10 +32,9 @@ const HomePageExperience = () => {
       {showOverlay && (
         <>
           <div className="fixed inset-0 z-[60] bg-[#030519] backdrop-blur-sm" />
-          <div className="fixed inset-0 z-[70] flex flex-col justify-center sm:justify-center p-4 sm:p-8 overflow-hidden touch-none">
+          <div className="fixed inset-0 z-[70] flex flex-col justify-start sm:justify-center p-4 sm:p-8 overflow-y-auto">
             <div 
-              className="w-full max-w-4xl mx-auto rounded-[48px] border border-white/10 bg-[#050718]/95 backdrop-blur-xl overflow-y-auto flex flex-col touch-auto"
-              style={{ maxHeight: 'calc(100dvh - 2rem)' }}
+              className="w-full max-w-4xl mx-auto my-auto rounded-[32px] sm:rounded-[48px] border border-white/10 bg-[#050718]/95 backdrop-blur-xl flex flex-col"
             >
               <HeroExperience />
             </div>
