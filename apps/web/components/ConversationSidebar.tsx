@@ -128,7 +128,7 @@ export default function ConversationSidebar({
           </div>
 
       {/* Premium Scrollable Content */}
-      <div className="flex-1 overflow-y-auto" ref={scrollerRef}>
+      <div className={clsx(styles.scroller, "flex-1 overflow-y-auto")} ref={scrollerRef}>
         {/* Sam Section */}
         <section className="px-4 py-2">
               {samEntry && (
