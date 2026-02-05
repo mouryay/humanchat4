@@ -316,7 +316,6 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
 }
 
 .loading,
@@ -341,7 +340,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow: hidden;
 }
 
 .sessionShell {
@@ -1172,7 +1170,6 @@
   background: #1f1f1f;
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
 }
 
 .chatArea .messageList {
