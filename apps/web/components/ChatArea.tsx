@@ -20,10 +20,17 @@ export default function ChatArea({ conversation, messages, registerScrollContain
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  // Filter out system messages - they'll be shown as notifications instead
+  // Filter out system messages and empty messages
   const orderedMessages = useMemo(() => {
     return [...messages]
-      .filter((message) => message.type !== 'system_notice')
+      .filter((message) => {
+        // Filter out system messages - they'll be shown as notifications instead
+        if (message.type === 'system_notice') return false;
+        // Filter out messages with empty or whitespace-only content
+        const content = message.content?.trim() || '';
+        if (!content) return false;
+        return true;
+      })
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [messages]);
 

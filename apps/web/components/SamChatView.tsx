@@ -209,8 +209,11 @@ export default function SamChatView({
   const orderedMessages = useMemo(() => {
     return [...messages]
       .filter((message) => {
-        // Filter out old-style booking messages (client-side created)
+        // Filter out messages with empty or whitespace-only content
         const content = message.content?.trim() || '';
+        if (!content) return false;
+
+        // Filter out old-style booking messages (client-side created)
         const isOldBookingMessage = message.senderType === 'user_text' && 
           content.startsWith('Book') && 
           content.includes('minute session');

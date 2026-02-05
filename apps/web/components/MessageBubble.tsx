@@ -93,8 +93,9 @@ export default function MessageBubble({
     conversation ?? null
   );
 
-  // Don't render empty bubbles
-  if (!content || content.trim().length === 0) {
+  // Don't render empty bubbles - check for null, undefined, empty string, or whitespace-only
+  const trimmedContent = content?.trim() ?? '';
+  if (!trimmedContent) {
     return null;
   }
 

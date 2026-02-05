@@ -54,7 +54,17 @@ export default function SessionView({ conversation, session, invite, messages, r
     return () => unsubscribe();
   }, []);
 
-  const orderedMessages = useMemo(() => [...messages].sort((a, b) => a.timestamp - b.timestamp), [messages]);
+  const orderedMessages = useMemo(() => 
+    [...messages]
+      .filter((message) => {
+        // Filter out messages with empty or whitespace-only content
+        const content = message.content?.trim() || '';
+        if (!content) return false;
+        return true;
+      })
+      .sort((a, b) => a.timestamp - b.timestamp), 
+    [messages]
+  );
   
   // Extract system messages for notifications
   const systemMessages = useMemo(() => {
