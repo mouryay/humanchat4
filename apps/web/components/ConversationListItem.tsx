@@ -37,7 +37,9 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = () => onSelect(conversation.conversationId);
+  const handleClick = () => {
+    onSelect(conversation.conversationId);
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLLIElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -49,6 +51,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
   const handleTouchStart = (event: React.TouchEvent<HTMLLIElement>) => {
     if (disableGestures) return;
     touchStart.current = event.touches[0].clientX;
+    touchDelta.current = 0;
   };
 
   const handleTouchMove = (event: React.TouchEvent<HTMLLIElement>) => {
@@ -56,11 +59,22 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
     touchDelta.current = event.touches[0].clientX - touchStart.current;
   };
 
-  const handleTouchEnd = () => {
-    if (disableGestures || touchStart.current === null) return;
+  const handleTouchEnd = (event: React.TouchEvent<HTMLLIElement>) => {
+    if (disableGestures || touchStart.current === null) {
+      touchStart.current = null;
+      touchDelta.current = 0;
+      return;
+    }
+    
+    // Check if this was a swipe gesture (more than 60px horizontal movement)
     if (touchDelta.current < -60 && onArchive) {
       onArchive(conversation.conversationId);
+    } else if (Math.abs(touchDelta.current) < 10) {
+      // This was a tap (minimal movement) - trigger selection immediately
+      event.preventDefault();
+      onSelect(conversation.conversationId);
     }
+    
     touchStart.current = null;
     touchDelta.current = 0;
   };

@@ -205,7 +205,7 @@ const ChatShell = () => {
   );
 
   return (
-    <main className={clsx('flex flex-col overflow-hidden bg-midnight text-white', isMobile ? 'h-[100dvh]' : 'h-screen')}>
+    <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] overflow-hidden' : 'h-screen overflow-hidden')}>
       {isTablet && (
         <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
           <button
@@ -236,7 +236,7 @@ const ChatShell = () => {
         )}
 
         {isMobile ? (
-          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight">
+          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden">
             <ConversationView
               key={`mobile-${activeConversationId ?? samConversationId}`}
               activeConversationId={activeConversationId ?? samConversationId}
@@ -252,26 +252,31 @@ const ChatShell = () => {
               })}
               aria-hidden={mobileDrawer !== 'conversations'}
             >
-              <button
-                type="button"
+              {/* Backdrop - closes drawer when tapped */}
+              <div
                 className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200 z-40', {
                   'opacity-0 pointer-events-none': mobileDrawer !== 'conversations',
                   'opacity-100 pointer-events-auto': mobileDrawer === 'conversations'
                 })}
                 onClick={handleCloseDrawers}
-                onTouchStart={handleCloseDrawers}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handleCloseDrawers();
+                }}
+                role="button"
+                tabIndex={-1}
                 aria-label="Close drawer"
               />
               <div
                 className={clsx(
-                  'relative h-full w-full border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out z-50',
+                  'relative h-full w-full max-w-[85%] border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out z-50',
                   {
                     '-translate-x-full': mobileDrawer !== 'conversations',
                     'translate-x-0': mobileDrawer === 'conversations'
                   }
                 )}
                 onClick={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
               >
                 <div className="flex h-full flex-col">
                   <div className="flex-1 overflow-y-auto">
