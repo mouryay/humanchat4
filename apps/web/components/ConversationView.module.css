@@ -487,45 +487,53 @@
 
 @media (max-width: 767px) {
   .messageList {
-    padding: 8px 12px 0 !important;
-    padding-bottom: 0 !important;
-    overflow: hidden !important;
-  }
-  
-  .messageListContainer {
-    padding: 8px 12px 0 !important;
-    margin: 0 !important;
-    padding-bottom: 0 !important;
-    overflow: hidden !important;
+    padding: 8px 12px 12px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     flex: 1;
     min-height: 0;
   }
   
-  .messageListContainer .messageList {
+  .messageListContainer {
     padding: 0 !important;
-    padding-bottom: 0 !important;
+    margin: 0 !important;
     overflow: hidden !important;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .messageListContainer .messageList {
+    padding: 8px 12px 12px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    flex: 1;
+    min-height: 0;
   }
   
   .container {
     padding: 8px !important;
-    padding-bottom: 0 !important;
     overflow: hidden !important;
   }
   
   .mobileContainer {
     padding: 8px !important;
-    padding-bottom: 0 !important;
     overflow: hidden !important;
   }
   
   .chatArea {
     padding: 0 4px;
     overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   
   .header {
     margin: 0 4px 8px 4px;
+    flex-shrink: 0;
   }
 }
 
@@ -1470,18 +1478,13 @@
     overflow: hidden;
   }
 
-  .messageList {
-    padding: 8px 12px 0 !important;
-    padding-bottom: 0 !important;
-    overflow: hidden !important;
-  }
-
   .inputBar,
   .chatInputBar {
     flex-direction: column;
     padding: 12px !important;
     padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
     margin-top: 8px;
+    flex-shrink: 0;
   }
 
   .inputBar button,
@@ -1508,11 +1511,9 @@
   .archivedView {
     gap: 0;
     overflow: hidden;
-  }
-  
-  .messageListContainer {
     flex: 1;
-    overflow: hidden !important;
-    margin-bottom: 0 !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 }
