@@ -45,6 +45,10 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
     if (googleStatus === 'signing-in') return;
     setGoogleStatus('signing-in');
     setError(null);
+    
+    // Detect mobile for different navigation strategy
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    
     try {
       await signInWithPopup(auth, googleProvider);
       // Wait for auth state to sync - poll for identity update
@@ -57,13 +61,22 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
         if (updatedIdentity) {
           // Give React time to update the UI before redirecting
           await new Promise(resolve => setTimeout(resolve, 100));
-          router.push('/?focus=sam');
+          // On mobile, use hard navigation to ensure proper state refresh
+          if (isMobile) {
+            window.location.href = '/?focus=sam';
+          } else {
+            router.push('/?focus=sam');
+          }
           return;
         }
         attempts++;
       }
-      // Fallback: redirect even if identity check timed out
-      router.push('/?focus=sam');
+      // Fallback: hard redirect on mobile, soft on desktop
+      if (isMobile) {
+        window.location.href = '/?focus=sam';
+      } else {
+        router.push('/?focus=sam');
+      }
     } catch (authIssue) {
       setError(authIssue instanceof Error ? authIssue.message : 'Unable to start Google sign in.');
     } finally {
