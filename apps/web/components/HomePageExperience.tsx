@@ -11,16 +11,27 @@ const HomePageExperience = () => {
   const { isMobile } = useBreakpoint();
   const showOverlay = !loading && !identity;
 
-  // Prevent body scrolling when overlay is shown on mobile
+  // Prevent body scrolling on mobile chat pages
   useEffect(() => {
-    if (showOverlay && isMobile) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
+    if (isMobile) {
+      // Set data attribute to enable CSS scroll blocking for chat page
+      document.documentElement.setAttribute('data-chat-page', 'true');
+      
+      // Also handle overlay state
+      if (showOverlay) {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      }
     } else {
+      document.documentElement.removeAttribute('data-chat-page');
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     }
     return () => {
+      document.documentElement.removeAttribute('data-chat-page');
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };

@@ -59,9 +59,11 @@ html[data-contrast='high'] {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Mobile scroll blocking - applied via data attribute on chat pages only */
   @supports (height: 100dvh) {
     @media (max-width: 767px) {
-      html, body {
+      html[data-chat-page="true"], 
+      html[data-chat-page="true"] body {
         height: 100dvh;
         max-height: 100dvh;
         overflow: hidden;
