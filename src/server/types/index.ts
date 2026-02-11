@@ -38,6 +38,12 @@ export interface User {
   medium_url?: string | null;
   youtube_url?: string | null;
   other_social_url?: string | null;
+  interests?: string[] | null;
+  experiences?: string | null;
+  location_born?: string | null;
+  cities_lived_in?: string[] | null;
+  date_of_birth?: string | null;
+  accept_inbound_requests?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -163,6 +169,17 @@ export interface SamProfileSummary {
   status: 'available' | 'away' | 'booked';
 }
 
+export interface ProfileUpdateFields {
+  headline?: string;
+  bio?: string;
+  interests?: string[];
+  experiences?: string;
+  location_born?: string;
+  cities_lived_in?: string[];
+  date_of_birth?: string;
+  accept_inbound_requests?: boolean;
+}
+
 export type SamAction =
   | {
       type: 'show_profiles';
@@ -189,6 +206,10 @@ export type SamAction =
   | {
       type: 'system_notice';
       notice: string;
+    }
+  | {
+      type: 'update_profile';
+      fields: ProfileUpdateFields;
     };
 
 export interface SamResponse {

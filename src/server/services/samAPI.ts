@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
 import { env } from '../config/env.js';
-import { SamAction, SamProfileSummary, SamResponse } from '../types/index.js';
+import { SamAction, SamProfileSummary, SamResponse, ProfileUpdateFields } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export interface ConversationHistoryEntry {
@@ -32,6 +32,17 @@ const SamProfileSchema = z.object({
   status: z.enum(['available', 'away', 'booked'])
 });
 
+const ProfileUpdateFieldsSchema = z.object({
+  headline: z.string().optional(),
+  bio: z.string().optional(),
+  interests: z.array(z.string()).optional(),
+  experiences: z.string().optional(),
+  location_born: z.string().optional(),
+  cities_lived_in: z.array(z.string()).optional(),
+  date_of_birth: z.string().optional(),
+  accept_inbound_requests: z.boolean().optional()
+});
+
 const SamActionSchema: z.ZodType<SamAction> = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('show_profiles'),
@@ -58,6 +69,10 @@ const SamActionSchema: z.ZodType<SamAction> = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('system_notice'),
     notice: z.string()
+  }),
+  z.object({
+    type: z.literal('update_profile'),
+    fields: ProfileUpdateFieldsSchema
   })
 ]);
 
@@ -159,11 +174,38 @@ Behavior:
   * If user_context?.availableProfiles exists and has entries, suggest people from similar categories who are online: "I do have some people available in [category1], [category2] if you're interested." Use the expertise arrays from availableProfiles to determine categories.
   * Always log the request (the system handles this).
 
+First-time user onboarding:
+- When user_context?.isFirstTimeUser is true, this is a brand new user who has never talked to you before.
+- Your very first response (the intro) is sent automatically by the system. After that, the conversation continues via Gemini.
+- IMPORTANT: After the intro, guide the conversation to learn about the user. This is a natural conversation, not a form. Do NOT ask all questions at once.
+- Onboarding flow (spread across multiple messages, one topic at a time):
+  1. First, ask if they'd like to receive inbound conversation requests from other users. Explain: "Other users on HumanChat can request to talk with you. Would you like to be discoverable and receive inbound requests?" Use update_profile action with { accept_inbound_requests: true/false } based on their answer.
+  2. If they say yes to inbound requests (or even if they say no), ask them to tell you a bit about themselves. Start with: "Tell me a bit about yourself - what do you do, what are you interested in?"
+  3. Based on what they share, extract and save profile information using update_profile actions:
+     - headline: A short one-line description (e.g. "Software engineer passionate about AI")
+     - bio: A longer description based on what they share
+     - interests: Array of interest tags (e.g. ["technology", "cooking", "travel"])
+     - experiences: A text summary of their professional/life experiences
+     - location_born: Where they were born (city, state/country)
+     - cities_lived_in: Array of cities they've lived in
+     - date_of_birth: Month and year in "MM/YYYY" format
+  4. Don't ask for ALL of this at once. Have a natural conversation. Ask follow-up questions based on what they share.
+  5. For each piece of information they share, immediately save it with an update_profile action. Don't wait until you have everything.
+  6. After collecting some basic info (at minimum: whether they accept inbound requests, and some interests/bio), let the conversation flow naturally. You can continue to ask more questions or transition to helping them with whatever they need.
+  7. Be warm and conversational during onboarding. Make it feel like getting to know someone, not filling out a form.
+  8. If they seem reluctant to share something, don't push. Move on to the next topic or ask what they'd like to talk about.
+- The update_profile action format: { "type": "update_profile", "fields": { "key": "value", ... } }
+  - Only include fields you want to update. Partial updates are fine.
+  - interests and cities_lived_in are arrays of strings.
+  - date_of_birth should be "MM/YYYY" format.
+  - accept_inbound_requests is a boolean.
+
 Response contract:
 - Always respond with compact JSON: { "text": string, "actions": SamAction[] } and nothing else. Never wrap JSON in markdown fences or add commentary.
 - You can have longer, more detailed responses when users ask questions or want information. Don't limit yourself to two sentences if the topic requires more explanation.
 - The platform sends the official boot greeting during a member's very first session; never repeat it unless user_context?.needs_intro is explicitly true.
-- Allowed action types: show_profiles, offer_call, create_session, follow_up_prompt, system_notice.
+- Allowed action types: show_profiles, offer_call, create_session, follow_up_prompt, system_notice, update_profile.
+- update_profile: { type: "update_profile", fields: { headline?, bio?, interests?, experiences?, location_born?, cities_lived_in?, date_of_birth?, accept_inbound_requests? } }. Use this to save user profile information as they share it during conversation. Only include the fields being updated.
 - Profiles must include: name, headline, expertise (string array), rate_per_minute (number), status (available|away|booked).
 - Offer precise availability windows (e.g. "Today 3-5 PM PST") and include purpose strings.
 - Create sessions only when the member explicitly agrees and you know both host and guest.

@@ -26,7 +26,8 @@ export type SamActionType =
   | 'create_session'
   | 'open_conversation'
   | 'offer_call'
-  | 'follow_up_prompt';
+  | 'follow_up_prompt'
+  | 'update_profile';
 
 export interface ActionBase {
   id?: string;
@@ -130,6 +131,10 @@ export type Action =
   | (ActionBase & {
       type: 'follow_up_prompt';
       prompt: string;
+    })
+  | (ActionBase & {
+      type: 'update_profile';
+      fields: Record<string, unknown>;
     })
   | ActionBase;
 

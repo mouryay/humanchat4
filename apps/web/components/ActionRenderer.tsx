@@ -476,6 +476,9 @@ export default function ActionRenderer({
     }
     case 'follow_up_prompt':
       return null;
+    case 'update_profile':
+      // Profile updates are handled server-side; no UI rendering needed
+      return null;
     default:
       return action.label ? <div className={styles.noticeBanner}>{action.label}</div> : null;
   }

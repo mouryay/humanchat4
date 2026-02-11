@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { addConversationMessage, ensureSamConversation, getSamActivityForUser } from './conversationService.js';
 import { sendToSam } from './samAPI.js';
-import { SamResponse, SamChatResult } from '../types/index.js';
-import { searchUsers } from './userService.js';
+import { SamResponse, SamChatResult, SamAction, ProfileUpdateFields } from '../types/index.js';
+import { searchUsers, updateUserProfile } from './userService.js';
 import { logRequestedPersonInterest, logSkillRequest } from './requestedPeopleService.js';
 import { ApiError } from '../errors/ApiError.js';
 import { logger } from '../utils/logger.js';
@@ -137,6 +137,39 @@ const extractSkillRequest = (message: string): string | null => {
   return null;
 };
 
+const ALLOWED_PROFILE_FIELDS = new Set([
+  'headline', 'bio', 'interests', 'experiences',
+  'location_born', 'cities_lived_in', 'date_of_birth',
+  'accept_inbound_requests'
+]);
+
+const processProfileUpdates = async (userId: string, actions: SamAction[]): Promise<void> => {
+  for (const action of actions) {
+    if (action.type !== 'update_profile') continue;
+    const fields = (action as Extract<SamAction, { type: 'update_profile' }>).fields;
+    if (!fields || typeof fields !== 'object') continue;
+
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      if (!ALLOWED_PROFILE_FIELDS.has(key)) continue;
+      if (value === undefined || value === null) continue;
+      sanitized[key] = value;
+    }
+
+    if (Object.keys(sanitized).length === 0) continue;
+
+    try {
+      await updateUserProfile(userId, sanitized as Partial<ProfileUpdateFields>);
+      logger.info('Sam updated user profile via onboarding', {
+        userId,
+        fields: Object.keys(sanitized)
+      });
+    } catch (error) {
+      logger.warn('Failed to apply Sam profile update', { userId, error, fields: Object.keys(sanitized) });
+    }
+  }
+};
+
 const maybeHandleSkillRequest = async (userId: string, message: string): Promise<void> => {
   const skillsDescription = extractSkillRequest(message);
   if (!skillsDescription) {
@@ -215,9 +248,11 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
     hoursIdle: samActivity.hoursIdle
   });
 
+  const isFirstTimeUser = !samActivity.hasHeardIntro;
+
   let response: SamResponse;
-  if (!samActivity.hasHeardIntro) {
-    // First-time user - give a clear intro
+  if (isFirstTimeUser) {
+    // First-time user - give a clear intro, then Gemini handles onboarding
     response = {
       text: SAM_INTRO_MESSAGE,
       actions: [
@@ -228,15 +263,24 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
       ]
     };
   } else {
-    // Returning user - pass activity context to Sam
+    // Returning or continuing user - pass activity and first-time context to Sam
     const enrichedContext = {
       ...parsed.userContext,
+      isFirstTimeUser: false,
       sessionContext: {
         isReturningAfterLongIdle: samActivity.isReturningAfterLongIdle,
         hoursIdle: samActivity.hoursIdle,
         lastActivityAt: samActivity.lastActivityAt?.toISOString() ?? null
       }
     };
+
+    // Check if the user has completed onboarding (has interests or bio beyond default)
+    // If the intro was heard but this is among the first few messages, treat as onboarding
+    const messageCount = parsed.conversationHistory.length;
+    if (messageCount <= 20) {
+      // Still early in the conversation - Sam might still be onboarding
+      enrichedContext.isFirstTimeUser = true;
+    }
     
     response =
       intercepted ??
@@ -245,6 +289,11 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
         conversationHistory: parsed.conversationHistory,
         userContext: enrichedContext
       }));
+
+    // Process any update_profile actions from Sam's response
+    if (response.actions && Array.isArray(response.actions)) {
+      await processProfileUpdates(userId, response.actions);
+    }
   }
 
   logger.info('Sam receptionist response received', {
