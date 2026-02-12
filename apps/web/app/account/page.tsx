@@ -42,49 +42,58 @@ export default function AccountPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-midnight text-white">
-      <header className="border-b border-white/10 px-6 py-6">
-        <div className="flex flex-wrap items-center gap-4">
+    <main className="min-h-screen bg-midnight text-white bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_50%)]">
+      <header className="px-6 pt-8 pb-2">
+        <div className="flex items-center justify-center">
           <Link
             href="/"
-            className="text-sm font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:text-white"
+            className="group relative text-lg font-bold uppercase tracking-[0.45em] text-white/90 transition hover:text-white"
           >
-            Humanchat.com
+            <span
+              className="relative z-10"
+              style={{
+                textShadow: '0 0 30px rgba(59,130,246,0.4), 0 2px 8px rgba(0,0,0,0.6), 0 0 2px rgba(255,255,255,0.15)'
+              }}
+            >
+              Humanchat.com
+            </span>
+            <span
+              className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              aria-hidden
+              style={{
+                textShadow: '0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(59,130,246,0.2)'
+              }}
+            />
           </Link>
-          <p className="flex-1 text-center text-xs uppercase tracking-[0.45em] text-white/50">Account</p>
-          <span className="text-xs text-white/60">
-            {identity?.name ? `Signed in as ${identity.name}` : 'Not signed in'}
-          </span>
         </div>
-        <h1 className="mt-6 text-3xl font-semibold text-white">Your operating console</h1>
-        <p className="mt-2 text-sm text-white/60">
-          {identity?.name ? 'Update everything from one place.' : 'Sign in to manage your account.'}
-        </p>
       </header>
 
-      <div className="mx-auto w-full max-w-6xl px-4 pb-12">
-        <div className="flex flex-col gap-8 py-10">
-          <div className="space-y-4">
-            {panelSections.map((panel) => {
-              const isOpen = openPanel === panel.id;
-              return (
-                <section key={panel.id} className="rounded-3xl border border-white/12 bg-white/5">
-                  <button
-                    type="button"
-                    onClick={() => setOpenPanel((prev) => (prev === panel.id ? null : panel.id))}
-                    className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
-                  >
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/50">{panel.label}</p>
-                      <p className="text-sm text-white/70">{panel.tagline}</p>
-                    </div>
-                    <span className="text-xl text-white/60">{isOpen ? '−' : '+'}</span>
-                  </button>
-                  {isOpen && <div className="border-t border-white/10 px-5 py-4">{panel.content}</div>}
-                </section>
-              );
-            })}
-          </div>
+      <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-6">
+        <div className="space-y-4">
+          {panelSections.map((panel) => {
+            const isOpen = openPanel === panel.id;
+            return (
+              <section
+                key={panel.id}
+                className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-sm transition-colors hover:border-white/15"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenPanel((prev) => (prev === panel.id ? null : panel.id))}
+                  className="flex w-full items-center justify-between gap-3 px-6 py-5 text-left"
+                >
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45 font-medium">{panel.label}</p>
+                    <p className="mt-0.5 text-sm text-white/65">{panel.tagline}</p>
+                  </div>
+                  <span className="text-lg text-white/40 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(0deg)' }}>
+                    {isOpen ? '−' : '+'}
+                  </span>
+                </button>
+                {isOpen && <div className="border-t border-white/8 px-6 py-5">{panel.content}</div>}
+              </section>
+            );
+          })}
         </div>
       </div>
     </main>

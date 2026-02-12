@@ -60,7 +60,7 @@ export default function AccountPreferencesForm({ profileState }: AccountPreferen
   };
 
   return (
-    <section className="rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Account preferences</p>
         <h2 className="text-2xl font-semibold">Control what members see</h2>

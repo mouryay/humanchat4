@@ -63,7 +63,6 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
 
   const statusLabel = identity ? `Account menu for ${identity.name}` : 'Open account menu';
   const initials = getInitials(identity?.name ?? null, identity?.email ?? null);
-  const statusDot = identity ? 'bg-aqua' : loading ? 'bg-white/40' : 'bg-peach/70';
 
   useEffect(() => {
     return () => {
@@ -144,15 +143,6 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       >
         <span className="sr-only">{statusLabel}</span>
         <span aria-hidden>{initials}</span>
-        {!isHeaderVariant && (
-          <span
-            aria-hidden
-            className={clsx(
-              'pointer-events-none absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-midnight shadow-[0_0_4px_rgba(0,0,0,0.45)]',
-              statusDot
-            )}
-          />
-        )}
       </button>
       <div
         className={clsx(

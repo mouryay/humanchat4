@@ -214,7 +214,7 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
     'rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white focus:border-aqua/60 focus:outline-none appearance-none';
 
   return (
-    <section className="rounded-3xl border border-white/12 bg-[rgba(15,23,42,0.85)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl">
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
       <header className="flex flex-col gap-1">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Extended profile</p>
         <h2 className="text-2xl font-semibold">More about you</h2>
