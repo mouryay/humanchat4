@@ -37,6 +37,12 @@ export interface UserProfile {
   mediumUrl: string | null;
   youtubeUrl: string | null;
   otherSocialUrl: string | null;
+  interests: string[];
+  experiences: string | null;
+  locationBorn: string | null;
+  citiesLivedIn: string[];
+  dateOfBirth: string | null;
+  acceptInboundRequests: boolean;
   updatedAt: string;
 }
 
@@ -70,6 +76,12 @@ interface UserProfileApiResponse {
   medium_url?: string | null;
   youtube_url?: string | null;
   other_social_url?: string | null;
+  interests?: string[] | null;
+  experiences?: string | null;
+  location_born?: string | null;
+  cities_lived_in?: string[] | null;
+  date_of_birth?: string | null;
+  accept_inbound_requests?: boolean;
   updated_at: string;
 }
 
@@ -155,6 +167,12 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   mediumUrl: record.medium_url ?? null,
   youtubeUrl: record.youtube_url ?? null,
   otherSocialUrl: record.other_social_url ?? null,
+  interests: Array.isArray(record.interests) ? record.interests : [],
+  experiences: record.experiences ?? null,
+  locationBorn: record.location_born ?? null,
+  citiesLivedIn: Array.isArray(record.cities_lived_in) ? record.cities_lived_in : [],
+  dateOfBirth: record.date_of_birth ?? null,
+  acceptInboundRequests: Boolean(record.accept_inbound_requests),
   updatedAt: record.updated_at
 });
 
@@ -200,6 +218,12 @@ export interface ProfileUpdateInput {
   mediumUrl?: string | null;
   youtubeUrl?: string | null;
   otherSocialUrl?: string | null;
+  interests?: string[];
+  experiences?: string | null;
+  locationBorn?: string | null;
+  citiesLivedIn?: string[];
+  dateOfBirth?: string | null;
+  acceptInboundRequests?: boolean;
 }
 
 export const fetchUserProfile = async (id: string): Promise<UserProfile> => {
@@ -261,6 +285,24 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   }
   if ('otherSocialUrl' in updates) {
     payload.other_social_url = updates.otherSocialUrl ?? null;
+  }
+  if ('interests' in updates) {
+    payload.interests = updates.interests ?? [];
+  }
+  if ('experiences' in updates) {
+    payload.experiences = updates.experiences ?? null;
+  }
+  if ('locationBorn' in updates) {
+    payload.location_born = updates.locationBorn ?? null;
+  }
+  if ('citiesLivedIn' in updates) {
+    payload.cities_lived_in = updates.citiesLivedIn ?? [];
+  }
+  if ('dateOfBirth' in updates) {
+    payload.date_of_birth = updates.dateOfBirth ?? null;
+  }
+  if ('acceptInboundRequests' in updates) {
+    payload.accept_inbound_requests = Boolean(updates.acceptInboundRequests);
   }
 
   const response = await handleResponse(
