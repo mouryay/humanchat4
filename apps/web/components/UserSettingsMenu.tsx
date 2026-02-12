@@ -146,7 +146,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute top-full right-0 mt-2 w-56 rounded-2xl border border-white/15 bg-black/80 p-3 text-sm text-white shadow-xl backdrop-blur-xl transition duration-150 z-[99999]',
+          'absolute top-full right-0 mt-2 w-56 rounded-2xl border border-white/10 bg-[#0a0e1a]/90 p-3 text-sm text-white shadow-2xl backdrop-blur-2xl transition duration-150 z-[99999]',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
         onClick={(e) => e.stopPropagation()}

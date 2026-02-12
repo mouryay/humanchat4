@@ -214,7 +214,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
     );
   }
 
-  const sectionCardClass = embedded ? 'rounded-3xl border border-white/12 bg-white/5' : 'rounded-3xl border border-white/10 bg-white/5';
+  const sectionCardClass = embedded ? 'rounded-3xl border border-white/10 bg-white/[0.03]' : 'rounded-3xl border border-white/10 bg-white/[0.03]';
 
   const sections: Array<{
     id: PreferenceSection;
@@ -382,7 +382,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
       tagline: 'Align Google Calendar and payouts.',
       content: (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-sm font-semibold">Google Calendar</p>
             <p className="text-xs text-white/60">{settings?.calendarConnected ? 'Connected ✓' : 'Not connected'}</p>
             <div className="mt-4 flex flex-wrap gap-3">
@@ -408,7 +408,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-sm font-semibold">Stripe</p>
             <p className="text-xs text-white/60">{settings?.stripeConnected ? 'Connected ✓' : 'Not connected'}</p>
             <div className="mt-4 flex flex-wrap gap-3">

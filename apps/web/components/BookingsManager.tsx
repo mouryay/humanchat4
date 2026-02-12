@@ -13,8 +13,8 @@ interface BookingsManagerProps {
   embedded?: boolean;
 }
 
-const panelBackground = 'bg-[#1a1f3a] border border-white/10';
-const panelBackgroundEmbedded = 'bg-black/20 border border-white/10';
+const panelBackground = 'bg-white/[0.03] border border-white/10';
+const panelBackgroundEmbedded = 'bg-white/[0.03] border border-white/10';
 
 export function BookingsManager({ embedded = false }: BookingsManagerProps) {
   const router = useRouter();

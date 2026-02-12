@@ -62,7 +62,7 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
         {editSections.map((section) => {
           const isOpen = openSection === section.id;
           return (
-            <section key={section.id} className="rounded-3xl border border-white/12 bg-white/5">
+            <section key={section.id} className="rounded-3xl border border-white/10 bg-white/[0.03]">
               <button
                 type="button"
                 className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"

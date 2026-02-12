@@ -171,7 +171,7 @@ export function AvailabilityManager({ embedded = false }: AvailabilityManagerPro
 
   const containerClass = embedded ? 'space-y-6 text-white' : 'min-h-screen bg-[#0a0e27] text-white p-6';
   const innerClass = embedded ? 'space-y-6' : 'max-w-4xl mx-auto';
-  const cardClass = embedded ? 'rounded-3xl border border-white/10 bg-black/20 p-6' : 'bg-[#1a1f3a] rounded-lg p-6';
+  const cardClass = embedded ? 'rounded-3xl border border-white/10 bg-white/[0.03] p-6' : 'rounded-3xl border border-white/10 bg-white/[0.03] p-6';
 
   return (
     <div className={containerClass}>
@@ -313,7 +313,7 @@ export function AvailabilityManager({ embedded = false }: AvailabilityManagerPro
 
       {showBlockModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/80 p-6">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0e1a]/95 p-6 backdrop-blur-2xl">
             <h3 className="text-xl font-semibold text-white">Block dates</h3>
             <div className="mt-4 space-y-4 text-sm text-white/80">
               <label className="block">
