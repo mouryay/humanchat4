@@ -38,6 +38,7 @@ export interface UserProfile {
   youtubeUrl: string | null;
   otherSocialUrl: string | null;
   interests: string[];
+  skills: string[];
   experiences: string | null;
   locationBorn: string | null;
   citiesLivedIn: string[];
@@ -77,6 +78,7 @@ interface UserProfileApiResponse {
   youtube_url?: string | null;
   other_social_url?: string | null;
   interests?: string[] | null;
+  skills?: string[] | null;
   experiences?: string | null;
   location_born?: string | null;
   cities_lived_in?: string[] | null;
@@ -168,6 +170,7 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   youtubeUrl: record.youtube_url ?? null,
   otherSocialUrl: record.other_social_url ?? null,
   interests: Array.isArray(record.interests) ? record.interests : [],
+  skills: Array.isArray(record.skills) ? record.skills : [],
   experiences: record.experiences ?? null,
   locationBorn: record.location_born ?? null,
   citiesLivedIn: Array.isArray(record.cities_lived_in) ? record.cities_lived_in : [],
@@ -219,6 +222,7 @@ export interface ProfileUpdateInput {
   youtubeUrl?: string | null;
   otherSocialUrl?: string | null;
   interests?: string[];
+  skills?: string[];
   experiences?: string | null;
   locationBorn?: string | null;
   citiesLivedIn?: string[];
@@ -288,6 +292,9 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   }
   if ('interests' in updates) {
     payload.interests = updates.interests ?? [];
+  }
+  if ('skills' in updates) {
+    payload.skills = updates.skills ?? [];
   }
   if ('experiences' in updates) {
     payload.experiences = updates.experiences ?? null;

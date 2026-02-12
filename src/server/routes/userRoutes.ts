@@ -77,6 +77,7 @@ const updateSchema = z.object({
   is_online: z.boolean().optional(),
   has_active_session: z.boolean().optional(),
   interests: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
   experiences: z.string().nullable().optional(),
   location_born: z.string().nullable().optional(),
   cities_lived_in: z.array(z.string()).optional(),

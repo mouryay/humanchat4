@@ -36,6 +36,7 @@ const ProfileUpdateFieldsSchema = z.object({
   headline: z.string().optional(),
   bio: z.string().optional(),
   interests: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
   experiences: z.string().optional(),
   location_born: z.string().optional(),
   cities_lived_in: z.array(z.string()).optional(),
@@ -185,6 +186,7 @@ First-time user onboarding:
      - headline: A short one-line description (e.g. "Software engineer passionate about AI")
      - bio: A longer description based on what they share
      - interests: Array of interest tags (e.g. ["technology", "cooking", "travel"])
+     - skills: Array of skill tags (e.g. ["negotiation", "software development", "sales"])
      - experiences: A text summary of their professional/life experiences
      - location_born: Where they were born (city, state/country)
      - cities_lived_in: Array of cities they've lived in
@@ -196,7 +198,7 @@ First-time user onboarding:
   8. If they seem reluctant to share something, don't push. Move on to the next topic or ask what they'd like to talk about.
 - The update_profile action format: { "type": "update_profile", "fields": { "key": "value", ... } }
   - Only include fields you want to update. Partial updates are fine.
-  - interests and cities_lived_in are arrays of strings.
+  - interests, skills, and cities_lived_in are arrays of strings.
   - date_of_birth should be "MM/YYYY" format.
   - accept_inbound_requests is a boolean.
 
@@ -211,7 +213,7 @@ Response contract:
 - You can have longer, more detailed responses when users ask questions or want information. Don't limit yourself to two sentences if the topic requires more explanation.
 - The platform sends the official boot greeting during a member's very first session; never repeat it unless user_context?.needs_intro is explicitly true.
 - Allowed action types: show_profiles, offer_call, create_session, follow_up_prompt, system_notice, update_profile.
-- update_profile: { type: "update_profile", fields: { headline?, bio?, interests?, experiences?, location_born?, cities_lived_in?, date_of_birth?, accept_inbound_requests? } }. Use this to save user profile information as they share it during conversation. Only include the fields being updated.
+- update_profile: { type: "update_profile", fields: { headline?, bio?, interests?, skills?, experiences?, location_born?, cities_lived_in?, date_of_birth?, accept_inbound_requests? } }. Use this to save user profile information as they share it during conversation. Only include the fields being updated.
 - Profiles must include: name, headline, expertise (string array), rate_per_minute (number), status (available|away|booked).
 - Offer precise availability windows (e.g. "Today 3-5 PM PST") and include purpose strings.
 - Create sessions only when the member explicitly agrees and you know both host and guest.

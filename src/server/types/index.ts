@@ -39,6 +39,7 @@ export interface User {
   youtube_url?: string | null;
   other_social_url?: string | null;
   interests?: string[] | null;
+  skills?: string[] | null;
   experiences?: string | null;
   location_born?: string | null;
   cities_lived_in?: string[] | null;
@@ -173,6 +174,7 @@ export interface ProfileUpdateFields {
   headline?: string;
   bio?: string;
   interests?: string[];
+  skills?: string[];
   experiences?: string;
   location_born?: string;
   cities_lived_in?: string[];

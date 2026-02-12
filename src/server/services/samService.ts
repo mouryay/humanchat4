@@ -138,7 +138,7 @@ const extractSkillRequest = (message: string): string | null => {
 };
 
 const ALLOWED_PROFILE_FIELDS = new Set([
-  'headline', 'bio', 'interests', 'experiences',
+  'headline', 'bio', 'interests', 'skills', 'experiences',
   'location_born', 'cities_lived_in', 'date_of_birth',
   'accept_inbound_requests'
 ]);
