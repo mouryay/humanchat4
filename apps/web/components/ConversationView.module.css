@@ -440,10 +440,80 @@
 }
 
 .callButtonPrimary:disabled,
-.callButtonSecondary:disabled {
+.callButtonSecondary:disabled,
+.callButtonCompact:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Compact icon-only call buttons for mobile header */
+.callButtonsCompact {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.callButtonCompact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(59, 130, 246, 0.25);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.callButtonCompact:hover {
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.callButtonCompact:active {
+  transform: scale(0.95);
+}
+
+/* Mobile call actions row in header */
+.mobileCallActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mobileScheduleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(99, 102, 241, 0.25);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.mobileScheduleButton:hover {
+  background: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.mobileScheduleButton:active {
+  transform: scale(0.95);
 }
 
 .callSurface {

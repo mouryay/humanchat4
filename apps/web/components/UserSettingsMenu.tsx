@@ -101,7 +101,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
 
   const isHeaderVariant = variant === 'header';
   const buttonClassName = isHeaderVariant
-    ? 'relative flex h-10 w-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
+    ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-white/70 transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
     : 'relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-sm font-semibold text-white transition hover:border-white/50';
 
   return (
@@ -142,7 +142,15 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         style={{ touchAction: 'manipulation' }}
       >
         <span className="sr-only">{statusLabel}</span>
-        <span aria-hidden>{initials}</span>
+        {isHeaderVariant ? (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <circle cx="8" cy="3" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="8" cy="13" r="1.5" />
+          </svg>
+        ) : (
+          <span aria-hidden>{initials}</span>
+        )}
       </button>
       <div
         className={clsx(

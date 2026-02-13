@@ -14,11 +14,13 @@ import styles from './ConversationView.module.css';
 interface ChatHeaderCallActionsProps {
   conversationId: string;
   isConversationAccepted: boolean;
+  compact?: boolean;
 }
 
 export default function ChatHeaderCallActions({
   conversationId,
   isConversationAccepted,
+  compact = false,
 }: ChatHeaderCallActionsProps) {
   const router = useRouter();
   const [isStarting, setIsStarting] = useState(false);
@@ -67,25 +69,25 @@ export default function ChatHeaderCallActions({
 
   // Always show buttons, but disable if not accepted
   return (
-    <div className={styles.callButtons}>
+    <div className={compact ? styles.callButtonsCompact : styles.callButtons}>
       <button
         onClick={() => handleStartCall('video')}
         disabled={isStarting || !isConversationAccepted}
-        className={styles.callButtonPrimary}
+        className={compact ? styles.callButtonCompact : styles.callButtonPrimary}
         aria-label="Start video call"
       >
-        <Video size={18} />
-        <span>Video call</span>
+        <Video size={compact ? 16 : 18} />
+        {!compact && <span>Video call</span>}
       </button>
 
       <button
         onClick={() => handleStartCall('audio')}
         disabled={isStarting || !isConversationAccepted}
-        className={styles.callButtonSecondary}
+        className={compact ? styles.callButtonCompact : styles.callButtonSecondary}
         aria-label="Start audio call"
       >
-        <Phone size={18} />
-        <span>Audio call</span>
+        <Phone size={compact ? 16 : 18} />
+        {!compact && <span>Audio call</span>}
       </button>
     </div>
   );

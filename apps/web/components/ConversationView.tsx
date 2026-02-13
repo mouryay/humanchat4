@@ -190,6 +190,25 @@ export default function ConversationView({
               <div className={styles.mobileTitle}>{summary.title}</div>
               <div className={styles.mobileSubtitle}>{summary.subtitle}</div>
             </div>
+            {conversation && conversation.type !== 'sam' && (
+              <div className={styles.mobileCallActions}>
+                <ChatHeaderCallActions
+                  conversationId={conversation.conversationId}
+                  isConversationAccepted={true}
+                  compact
+                />
+                {otherParticipant && (
+                  <button
+                    type="button"
+                    onClick={handleScheduleClick}
+                    className={styles.mobileScheduleButton}
+                    aria-label={`Schedule time with ${otherParticipant.name}`}
+                  >
+                    📅
+                  </button>
+                )}
+              </div>
+            )}
             <div className={styles.mobileHeaderAccount}>
               <UserSettingsMenu variant="header" />
             </div>
