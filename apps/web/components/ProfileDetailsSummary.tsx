@@ -50,16 +50,7 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
   };
 
   return (
-    <section className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
-      <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Public profile</p>
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-2xl font-semibold text-white">How members see you</h2>
-          {renderStatus()}
-        </div>
-        <p className="text-sm text-white/70">These details power Sam recommendations and every ProfileCard.</p>
-      </header>
-
+    <div className="flex flex-col gap-6 text-white">
       {loading && <p className="text-sm text-white/70">Loading profile…</p>}
 
       {!loading && error && (
@@ -130,6 +121,6 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

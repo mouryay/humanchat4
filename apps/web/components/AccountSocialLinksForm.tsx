@@ -159,18 +159,12 @@ export default function AccountSocialLinksForm({ profileState }: AccountSocialLi
     }
   };
 
+  if (!profile) {
+    return <p className="text-sm text-white/70">Sign in to edit your links.</p>;
+  }
+
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
-      <header className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Public reputation</p>
-        <h2 className="text-2xl font-semibold">Link your socials</h2>
-        <p className="text-sm text-white/70">Add trusted destinations that help members verify your expertise before they book.</p>
-      </header>
-
-      {!profile && <p className="mt-6 text-sm text-white/70">Sign in to edit your links.</p>}
-
-      {profile && (
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" onSubmit={handleSubmit}>
           {socialFields.map((field) => (
             <label key={field.key} className="flex flex-col gap-2 text-sm text-white/80">
               <span className="font-semibold">{field.label}</span>
@@ -207,8 +201,6 @@ export default function AccountSocialLinksForm({ profileState }: AccountSocialLi
               {saving ? 'Saving…' : 'Save links'}
             </button>
           </div>
-        </form>
-      )}
-    </section>
+    </form>
   );
 }

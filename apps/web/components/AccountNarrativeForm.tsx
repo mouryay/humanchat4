@@ -53,20 +53,12 @@ export default function AccountNarrativeForm({ profileState }: AccountNarrativeF
     }
   };
 
+  if (!profile) {
+    return <p className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">Sign in to edit your story.</p>;
+  }
+
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
-      <header className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Bio & experience</p>
-        <h2 className="text-2xl font-semibold">Tell Sam how to introduce you</h2>
-        <p className="text-sm text-white/70">
-          Sam reads this to suggest you to other members. Add the highlights you want surfaced when matches are made.
-        </p>
-      </header>
-
-      {!profile && <p className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">Sign in to edit your story.</p>}
-
-      {profile && (
-        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="profile-experience-input">
             Experience headline
             <textarea
@@ -118,8 +110,6 @@ export default function AccountNarrativeForm({ profileState }: AccountNarrativeF
               {saving ? 'Saving…' : 'Save bio'}
             </button>
           </div>
-        </form>
-      )}
-    </section>
+    </form>
   );
 }

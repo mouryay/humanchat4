@@ -244,8 +244,6 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
   const [currentlyDealingWith, setCurrentlyDealingWith] = useState<CurrentlyDealingWith[]>([]);
 
   // Background fields
-  const [locationBorn, setLocationBorn] = useState('');
-  const [citiesLivedIn, setCitiesLivedIn] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [education, setEducation] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -274,8 +272,6 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
     setPlacesKnown(profile.placesKnown ?? []);
     setInterestsHobbies(profile.interestsHobbies ?? []);
     setCurrentlyDealingWith(profile.currentlyDealingWith ?? []);
-    setLocationBorn(profile.locationBorn ?? '');
-    setCitiesLivedIn(profile.citiesLivedIn ?? []);
     setLanguages(profile.languages ?? []);
     setEducation(profile.education ?? '');
     const dob = parseDob(profile.dateOfBirth);
@@ -300,8 +296,6 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
         placesKnown: placesKnown.filter((e) => e.rawText),
         interestsHobbies: interestsHobbies.filter((e) => e.rawText),
         currentlyDealingWith: currentlyDealingWith.filter((e) => e.rawText),
-        locationBorn: locationBorn.trim() || null,
-        citiesLivedIn,
         languages,
         education: education.trim() || null,
         dateOfBirth: formatDob(dobMonth, dobYear),
@@ -412,29 +406,9 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
       id: 'background',
       title: 'Background',
       count: undefined,
-      hint: 'Where you\'re from, languages, and education.',
+      hint: 'Languages, education, and age.',
       content: (
         <div className="space-y-4">
-          <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="profile-location-born">
-            Where born / raised
-            <input
-              id="profile-location-born"
-              type="text"
-              value={locationBorn}
-              onChange={(e) => setLocationBorn(e.target.value)}
-              placeholder="e.g. Austin, TX"
-              className={inputClass}
-            />
-          </label>
-
-          <TagInput
-            id="profile-cities"
-            label="Cities lived in"
-            tags={citiesLivedIn}
-            onChange={setCitiesLivedIn}
-            placeholder="Type a city and press enter"
-          />
-
           <TagInput
             id="profile-languages"
             label="Languages spoken"
@@ -522,74 +496,68 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
     }
   ];
 
+  if (!profile) {
+    return (
+      <p className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+        Sign in to edit your profile.
+      </p>
+    );
+  }
+
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
-      <header className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Detailed profile</p>
-        <h2 className="text-2xl font-semibold">More about you</h2>
-        <p className="text-sm text-white/70">
-          Just say it in your own words. Sam reads between the lines.
-        </p>
-      </header>
+    <form className="space-y-2" onSubmit={handleSubmit}>
+      <p className="text-sm text-white/50 mb-3">
+        Just say it in your own words. Sam reads between the lines.
+      </p>
 
-      {!profile && (
-        <p className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-          Sign in to edit your profile.
-        </p>
-      )}
-
-      {profile && (
-        <form className="mt-6 space-y-2" onSubmit={handleSubmit}>
-          {subSections.map((sub) => {
-            const isOpen = openSub === sub.id;
-            return (
-              <div key={sub.id} className="rounded-2xl border border-white/8 bg-white/[0.02]">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-                  onClick={() => toggleSub(sub.id)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white/80">{sub.title}</p>
-                    <p className="text-xs text-white/40 truncate">{sub.hint}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {sub.count !== undefined && sub.count > 0 && (
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/50">{sub.count}</span>
-                    )}
-                    <span className="text-lg text-white/40">{isOpen ? '−' : '+'}</span>
-                  </div>
-                </button>
-                {isOpen && (
-                  <div className="border-t border-white/8 px-4 py-4">
-                    {sub.content}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {message && (
-            <p
-              className={`text-sm mt-4 ${
-                status === 'success' ? 'text-emerald-300' : status === 'error' ? 'text-rose-300' : 'text-white/70'
-              }`}
-            >
-              {message}
-            </p>
-          )}
-
-          <div className="flex justify-end pt-4">
+      {subSections.map((sub) => {
+        const isOpen = openSub === sub.id;
+        return (
+          <div key={sub.id} className="rounded-2xl border border-white/10">
             <button
-              type="submit"
-              disabled={saving}
-              className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-50"
+              type="button"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+              onClick={() => toggleSub(sub.id)}
             >
-              {saving ? 'Saving...' : 'Save profile'}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white/80">{sub.title}</p>
+                <p className="text-xs text-white/40 truncate">{sub.hint}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {sub.count !== undefined && sub.count > 0 && (
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/50">{sub.count}</span>
+                )}
+                <span className="text-lg text-white/40">{isOpen ? '−' : '+'}</span>
+              </div>
             </button>
+            {isOpen && (
+              <div className="border-t border-white/10 px-4 py-4">
+                {sub.content}
+              </div>
+            )}
           </div>
-        </form>
+        );
+      })}
+
+      {message && (
+        <p
+          className={`text-sm mt-4 ${
+            status === 'success' ? 'text-emerald-300' : status === 'error' ? 'text-rose-300' : 'text-white/70'
+          }`}
+        >
+          {message}
+        </p>
       )}
-    </section>
+
+      <div className="flex justify-end pt-4">
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save profile'}
+        </button>
+      </div>
+    </form>
   );
 }

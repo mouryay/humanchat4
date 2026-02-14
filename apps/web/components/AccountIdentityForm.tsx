@@ -71,18 +71,12 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     }
   };
 
+  if (!profile) {
+    return <p className="text-sm text-white/70">Sign in to edit your name.</p>;
+  }
+
   return (
-    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-white backdrop-blur-sm">
-      <header className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-white/50">Identity</p>
-        <h2 className="text-2xl font-semibold">Name & contact details</h2>
-        <p className="text-sm text-white/70">Update the name that appears on ProfileCards and invoices.</p>
-      </header>
-
-      {!profile && <p className="mt-6 text-sm text-white/70">Sign in to edit your name.</p>}
-
-      {profile && (
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20 overflow-hidden rounded-full border border-white/20">
@@ -164,8 +158,6 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
               {saving ? 'Saving…' : 'Save name'}
             </button>
           </div>
-        </form>
-      )}
-    </section>
+    </form>
   );
 }
