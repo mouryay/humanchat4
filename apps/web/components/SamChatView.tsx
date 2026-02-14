@@ -15,6 +15,10 @@ import { sessionStatusManager } from '../services/sessionStatusManager';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
+const isLegacyProfile = (profile: ProfileSummary | SamShowcaseProfile): profile is ProfileSummary => {
+  return (profile as ProfileSummary).userId !== undefined;
+};
+
 type ShowcaseEntry = SamShowcaseProfile & { userId?: string };
 
 interface DirectoryUserRecord {
@@ -107,6 +111,7 @@ interface SamChatViewProps {
   onConnectNow?: (profile: ProfileSummary) => void;
   onBookTime?: (profile: ProfileSummary) => void;
   connectingProfileId?: string | null;
+  onSidebarProfilesChange?: (profiles: ProfileSummary[]) => void;
 }
 
 const isSamMessage = (message: Message) => message.type === 'sam_response' || message.senderId === 'sam';
@@ -171,7 +176,8 @@ export default function SamChatView({
   onOpenConversation,
   onConnectNow,
   onBookTime,
-  connectingProfileId
+  connectingProfileId,
+  onSidebarProfilesChange
 }: SamChatViewProps) {
   const [draft, setDraft] = useState('');
   const [isThinking, setThinking] = useState(false);
@@ -264,6 +270,67 @@ export default function SamChatView({
     }
     return names;
   }, [conversation.participantLabels, localUserId]);
+
+  // Collect all ProfileSummary objects from show_profiles actions for the sidebar
+  const sidebarProfiles = useMemo(() => {
+    const seen = new Map<string, ProfileSummary>();
+    const selfNames = new Set(
+      Array.from(selfNameTokens).map((t) => t.trim().toLowerCase())
+    );
+    const onlineById = new Map(onlineProfiles.map((p) => [p.userId, p]));
+    const onlineByName = new Map(
+      onlineProfiles
+        .filter((p) => p.name)
+        .map((p) => [p.name!.trim().toLowerCase(), p])
+    );
+
+    orderedMessages.forEach((message) => {
+      (message.actions ?? []).forEach((action) => {
+        if ((action.type || action.actionType) !== 'show_profiles') return;
+        const profiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
+        profiles.forEach((profile) => {
+          if (isLegacyProfile(profile)) {
+            const p = profile as ProfileSummary;
+            if (localUserId && p.userId === localUserId) return;
+            if (p.name && selfNames.has(p.name.trim().toLowerCase())) return;
+            // Hydrate with live data if available
+            const live = (p.userId && onlineById.get(p.userId)) ||
+              (p.name && onlineByName.get(p.name.trim().toLowerCase()));
+            const hydrated = live ? {
+              ...p,
+              isOnline: live.isOnline ?? p.isOnline,
+              hasActiveSession: live.hasActiveSession ?? p.hasActiveSession,
+              presenceState: live.presenceState ?? p.presenceState,
+              lastSeenAt: live.lastSeenAt ?? p.lastSeenAt
+            } : p;
+            if (!seen.has(hydrated.userId)) {
+              seen.set(hydrated.userId, hydrated);
+            }
+          } else {
+            // SamShowcaseProfile - try to resolve from online directory
+            const showcase = profile as SamShowcaseProfile;
+            if (showcase.name && selfNames.has(showcase.name.trim().toLowerCase())) return;
+            const match = onlineByName.get(showcase.name?.trim().toLowerCase() ?? '');
+            if (match && !seen.has(match.userId)) {
+              seen.set(match.userId, match);
+            }
+          }
+        });
+      });
+    });
+
+    return Array.from(seen.values());
+  }, [orderedMessages, onlineProfiles, localUserId, selfNameTokens]);
+
+  // Notify parent of sidebar profiles
+  const prevSidebarRef = useRef<string>('');
+  useEffect(() => {
+    const key = sidebarProfiles.map((p) => p.userId).join(',');
+    if (key !== prevSidebarRef.current) {
+      prevSidebarRef.current = key;
+      onSidebarProfilesChange?.(sidebarProfiles);
+    }
+  }, [sidebarProfiles, onSidebarProfilesChange]);
 
   const loadOnlineProfiles = useCallback(async (): Promise<ProfileSummary[]> => {
     try {

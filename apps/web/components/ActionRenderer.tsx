@@ -286,109 +286,23 @@ export default function ActionRenderer({
 
   switch (action.type || action.actionType) {
     case 'show_profiles': {
+      // Profile cards now render in the right sidebar panel instead of inline
       const profiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
-      const visibleProfiles = profiles.filter((profile) => {
+      const count = profiles.filter((profile) => {
         if (isLegacyProfile(profile)) {
-          if (currentUserId && profile.userId === currentUserId) {
-            return false;
-          }
-          if (matchesSelfName(profile.name)) {
-            return false;
-          }
+          if (currentUserId && profile.userId === currentUserId) return false;
+          if (matchesSelfName(profile.name)) return false;
           return true;
         }
-
-        if (matchesSelfName(profile.name)) {
-          return false;
-        }
-
+        if (matchesSelfName(profile.name)) return false;
         return true;
-      });
-      const legacyProfiles = visibleProfiles.filter(isLegacyProfile) as ProfileSummary[];
-      const showcaseProfiles = visibleProfiles.filter((profile) => !isLegacyProfile(profile)) as SamShowcaseProfile[];
-      const enforceOnlineOnly = (directoryProfiles?.length ?? 0) > 0;
-      const disableLiveStatus = enforceOnlineOnly;
-      const hydratedLegacyProfiles = legacyProfiles
-        .map((profile) => {
-          const normalizedName = profile.name?.trim().toLowerCase() ?? '';
-          const authoritative = (profile.userId && directoryById.get(profile.userId)) || profileDirectory.get(normalizedName);
-          if (!authoritative) {
-            return profile;
-          }
-          return {
-            ...profile,
-            isOnline: authoritative.isOnline ?? profile.isOnline,
-            hasActiveSession: authoritative.hasActiveSession ?? profile.hasActiveSession,
-            presenceState: authoritative.presenceState ?? profile.presenceState,
-            lastSeenAt: authoritative.lastSeenAt ?? profile.lastSeenAt
-          };
-        })
-        .filter((profile) => {
-          if (!enforceOnlineOnly) {
-            return true;
-          }
-          if (profile.userId && directoryById.has(profile.userId)) {
-            return true;
-          }
-          if (!profile.userId && profile.name) {
-            return profileDirectory.has(profile.name.trim().toLowerCase());
-          }
-          return false;
-        })
-        .filter((profile) => {
-          if (!enforceOnlineOnly) {
-            return true;
-          }
-          return Boolean(profile.isOnline && !profile.hasActiveSession);
-        });
-      const filteredShowcaseProfiles = showcaseProfiles.filter((profile) => {
-        if (!enforceOnlineOnly) {
-          return true;
-        }
-        return profile.status === 'available';
-      });
-
-      if (hydratedLegacyProfiles.length > 0) {
-        return (
-          <div className={styles.profileScroller}>
-            {hydratedLegacyProfiles.map((profile) => (
-              <ProfileCard
-                key={profile.userId}
-                profile={profile}
-                onConnectNow={onConnectNow}
-                onBookTime={onBookTime}
-                isConnecting={connectingProfileId === profile.userId}
-                disableLiveStatus={disableLiveStatus}
-                prefetchedStatus={disableLiveStatus ? toPrefetchedStatus(profile) : undefined}
-              />
-            ))}
-          </div>
-        );
-      }
-
-      if (filteredShowcaseProfiles.length > 0) {
-        return (
-          <div className={styles.profileScroller}>
-            {filteredShowcaseProfiles.map((profile, index) => (
-              <ShowcaseProfileTile
-                key={`${profile.name ?? 'profile'}-${index}`}
-                profile={profile}
-                directoryByName={profileDirectory}
-                disableLiveStatus={disableLiveStatus}
-                onConnectNow={onConnectNow}
-                onBookTime={onBookTime}
-                connectingProfileId={connectingProfileId}
-              />
-            ))}
-          </div>
-        );
-      }
-
-      if (enforceOnlineOnly) {
-        return <div className={styles.noticeBanner}>No members are live right now. Try again in a few minutes.</div>;
-      }
-
-      return null;
+      }).length;
+      if (count === 0) return null;
+      return (
+        <div className={styles.noticeBanner}>
+          👥 {count === 1 ? '1 person' : `${count} people`} recommended — check the People panel.
+        </div>
+      );
     }
     case 'offer_connection':
       return <OfferConnection action={action as Extract<Action, { type: 'offer_connection' }>} onOpenConversation={onOpenConversation} />;

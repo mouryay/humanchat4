@@ -22,6 +22,7 @@ interface ConversationViewProps {
   isMobile?: boolean;
   onBack?: () => void;
   onShowProfilePanel?: () => void;
+  onSidebarProfilesChange?: (profiles: ProfileSummary[]) => void;
 }
 
 type ScrollBinding = {
@@ -34,7 +35,8 @@ export default function ConversationView({
   onSelectConversation,
   isMobile,
   onBack,
-  onShowProfilePanel
+  onShowProfilePanel,
+  onSidebarProfilesChange
 }: ConversationViewProps) {
   const { conversation, session, invite, messages, loading, error } = useConversationDetail(activeConversationId);
   const scrollPositions = useRef<Map<string, number>>(new Map());
@@ -278,6 +280,7 @@ export default function ConversationView({
                   }
                   setBookingProfile(profile);
                 }}
+                onSidebarProfilesChange={onSidebarProfilesChange}
               />
             ) : (
               <SessionView

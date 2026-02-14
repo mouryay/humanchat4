@@ -6,19 +6,25 @@ import clsx from 'clsx';
 import ConversationSidebar from './ConversationSidebar';
 import ConversationView from './ConversationView';
 import ProfilePanel from './ProfilePanel';
+import ProfileSidebar from './ProfileSidebar';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useConversationData } from '../hooks/useConversationData';
 import { useChatRequests } from '../hooks/useChatRequests';
 import { fetchUserProfile, type UserProfile } from '../services/profileApi';
 import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../constants/events';
 import { PENDING_INVITE_CONVERSATION_KEY } from '../constants/storageKeys';
+import type { ProfileSummary } from '../../../src/lib/db';
+import { connectNow as connectNowWithProfile } from '../services/conversationClient';
+import { sessionStatusManager } from '../services/sessionStatusManager';
+import BookingModal from './BookingModal';
+import RequestForm from './RequestForm';
 
 const ChatShell = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [shouldOpenSam, setShouldOpenSam] = useState(false);
-  const [mobileDrawer, setMobileDrawer] = useState<'none' | 'conversations' | 'profile'>('none');
+  const [mobileDrawer, setMobileDrawer] = useState<'none' | 'conversations' | 'profile' | 'profiles'>('none');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const { isMobile, isTablet } = useBreakpoint();
   const { conversations } = useConversationData();
@@ -33,6 +39,10 @@ const ChatShell = () => {
   const [requesterProfiles, setRequesterProfiles] = useState<
     Record<string, Pick<UserProfile, 'name' | 'headline' | 'avatarUrl'>>
   >({});
+  const [sidebarProfiles, setSidebarProfiles] = useState<ProfileSummary[]>([]);
+  const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null);
+  const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
+  const [requestProfile, setRequestProfile] = useState<ProfileSummary | null>(null);
   const pendingConversationParam = searchParams.get('conversationId');
 
   const samConversationId = useMemo(() => {
@@ -190,6 +200,32 @@ const ChatShell = () => {
     };
   }, [requests]);
 
+  const handleSidebarConnectNow = useCallback(
+    async (profile: ProfileSummary) => {
+      if (!profile.userId) return;
+      const userId = sessionStatusManager.getCurrentUserId();
+      if (!userId) return;
+      setConnectingProfileId(profile.userId);
+      try {
+        const createdConversationId = await connectNowWithProfile(profile, userId);
+        focusConversation(createdConversationId);
+      } catch {
+        // Error handled silently
+      } finally {
+        setConnectingProfileId((prev) => (prev === profile.userId ? null : prev));
+      }
+    },
+    [focusConversation]
+  );
+
+  const handleSidebarBookTime = useCallback((profile: ProfileSummary) => {
+    if (profile.managed && profile.confidentialRate) {
+      setRequestProfile(profile);
+    } else {
+      setBookingProfile(profile);
+    }
+  }, []);
+
   const handleRequestAction = useCallback(
     async (requestId: string, status: 'pending' | 'approved' | 'declined') => {
       const result = await updateStatus(requestId, status);
@@ -244,6 +280,13 @@ const ChatShell = () => {
               isMobile
               onBack={handleShowConversationDrawer}
               onShowProfilePanel={handleShowProfileDrawer}
+              onSidebarProfilesChange={(profiles) => {
+                setSidebarProfiles(profiles);
+                // Auto-open profiles drawer when new profiles arrive on mobile
+                if (profiles.length > 0 && mobileDrawer === 'none') {
+                  setMobileDrawer('profiles');
+                }
+              }}
             />
 
             <div
@@ -334,6 +377,56 @@ const ChatShell = () => {
                 </div>
               </div>
             </div>
+
+            {/* Mobile profiles drawer (slides from right) */}
+            <div
+              className={clsx('pointer-events-none absolute inset-0 z-30 flex justify-end', {
+                'pointer-events-auto': mobileDrawer === 'profiles'
+              })}
+              aria-hidden={mobileDrawer !== 'profiles'}
+            >
+              <button
+                type="button"
+                className={clsx('absolute inset-0 bg-black/60 transition-opacity duration-200', {
+                  'opacity-0': mobileDrawer !== 'profiles',
+                  'opacity-100': mobileDrawer === 'profiles'
+                })}
+                onClick={handleCloseDrawers}
+                aria-label="Close profiles drawer"
+              />
+              <div
+                className={clsx(
+                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 shadow-2xl transition-transform duration-200 ease-out',
+                  {
+                    'translate-x-full': mobileDrawer !== 'profiles',
+                    'translate-x-0': mobileDrawer === 'profiles'
+                  }
+                )}
+                style={{ backgroundColor: '#05060a' }}
+              >
+                <div className="flex h-full flex-col">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
+                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">People</span>
+                    <button
+                      type="button"
+                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
+                      onClick={handleCloseDrawers}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <ProfileSidebar
+                      profiles={sidebarProfiles}
+                      onConnectNow={handleSidebarConnectNow}
+                      onBookTime={handleSidebarBookTime}
+                      connectingProfileId={connectingProfileId}
+                      hideHeader
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         ) : (
           <>
@@ -342,21 +435,30 @@ const ChatShell = () => {
                 key={`desktop-${activeConversationId}`}
                 activeConversationId={activeConversationId}
                 onSelectConversation={handleSelectConversation}
+                onSidebarProfilesChange={setSidebarProfiles}
               />
             </section>
             <aside
-              aria-hidden
-              className="flex h-full shrink-0 flex-col"
+              className="flex h-full shrink-0 flex-col border-l border-white/10"
               style={{ 
                 width: 'var(--sidebar-width)', 
                 minWidth: 'var(--sidebar-width)', 
                 backgroundColor: '#05060a',
                 boxShadow: '-2px 0 12px rgba(0, 0, 0, 0.15)'
               }}
-            />
+            >
+              <ProfileSidebar
+                profiles={sidebarProfiles}
+                onConnectNow={handleSidebarConnectNow}
+                onBookTime={handleSidebarBookTime}
+                connectingProfileId={connectingProfileId}
+              />
+            </aside>
           </>
         )}
       </div>
+      <BookingModal open={Boolean(bookingProfile)} profile={bookingProfile} conversation={null} onClose={() => setBookingProfile(null)} />
+      <RequestForm open={Boolean(requestProfile)} profile={requestProfile} conversation={null} onClose={() => setRequestProfile(null)} />
     </main>
   );
 };
