@@ -24,8 +24,8 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
   const editSections = [
     {
       id: 'profile' as const,
-      label: 'Your profile',
-      tagline: 'Name, about you, experiences, interests, and matching.',
+      label: 'Bio',
+      tagline: 'Name, bio, experiences, interests, and matching.',
       content: <AccountExtendedProfileForm profileState={resolvedProfileState} />
     },
     {
