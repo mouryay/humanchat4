@@ -3,8 +3,6 @@
 import { useState } from 'react';
 
 import AccountExtendedProfileForm from '../AccountExtendedProfileForm';
-import AccountIdentityForm from '../AccountIdentityForm';
-import AccountNarrativeForm from '../AccountNarrativeForm';
 import AccountSocialLinksForm from '../AccountSocialLinksForm';
 import ProfileDetailsSummary from '../ProfileDetailsSummary';
 import { useProfileDetails } from '../../hooks/useProfileDetails';
@@ -16,30 +14,18 @@ interface SettingsProfilePanelProps {
   embedded?: boolean;
 }
 
-type ProfileSection = 'summary' | 'identity' | 'story' | 'extended' | 'reputation' | null;
+type ProfileSection = 'summary' | 'profile' | 'reputation' | null;
 
 export default function SettingsProfilePanel({ profileState, embedded = false }: SettingsProfilePanelProps) {
   const resolvedProfileState = profileState ?? useProfileDetails();
   const containerClass = embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8 text-white';
-  const [openSection, setOpenSection] = useState<ProfileSection>('identity');
+  const [openSection, setOpenSection] = useState<ProfileSection>('profile');
 
   const editSections = [
     {
-      id: 'identity' as const,
-      label: 'Basic info',
-      tagline: 'Name, role, and what you\'re focused on.',
-      content: <AccountIdentityForm profileState={resolvedProfileState} />
-    },
-    {
-      id: 'story' as const,
-      label: 'Bio & story',
-      tagline: 'Headline and narrative members read.',
-      content: <AccountNarrativeForm profileState={resolvedProfileState} />
-    },
-    {
-      id: 'extended' as const,
-      label: 'Detailed profile',
-      tagline: 'Experiences, interests, places, products, background, and matching.',
+      id: 'profile' as const,
+      label: 'Your profile',
+      tagline: 'Name, about you, experiences, interests, and matching.',
       content: <AccountExtendedProfileForm profileState={resolvedProfileState} />
     },
     {

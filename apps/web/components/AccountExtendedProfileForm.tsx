@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UseProfileDetailsResult } from '../hooks/useProfileDetails';
 import type {
   LivedExperience,
@@ -236,6 +237,10 @@ const formatDob = (month: string, year: string): string | null => {
 export default function AccountExtendedProfileForm({ profileState }: AccountExtendedProfileFormProps) {
   const { profile, save, saving } = profileState;
 
+  // Identity
+  const [name, setName] = useState('');
+  const [about, setAbout] = useState('');
+
   // Structured JSONB arrays — user only sees rawText
   const [livedExperiences, setLivedExperiences] = useState<LivedExperience[]>([]);
   const [productsServices, setProductsServices] = useState<ProductService[]>([]);
@@ -265,8 +270,16 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
   const selectClass =
     'w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-aqua/60 focus:outline-none appearance-none';
 
+  const initials = useMemo(() => {
+    if (!profile?.name) return 'HC';
+    const parts = profile.name.trim().split(/\s+/);
+    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'HC';
+  }, [profile?.name]);
+
   useEffect(() => {
     if (!profile) return;
+    setName(profile.name ?? '');
+    setAbout(profile.bio ?? '');
     setLivedExperiences(profile.livedExperiences ?? []);
     setProductsServices(profile.productsServices ?? []);
     setPlacesKnown(profile.placesKnown ?? []);
@@ -287,10 +300,18 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!profile) return;
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2) {
+      setStatus('error');
+      setMessage('Name must be at least 2 characters.');
+      return;
+    }
     setStatus('idle');
     setMessage(null);
     try {
       await save({
+        name: trimmedName,
+        bio: about.trim() || null,
         livedExperiences: livedExperiences.filter((e) => e.rawText),
         productsServices: productsServices.filter((e) => e.rawText),
         placesKnown: placesKnown.filter((e) => e.rawText),
@@ -505,11 +526,40 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
   }
 
   return (
-    <form className="space-y-2" onSubmit={handleSubmit}>
-      <p className="text-sm text-white/50 mb-3">
-        Just say it in your own words. Sam reads between the lines.
-      </p>
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {/* Name & avatar */}
+      <div className="flex items-center gap-4">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/20">
+          {profile.avatarUrl ? (
+            <Image src={profile.avatarUrl} alt="Avatar" fill sizes="64px" className="object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center text-base font-semibold text-white/70">{initials}</span>
+          )}
+        </div>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name"
+          className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none"
+          maxLength={80}
+        />
+      </div>
 
+      {/* About you — one box, Sam extracts the rest */}
+      <label className="flex flex-col gap-2 text-sm text-white/80">
+        About you
+        <textarea
+          value={about}
+          onChange={(e) => setAbout(e.target.value)}
+          placeholder="Tell Sam about yourself — who you are, what you do, what you care about. Write naturally. Sam figures out the rest."
+          className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none leading-relaxed"
+          rows={5}
+        />
+        <span className="text-xs text-white/40">Sam uses this to introduce you to other members and extract your role, focus, and headline automatically.</span>
+      </label>
+
+      {/* Sub-sections */}
       {subSections.map((sub) => {
         const isOpen = openSub === sub.id;
         return (
