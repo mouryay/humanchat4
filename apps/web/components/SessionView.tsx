@@ -228,50 +228,26 @@ export default function SessionView({ conversation, session, invite, messages, r
   const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && !callSummary.confidentialRate && showDonationModal && session);
   const canLaunchCall = Boolean(session && currentUserId);
   const callActive = Boolean(callMode && canLaunchCall);
-
-  const handleLaunchCall = (mode: 'video' | 'audio') => {
-    if (!canLaunchCall) return;
-    setShowDonationModal(false);
-    setCallSummary(null);
-    setCallMode(mode);
-  };
+  const [videoFullscreen, setVideoFullscreen] = useState(false);
 
   return (
     <div className={styles.humanView}>
       {invitePanel}
-      <div className={styles.callLauncher}>
-        <div>
-          <p className={styles.callLauncherTitle}>{callActive ? `Live ${callMode === 'audio' ? 'audio' : 'video'} call with ${peerLabel}` : `Chat with ${peerLabel}`}</p>
-          <p className={styles.callLauncherSub}>
-            {callActive ? 'Keep the text thread open while you are on the call. End the session any time.' : 'Use the buttons to start a video or audio session when both of you are ready. The chat stays open the entire time.'}
-          </p>
-        </div>
-        <div className={styles.callButtons}>
-          <button
-            type="button"
-            className={styles.callButtonPrimary}
-            onClick={() => handleLaunchCall('video')}
-            disabled={!canLaunchCall || callActive}
-          >
-            Start video call
-          </button>
-          <button
-            type="button"
-            className={styles.callButtonSecondary}
-            onClick={() => handleLaunchCall('audio')}
-            disabled={!canLaunchCall || callActive}
-          >
-            Start audio call
-          </button>
-        </div>
-      </div>
-      {callActive && session && currentUserId && (
-        <div className={styles.callSurface}>
-          <VideoArea session={session} currentUserId={currentUserId} onCallEnd={handleCallEnd} mediaMode={callMode ?? 'video'} />
-        </div>
-      )}
-      <div className={styles.chatSection}>
+      <div className={styles.chatSection} style={{ position: 'relative' }}>
         <ChatArea conversation={conversation} messages={messages} registerScrollContainer={registerScrollContainer} currentUserId={currentUserId} />
+        {callActive && session && currentUserId && (
+          <div className={videoFullscreen ? styles.videoOverlayFullscreen : styles.videoOverlayInline}>
+            <VideoArea session={session} currentUserId={currentUserId} onCallEnd={handleCallEnd} mediaMode={callMode ?? 'video'} />
+            <button
+              type="button"
+              className={styles.videoFullscreenToggle}
+              onClick={() => setVideoFullscreen((prev) => !prev)}
+              aria-label={videoFullscreen ? 'Exit fullscreen' : 'Go fullscreen'}
+            >
+              {videoFullscreen ? '⤡' : '⤢'}
+            </button>
+          </div>
+        )}
       </div>
       {activeSystemMessage && (
         <SystemMessageNotification

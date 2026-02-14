@@ -53,6 +53,38 @@ export default function ConversationSidebar({
     return (requests ?? []).filter((request) => request.status === 'pending');
   }, [requests]);
 
+  // Build fake ConversationListEntry items for pending requests
+  const requestEntries = useMemo(() => {
+    return pendingRequests.map((request) => {
+      const profile = requestProfiles?.[request.requesterId];
+      const displayName = profile?.name ?? 'New request';
+      const initials = displayName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((s) => s[0]?.toUpperCase() ?? '')
+        .join('') || 'RQ';
+      const entry: ConversationListEntry = {
+        conversation: {
+          conversationId: `request-${request.requestId}`,
+          type: 'human',
+          participants: [request.requesterId],
+          participantLabels: { [request.requesterId]: displayName },
+          lastActivity: request.createdAt,
+          unreadCount: 0
+        },
+        meta: {
+          displayName,
+          initials,
+          lastMessage: profile?.headline ?? 'Wants to connect',
+          relativeTimestamp: formatRelativeTime(request.createdAt),
+          avatarUrl: profile?.avatarUrl ?? undefined
+        }
+      };
+      return { entry, request };
+    });
+  }, [pendingRequests, requestProfiles]);
+
   const unreadCount = useMemo(() => {
     return conversations.slice(1).filter((entry) =>
       !isArchived(entry.conversation.conversationId) && (entry.conversation.unreadCount ?? 0) > 0
@@ -153,6 +185,35 @@ export default function ConversationSidebar({
           )}
 
               <ul className="list-none p-0 m-0" onScroll={handleScroll}>
+            {requestEntries.map(({ entry, request }) => {
+              const isUpdating = requestActionPendingId === request.requestId;
+              const handleAction = (status: ChatRequest['status']) => {
+                if (!onRequestAction) return;
+                const outcome = onRequestAction(request.requestId, status);
+                if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
+                  (outcome as Promise<unknown>).catch((actionError) => {
+                    console.warn('Request action failed', actionError);
+                  });
+                }
+              };
+              return (
+                <li key={entry.conversation.conversationId} className="px-4 mb-1">
+                  <ConversationListItem
+                    entry={entry}
+                    isActive={false}
+                    onSelect={() => {}}
+                    showMetadata={!collapsed}
+                    disableGestures
+                    pendingRequest={{
+                      requestId: request.requestId,
+                      onAccept: () => handleAction('approved'),
+                      onDecline: () => handleAction('declined'),
+                      isPending: isUpdating
+                    }}
+                  />
+                </li>
+              );
+            })}
             {visibleHumanEntries.map((entry) => (
                   <li key={entry.conversation.conversationId} className="px-4 mb-1">
               <ConversationListItem
@@ -180,98 +241,17 @@ export default function ConversationSidebar({
             </div>
           )}
 
-          {/* Requests Section */}
-          <div className="mt-8 px-4">
-            {!collapsed && pendingRequests.length > 0 && (
-              <div className="mb-3">
-                <span className="px-2.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">
-                  {pendingRequests.length} pending
-                </span>
-              </div>
-            )}
-
-            {requestLoading && (
-              <div className="p-4 rounded-xl bg-background-tertiary/50 shadow-sm text-sm text-text-secondary">
-                Loading requests…
+          {/* Request loading/error indicators */}
+          {requestLoading && (
+            <div className="px-6 py-4 text-center text-sm text-text-secondary">
+              Loading requests…
             </div>
-            )}
-
-            {requestError && !requestLoading && (
-              <div className="p-4 rounded-xl bg-red-500/10 shadow-sm text-sm text-red-400">
-                {requestError}
-                </div>
-            )}
-
-            {pendingRequests.length === 0 && !requestLoading && null}
-
-            {pendingRequests.length > 0 && (
-              <ul className="space-y-2">
-                  {pendingRequests.map((request) => {
-                    const profile = requestProfiles?.[request.requesterId];
-                    const displayName = profile?.name ?? 'New request';
-                    const subtitle = profile?.headline ?? 'Waiting for your response';
-                    const initials = displayName
-                      .split(' ')
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((segment) => segment[0]?.toUpperCase() ?? '')
-                      .join('') || 'RQ';
-                    const isUpdating = requestActionPendingId === request.requestId;
-
-                    const handleAction = (status: ChatRequest['status']) => {
-                    if (!onRequestAction) return;
-                      const outcome = onRequestAction(request.requestId, status);
-                      if (outcome && typeof (outcome as Promise<unknown>).catch === 'function') {
-                        (outcome as Promise<unknown>).catch((actionError) => {
-                          console.warn('Request action failed', actionError);
-                        });
-                      }
-                    };
-
-                    return (
-                    <li 
-                      key={request.requestId} 
-                      className="rounded-xl p-4 bg-background-tertiary/50 hover:bg-background-hover/80 hover:shadow-md transition-all duration-base"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                          {profile?.avatarUrl ? (
-                          <img 
-                            src={profile.avatarUrl} 
-                            alt={displayName} 
-                            className="h-10 w-10 avatar-chamfered object-cover"
-                          />
-                          ) : (
-                          <div className="h-10 w-10 avatar-chamfered bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                            {initials}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-text-primary truncate">{displayName}</p>
-                          <p className="text-xs text-text-secondary truncate">{subtitle}</p>
-                        </div>
-                            </div>
-                      <div className="flex gap-2">
-                            <button
-                          className="flex-1 btn-premium btn-premium-primary text-sm py-2 disabled:opacity-50"
-                          onClick={() => handleAction('approved')}
-                              disabled={isUpdating}
-                            >
-                          Accept
-                            </button>
-                            <button
-                          className="flex-1 btn-premium btn-premium-secondary text-sm py-2 disabled:opacity-50"
-                          onClick={() => handleAction('declined')}
-                              disabled={isUpdating}
-                            >
-                          Decline
-                            </button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-          </div>
+          )}
+          {requestError && !requestLoading && (
+            <div className="px-6 py-2 text-center text-sm text-red-400">
+              {requestError}
+            </div>
+          )}
         </section>
       </div>
 

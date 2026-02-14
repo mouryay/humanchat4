@@ -5,6 +5,13 @@ import { useRef, useState } from 'react';
 import styles from './ConversationSidebar.module.css';
 import type { ConversationListEntry } from '../hooks/useConversationData';
 
+interface PendingRequestOverlay {
+  requestId: string;
+  onAccept: () => void;
+  onDecline: () => void;
+  isPending: boolean;
+}
+
 interface ConversationListItemProps {
   entry: ConversationListEntry;
   isActive: boolean;
@@ -14,6 +21,7 @@ interface ConversationListItemProps {
   showMetadata?: boolean;
   disableGestures?: boolean;
   deletePending?: boolean;
+  pendingRequest?: PendingRequestOverlay;
 }
 
 const statusIconMap = {
@@ -28,7 +36,7 @@ const statusClassMap: Record<StatusVariant, string> = {
   scheduled: styles.statusScheduled
 };
 
-export default function ConversationListItem({ entry, isActive, onSelect, onArchive, onDelete, showMetadata = true, disableGestures, deletePending }: ConversationListItemProps) {
+export default function ConversationListItem({ entry, isActive, onSelect, onArchive, onDelete, showMetadata = true, disableGestures, deletePending, pendingRequest }: ConversationListItemProps) {
   const { conversation, meta } = entry;
   const isSam = conversation.type === 'sam';
   const unreadCount = conversation.unreadCount ?? 0;
@@ -172,18 +180,45 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
           <div className={styles.nameRow}>
             <span className={styles.name}>{meta?.displayName ?? 'Unknown'}</span>
           </div>
-          <div className={styles.metaRow}>
-            <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
-          <div className={styles.badges}>
-            {statusVariant && statusClass && (
-              <span className={clsx(styles.status, statusClass)}>
-                {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
-              </span>
-            )}
-            {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
-          </div>
-          </div>
-          <div className={styles.preview}>{meta?.lastMessage ?? 'No messages yet'}</div>
+          {pendingRequest ? (
+            <div
+              className={styles.requestActions}
+              onClick={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className={styles.requestAccept}
+                onClick={(e) => { e.stopPropagation(); pendingRequest.onAccept(); }}
+                disabled={pendingRequest.isPending}
+              >
+                {pendingRequest.isPending ? '...' : 'Accept'}
+              </button>
+              <button
+                type="button"
+                className={styles.requestDecline}
+                onClick={(e) => { e.stopPropagation(); pendingRequest.onDecline(); }}
+                disabled={pendingRequest.isPending}
+              >
+                Decline
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className={styles.metaRow}>
+                <span className={styles.timestamp}>{meta?.relativeTimestamp}</span>
+                <div className={styles.badges}>
+                  {statusVariant && statusClass && (
+                    <span className={clsx(styles.status, statusClass)}>
+                      {statusIconMap[statusVariant]} {statusVariant === 'active' ? 'Active' : 'Scheduled'}
+                    </span>
+                  )}
+                  {unreadCount > 0 && <span className={clsx(styles.badge, styles.unread)}>{Math.min(unreadCount, 99)}</span>}
+                </div>
+              </div>
+              <div className={styles.preview}>{meta?.lastMessage ?? 'No messages yet'}</div>
+            </>
+          )}
         </div>
       )}
     </li>

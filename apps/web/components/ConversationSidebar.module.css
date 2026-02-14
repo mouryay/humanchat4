@@ -351,6 +351,52 @@
   text-overflow: ellipsis;
 }
 
+/* Accept / Decline buttons on pending request cards */
+.requestActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.requestAccept,
+.requestDecline {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.requestAccept {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+}
+
+.requestAccept:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.requestDecline {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.requestDecline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.requestAccept:disabled,
+.requestDecline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .badges {
   display: flex;
   align-items: center;
