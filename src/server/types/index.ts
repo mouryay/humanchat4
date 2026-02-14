@@ -7,6 +7,50 @@ export type InstantInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired
 
 export type UserRole = 'user' | 'admin' | 'manager';
 
+// --- Profile section JSONB shapes ---
+
+export interface LivedExperience {
+  type: string; // health | legal | financial | career | life_transition | other
+  situation: string;
+  location?: string | null;
+  timePeriod?: string | null;
+  status?: 'resolved' | 'ongoing' | 'recurring' | null;
+  canHelpWith?: string | null;
+  visibility?: 'public' | 'match_only' | 'private';
+  willingToDiscuss?: 'yes' | 'only_if_asked' | 'no';
+}
+
+export interface ProductService {
+  category: string; // vehicle | software | service | appliance | other
+  name: string;
+  duration?: string | null;
+  usageContext?: string | null;
+  opinion?: string | null;
+  wouldRecommend?: 'yes' | 'no' | 'with_caveats' | null;
+}
+
+export interface PlaceKnown {
+  type: string; // neighborhood | city | building | venue | other
+  name: string;
+  relationship?: 'resident' | 'former_resident' | 'frequent_visitor' | 'visitor' | null;
+  timePeriod?: string | null;
+  insights?: string | null;
+  wouldRecommend?: 'yes' | 'no' | 'with_caveats' | null;
+}
+
+export interface InterestHobby {
+  name: string;
+  engagement?: 'casual' | 'regular' | 'serious' | null;
+  skillLevel?: 'beginner' | 'intermediate' | 'expert' | null;
+  lookingTo?: 'learn' | 'share' | 'collaborate' | 'just_enjoy' | null;
+}
+
+export interface CurrentlyDealingWith {
+  situation: string;
+  timeIn?: string | null;
+  lookingFor?: 'advice' | 'support' | 'just_relating' | null;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -31,6 +75,7 @@ export interface User {
   manager_display_name?: string | null;
   presence_state?: 'active' | 'idle' | 'offline' | null;
   last_seen_at?: string | null;
+  // Social links
   linkedin_url?: string | null;
   facebook_url?: string | null;
   instagram_url?: string | null;
@@ -38,6 +83,10 @@ export interface User {
   medium_url?: string | null;
   youtube_url?: string | null;
   other_social_url?: string | null;
+  // Basic info
+  current_role_title?: string | null;
+  current_focus?: string | null;
+  // Legacy simple fields (kept for backward compat)
   interests?: string[] | null;
   skills?: string[] | null;
   experiences?: string | null;
@@ -45,6 +94,18 @@ export interface User {
   cities_lived_in?: string[] | null;
   date_of_birth?: string | null;
   accept_inbound_requests?: boolean;
+  // Structured profile sections (JSONB)
+  lived_experiences?: LivedExperience[] | null;
+  products_services?: ProductService[] | null;
+  places_known?: PlaceKnown[] | null;
+  interests_hobbies?: InterestHobby[] | null;
+  currently_dealing_with?: CurrentlyDealingWith[] | null;
+  // Background
+  languages?: string[] | null;
+  education?: string | null;
+  // Matching preferences
+  preferred_connection_types?: string[] | null;
+  topics_to_avoid?: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -180,6 +241,18 @@ export interface ProfileUpdateFields {
   cities_lived_in?: string[];
   date_of_birth?: string;
   accept_inbound_requests?: boolean;
+  // New structured fields
+  current_role_title?: string;
+  current_focus?: string;
+  lived_experiences?: LivedExperience[];
+  products_services?: ProductService[];
+  places_known?: PlaceKnown[];
+  interests_hobbies?: InterestHobby[];
+  currently_dealing_with?: CurrentlyDealingWith[];
+  languages?: string[];
+  education?: string;
+  preferred_connection_types?: string[];
+  topics_to_avoid?: string[];
 }
 
 export type SamAction =

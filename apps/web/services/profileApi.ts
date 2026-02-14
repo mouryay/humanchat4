@@ -1,4 +1,11 @@
 import type { ProfileSummary } from '../../../src/lib/db';
+import type {
+  LivedExperience,
+  ProductService,
+  PlaceKnown,
+  InterestHobby,
+  CurrentlyDealingWith
+} from '../../../src/server/types/index';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -8,6 +15,8 @@ export interface ScheduledRateEntry {
   durationMinutes: number;
   price: number;
 }
+
+export type { LivedExperience, ProductService, PlaceKnown, InterestHobby, CurrentlyDealingWith };
 
 export interface UserProfile {
   id: string;
@@ -44,6 +53,18 @@ export interface UserProfile {
   citiesLivedIn: string[];
   dateOfBirth: string | null;
   acceptInboundRequests: boolean;
+  // New structured fields
+  currentRoleTitle: string | null;
+  currentFocus: string | null;
+  livedExperiences: LivedExperience[];
+  productsServices: ProductService[];
+  placesKnown: PlaceKnown[];
+  interestsHobbies: InterestHobby[];
+  currentlyDealingWith: CurrentlyDealingWith[];
+  languages: string[];
+  education: string | null;
+  preferredConnectionTypes: string[];
+  topicsToAvoid: string[];
   updatedAt: string;
 }
 
@@ -84,6 +105,18 @@ interface UserProfileApiResponse {
   cities_lived_in?: string[] | null;
   date_of_birth?: string | null;
   accept_inbound_requests?: boolean;
+  // New structured fields
+  current_role_title?: string | null;
+  current_focus?: string | null;
+  lived_experiences?: LivedExperience[] | null;
+  products_services?: ProductService[] | null;
+  places_known?: PlaceKnown[] | null;
+  interests_hobbies?: InterestHobby[] | null;
+  currently_dealing_with?: CurrentlyDealingWith[] | null;
+  languages?: string[] | null;
+  education?: string | null;
+  preferred_connection_types?: string[] | null;
+  topics_to_avoid?: string[] | null;
   updated_at: string;
 }
 
@@ -176,6 +209,18 @@ const mapApiProfile = (record: UserProfileApiResponse): UserProfile => ({
   citiesLivedIn: Array.isArray(record.cities_lived_in) ? record.cities_lived_in : [],
   dateOfBirth: record.date_of_birth ?? null,
   acceptInboundRequests: Boolean(record.accept_inbound_requests),
+  // New structured fields
+  currentRoleTitle: record.current_role_title ?? null,
+  currentFocus: record.current_focus ?? null,
+  livedExperiences: Array.isArray(record.lived_experiences) ? record.lived_experiences : [],
+  productsServices: Array.isArray(record.products_services) ? record.products_services : [],
+  placesKnown: Array.isArray(record.places_known) ? record.places_known : [],
+  interestsHobbies: Array.isArray(record.interests_hobbies) ? record.interests_hobbies : [],
+  currentlyDealingWith: Array.isArray(record.currently_dealing_with) ? record.currently_dealing_with : [],
+  languages: Array.isArray(record.languages) ? record.languages : [],
+  education: record.education ?? null,
+  preferredConnectionTypes: Array.isArray(record.preferred_connection_types) ? record.preferred_connection_types : [],
+  topicsToAvoid: Array.isArray(record.topics_to_avoid) ? record.topics_to_avoid : [],
   updatedAt: record.updated_at
 });
 
@@ -228,6 +273,18 @@ export interface ProfileUpdateInput {
   citiesLivedIn?: string[];
   dateOfBirth?: string | null;
   acceptInboundRequests?: boolean;
+  // New structured fields
+  currentRoleTitle?: string | null;
+  currentFocus?: string | null;
+  livedExperiences?: LivedExperience[];
+  productsServices?: ProductService[];
+  placesKnown?: PlaceKnown[];
+  interestsHobbies?: InterestHobby[];
+  currentlyDealingWith?: CurrentlyDealingWith[];
+  languages?: string[];
+  education?: string | null;
+  preferredConnectionTypes?: string[];
+  topicsToAvoid?: string[];
 }
 
 export const fetchUserProfile = async (id: string): Promise<UserProfile> => {
@@ -310,6 +367,40 @@ export const updateUserProfile = async (id: string, updates: ProfileUpdateInput)
   }
   if ('acceptInboundRequests' in updates) {
     payload.accept_inbound_requests = Boolean(updates.acceptInboundRequests);
+  }
+  // New structured fields
+  if ('currentRoleTitle' in updates) {
+    payload.current_role_title = updates.currentRoleTitle ?? null;
+  }
+  if ('currentFocus' in updates) {
+    payload.current_focus = updates.currentFocus ?? null;
+  }
+  if ('livedExperiences' in updates) {
+    payload.lived_experiences = updates.livedExperiences ?? [];
+  }
+  if ('productsServices' in updates) {
+    payload.products_services = updates.productsServices ?? [];
+  }
+  if ('placesKnown' in updates) {
+    payload.places_known = updates.placesKnown ?? [];
+  }
+  if ('interestsHobbies' in updates) {
+    payload.interests_hobbies = updates.interestsHobbies ?? [];
+  }
+  if ('currentlyDealingWith' in updates) {
+    payload.currently_dealing_with = updates.currentlyDealingWith ?? [];
+  }
+  if ('languages' in updates) {
+    payload.languages = updates.languages ?? [];
+  }
+  if ('education' in updates) {
+    payload.education = updates.education ?? null;
+  }
+  if ('preferredConnectionTypes' in updates) {
+    payload.preferred_connection_types = updates.preferredConnectionTypes ?? [];
+  }
+  if ('topicsToAvoid' in updates) {
+    payload.topics_to_avoid = updates.topicsToAvoid ?? [];
   }
 
   const response = await handleResponse(

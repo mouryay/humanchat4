@@ -26,26 +26,26 @@ export default function SettingsProfilePanel({ profileState, embedded = false }:
   const editSections = [
     {
       id: 'identity' as const,
-      label: 'Identity & appearance',
-      tagline: 'Avatar, name, and public basics.',
+      label: 'Basic info',
+      tagline: 'Name, role, and what you\'re focused on.',
       content: <AccountIdentityForm profileState={resolvedProfileState} />
     },
     {
       id: 'story' as const,
-      label: 'Story & positioning',
+      label: 'Bio & story',
       tagline: 'Headline and narrative members read.',
       content: <AccountNarrativeForm profileState={resolvedProfileState} />
     },
     {
       id: 'extended' as const,
-      label: 'Interests & background',
-      tagline: 'Interests, experiences, locations, and discoverability.',
+      label: 'Detailed profile',
+      tagline: 'Experiences, interests, places, products, background, and matching.',
       content: <AccountExtendedProfileForm profileState={resolvedProfileState} />
     },
     {
       id: 'reputation' as const,
-      label: 'Public reputation',
-      tagline: 'Link socials and credibility signals.',
+      label: 'Social proof',
+      tagline: 'LinkedIn, socials, and website links.',
       content: <AccountSocialLinksForm profileState={resolvedProfileState} />
     },
     {

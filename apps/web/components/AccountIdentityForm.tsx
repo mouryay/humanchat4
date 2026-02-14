@@ -12,6 +12,8 @@ const MIN_NAME_LENGTH = 2;
 export default function AccountIdentityForm({ profileState }: AccountIdentityFormProps) {
   const { profile, save, saving } = profileState;
   const [name, setName] = useState('');
+  const [currentRole, setCurrentRole] = useState('');
+  const [currentFocus, setCurrentFocus] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
@@ -21,9 +23,11 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     } else {
       setName('');
     }
+    setCurrentRole(profile?.currentRoleTitle ?? '');
+    setCurrentFocus(profile?.currentFocus ?? '');
     setStatus('idle');
     setMessage(null);
-  }, [profile?.name]);
+  }, [profile?.name, profile?.currentRoleTitle, profile?.currentFocus]);
 
   const trimmedName = name.trim();
 
@@ -38,8 +42,11 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     if (!profile) return true;
     if (saving) return true;
     if (trimmedName.length < MIN_NAME_LENGTH) return true;
-    return trimmedName === profile.name.trim();
-  }, [profile, saving, trimmedName]);
+    const nameUnchanged = trimmedName === profile.name.trim();
+    const roleUnchanged = currentRole.trim() === (profile.currentRoleTitle ?? '');
+    const focusUnchanged = currentFocus.trim() === (profile.currentFocus ?? '');
+    return nameUnchanged && roleUnchanged && focusUnchanged;
+  }, [profile, saving, trimmedName, currentRole, currentFocus]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,7 +58,11 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
     setStatus('idle');
     setMessage(null);
     try {
-      await save({ name: trimmedName });
+      await save({
+        name: trimmedName,
+        currentRoleTitle: currentRole.trim() || null,
+        currentFocus: currentFocus.trim() || null
+      });
       setStatus('success');
       setMessage('Name updated successfully.');
     } catch (error) {
@@ -102,6 +113,30 @@ export default function AccountIdentityForm({ profileState }: AccountIdentityFor
               placeholder="Your name"
               className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white focus:border-aqua/60"
               maxLength={80}
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="account-role-input">
+            Current role / profession
+            <input
+              id="account-role-input"
+              type="text"
+              value={currentRole}
+              onChange={(event) => setCurrentRole(event.target.value)}
+              placeholder="e.g. Product Manager, Freelance Designer"
+              className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-aqua/60"
+              maxLength={120}
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm text-white/80" htmlFor="account-focus-input">
+            Current focus / goal
+            <input
+              id="account-focus-input"
+              type="text"
+              value={currentFocus}
+              onChange={(event) => setCurrentFocus(event.target.value)}
+              placeholder="e.g. Scaling my startup, switching careers"
+              className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-aqua/60"
+              maxLength={200}
             />
           </label>
           <div className="flex flex-col gap-2 text-xs text-white/60">

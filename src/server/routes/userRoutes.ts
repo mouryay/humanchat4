@@ -66,6 +66,48 @@ const normalizeUpdatePayload = (body: unknown): Record<string, unknown> => {
   return normalized;
 };
 
+const livedExperienceSchema = z.object({
+  type: z.string(),
+  situation: z.string(),
+  location: z.string().nullable().optional(),
+  timePeriod: z.string().nullable().optional(),
+  status: z.enum(['resolved', 'ongoing', 'recurring']).nullable().optional(),
+  canHelpWith: z.string().nullable().optional(),
+  visibility: z.enum(['public', 'match_only', 'private']).optional(),
+  willingToDiscuss: z.enum(['yes', 'only_if_asked', 'no']).optional()
+});
+
+const productServiceSchema = z.object({
+  category: z.string(),
+  name: z.string(),
+  duration: z.string().nullable().optional(),
+  usageContext: z.string().nullable().optional(),
+  opinion: z.string().nullable().optional(),
+  wouldRecommend: z.enum(['yes', 'no', 'with_caveats']).nullable().optional()
+});
+
+const placeKnownSchema = z.object({
+  type: z.string(),
+  name: z.string(),
+  relationship: z.enum(['resident', 'former_resident', 'frequent_visitor', 'visitor']).nullable().optional(),
+  timePeriod: z.string().nullable().optional(),
+  insights: z.string().nullable().optional(),
+  wouldRecommend: z.enum(['yes', 'no', 'with_caveats']).nullable().optional()
+});
+
+const interestHobbySchema = z.object({
+  name: z.string(),
+  engagement: z.enum(['casual', 'regular', 'serious']).nullable().optional(),
+  skillLevel: z.enum(['beginner', 'intermediate', 'expert']).nullable().optional(),
+  lookingTo: z.enum(['learn', 'share', 'collaborate', 'just_enjoy']).nullable().optional()
+});
+
+const currentlyDealingWithSchema = z.object({
+  situation: z.string(),
+  timeIn: z.string().nullable().optional(),
+  lookingFor: z.enum(['advice', 'support', 'just_relating']).nullable().optional()
+});
+
 const updateSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   headline: z.string().optional(),
@@ -89,7 +131,19 @@ const updateSchema = z.object({
   quora_url: socialUrlSchema,
   medium_url: socialUrlSchema,
   youtube_url: socialUrlSchema,
-  other_social_url: socialUrlSchema
+  other_social_url: socialUrlSchema,
+  // New structured profile fields
+  current_role_title: z.string().nullable().optional(),
+  current_focus: z.string().nullable().optional(),
+  lived_experiences: z.array(livedExperienceSchema).optional(),
+  products_services: z.array(productServiceSchema).optional(),
+  places_known: z.array(placeKnownSchema).optional(),
+  interests_hobbies: z.array(interestHobbySchema).optional(),
+  currently_dealing_with: z.array(currentlyDealingWithSchema).optional(),
+  languages: z.array(z.string()).optional(),
+  education: z.string().nullable().optional(),
+  preferred_connection_types: z.array(z.string()).optional(),
+  topics_to_avoid: z.array(z.string()).optional()
 });
 
 router.patch('/:id', authenticate, authenticatedLimiter, async (req, res, next) => {
