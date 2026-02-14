@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { UseProfileDetailsResult } from '../hooks/useProfileDetails';
 import type {
   LivedExperience,
@@ -14,20 +14,7 @@ interface AccountExtendedProfileFormProps {
   profileState: UseProfileDetailsResult;
 }
 
-/* ── Shared helpers ───────────────────────────────────────────────── */
-
-const inputClass =
-  'w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none';
-const selectClass =
-  'w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-aqua/60 focus:outline-none appearance-none';
-const cardClass =
-  'relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3';
-const removeBtn =
-  'absolute top-3 right-3 text-white/30 hover:text-rose-400 transition text-lg leading-none';
-const addBtnClass =
-  'w-full rounded-2xl border border-dashed border-white/15 py-3 text-sm text-white/50 hover:border-white/30 hover:text-white/70 transition';
-
-/* ── Tag / chip input ─────────────────────────────────────────────── */
+/* ── Tag / chip input (for simple string arrays) ──────────────────── */
 
 interface TagInputProps {
   id: string;
@@ -87,7 +74,7 @@ function TagInput({ id, label, tags, onChange, placeholder, hint }: TagInputProp
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? 'Type and press enter'}
-          className={`flex-1 ${inputClass}`}
+          className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none"
         />
         <button
           type="button"
@@ -125,14 +112,99 @@ function TagInput({ id, label, tags, onChange, placeholder, hint }: TagInputProp
   );
 }
 
-/* ── Sub-section header ───────────────────────────────────────────── */
+/* ── Freeform entry input (for JSONB arrays with rawText) ─────────── */
 
-function SectionHeader({ title, count }: { title: string; count?: number }) {
+interface FreeformEntryProps<T extends { rawText: string }> {
+  label: string;
+  hint: string;
+  placeholder: string;
+  entries: T[];
+  onChange: (entries: T[]) => void;
+  makeEntry: (text: string) => T;
+}
+
+function FreeformEntry<T extends { rawText: string }>({
+  label,
+  hint,
+  placeholder,
+  entries,
+  onChange,
+  makeEntry
+}: FreeformEntryProps<T>) {
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const add = useCallback(() => {
+    const text = draft.trim();
+    if (!text) return;
+    onChange([...entries, makeEntry(text)]);
+    setDraft('');
+    inputRef.current?.focus();
+  }, [draft, entries, onChange, makeEntry]);
+
+  const remove = useCallback(
+    (index: number) => {
+      onChange(entries.filter((_, i) => i !== index));
+    },
+    [entries, onChange]
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      add();
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between pb-2 border-b border-white/8 mb-3">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-white/60">{title}</h3>
-      {count !== undefined && (
-        <span className="text-xs text-white/40">{count} {count === 1 ? 'entry' : 'entries'}</span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-white/80">{label}</p>
+        {entries.length > 0 && (
+          <span className="text-xs text-white/40">{entries.length}</span>
+        )}
+      </div>
+      <p className="text-xs text-white/40 -mt-1">{hint}</p>
+
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={!draft.trim()}
+          className="rounded-2xl border border-white/15 bg-white/8 px-4 py-2.5 text-sm font-medium text-white/70 transition hover:bg-white/12 disabled:opacity-30"
+        >
+          add
+        </button>
+      </div>
+
+      {entries.length > 0 && (
+        <div className="flex flex-col gap-2 mt-1">
+          {entries.map((entry, index) => (
+            <div
+              key={index}
+              className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"
+            >
+              <p className="flex-1 text-sm text-white leading-relaxed">{entry.rawText}</p>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="mt-0.5 text-white/30 hover:text-rose-400 transition text-lg leading-none shrink-0"
+                aria-label="Remove"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -159,56 +231,12 @@ const formatDob = (month: string, year: string): string | null => {
   return `${month.padStart(2, '0')}/${year}`;
 };
 
-/* ── Default entry factories ──────────────────────────────────────── */
-
-const newLivedExperience = (): LivedExperience => ({
-  type: '',
-  situation: '',
-  location: null,
-  timePeriod: null,
-  status: null,
-  canHelpWith: null,
-  visibility: 'public',
-  willingToDiscuss: 'yes'
-});
-
-const newProductService = (): ProductService => ({
-  category: '',
-  name: '',
-  duration: null,
-  usageContext: null,
-  opinion: null,
-  wouldRecommend: null
-});
-
-const newPlaceKnown = (): PlaceKnown => ({
-  type: '',
-  name: '',
-  relationship: null,
-  timePeriod: null,
-  insights: null,
-  wouldRecommend: null
-});
-
-const newInterestHobby = (): InterestHobby => ({
-  name: '',
-  engagement: null,
-  skillLevel: null,
-  lookingTo: null
-});
-
-const newCurrentlyDealingWith = (): CurrentlyDealingWith => ({
-  situation: '',
-  timeIn: null,
-  lookingFor: null
-});
-
 /* ── Main form ────────────────────────────────────────────────────── */
 
 export default function AccountExtendedProfileForm({ profileState }: AccountExtendedProfileFormProps) {
   const { profile, save, saving } = profileState;
 
-  // Structured JSONB arrays
+  // Structured JSONB arrays — user only sees rawText
   const [livedExperiences, setLivedExperiences] = useState<LivedExperience[]>([]);
   const [productsServices, setProductsServices] = useState<ProductService[]>([]);
   const [placesKnown, setPlacesKnown] = useState<PlaceKnown[]>([]);
@@ -231,10 +259,13 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
   // UI state
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
-
-  // Collapsed sub-sections
   const [openSub, setOpenSub] = useState<string | null>(null);
   const toggleSub = (id: string) => setOpenSub((prev) => (prev === id ? null : id));
+
+  const inputClass =
+    'w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-aqua/60 focus:outline-none';
+  const selectClass =
+    'w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-aqua/60 focus:outline-none appearance-none';
 
   useEffect(() => {
     if (!profile) return;
@@ -263,19 +294,12 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
     setStatus('idle');
     setMessage(null);
     try {
-      // Filter out entries where the required fields are empty
-      const validExperiences = livedExperiences.filter((e) => e.type && e.situation);
-      const validProducts = productsServices.filter((e) => e.category && e.name);
-      const validPlaces = placesKnown.filter((e) => e.type && e.name);
-      const validInterests = interestsHobbies.filter((e) => e.name);
-      const validDealing = currentlyDealingWith.filter((e) => e.situation);
-
       await save({
-        livedExperiences: validExperiences,
-        productsServices: validProducts,
-        placesKnown: validPlaces,
-        interestsHobbies: validInterests,
-        currentlyDealingWith: validDealing,
+        livedExperiences: livedExperiences.filter((e) => e.rawText),
+        productsServices: productsServices.filter((e) => e.rawText),
+        placesKnown: placesKnown.filter((e) => e.rawText),
+        interestsHobbies: interestsHobbies.filter((e) => e.rawText),
+        currentlyDealingWith: currentlyDealingWith.filter((e) => e.rawText),
         locationBorn: locationBorn.trim() || null,
         citiesLivedIn,
         languages,
@@ -293,212 +317,95 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
     }
   };
 
-  /* ── Generic entry helpers ─────────────────────────────────────── */
+  /* ── Entry factories (user only provides rawText) ──────────────── */
 
-  const updateEntry = <T,>(
-    list: T[],
-    setList: React.Dispatch<React.SetStateAction<T[]>>,
-    index: number,
-    field: keyof T,
-    value: T[keyof T]
-  ) => {
-    setList(list.map((e, i) => (i === index ? { ...e, [field]: value } : e)));
-  };
+  const makeLivedExperience = useCallback((text: string): LivedExperience => ({ rawText: text }), []);
+  const makeProductService = useCallback((text: string): ProductService => ({ rawText: text }), []);
+  const makePlaceKnown = useCallback((text: string): PlaceKnown => ({ rawText: text }), []);
+  const makeInterestHobby = useCallback((text: string): InterestHobby => ({ rawText: text }), []);
+  const makeDealingWith = useCallback((text: string): CurrentlyDealingWith => ({ rawText: text }), []);
 
-  const removeEntry = <T,>(list: T[], setList: React.Dispatch<React.SetStateAction<T[]>>, index: number) => {
-    setList(list.filter((_, i) => i !== index));
-  };
-
-  /* ── Sub-section components ────────────────────────────────────── */
+  /* ── Sub-sections ──────────────────────────────────────────────── */
 
   const subSections = [
     {
       id: 'lived',
       title: 'Lived Experiences',
       count: livedExperiences.length,
-      hint: 'Health, legal, financial, career, or life transitions you\'ve navigated.',
+      hint: 'What have you been through that you could help someone else with?',
       content: (
-        <div className="space-y-3">
-          {livedExperiences.map((exp, i) => (
-            <div key={i} className={cardClass}>
-              <button type="button" className={removeBtn} onClick={() => removeEntry(livedExperiences, setLivedExperiences, i)}>&times;</button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select value={exp.type} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'type', e.target.value)} className={selectClass}>
-                  <option value="">Type...</option>
-                  <option value="health">Health</option>
-                  <option value="legal">Legal</option>
-                  <option value="financial">Financial</option>
-                  <option value="career">Career</option>
-                  <option value="life_transition">Life transition</option>
-                  <option value="other">Other</option>
-                </select>
-                <input value={exp.situation} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'situation', e.target.value)} placeholder="Specific situation" className={inputClass} />
-                <input value={exp.location ?? ''} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'location', e.target.value || null)} placeholder="Location (optional)" className={inputClass} />
-                <input value={exp.timePeriod ?? ''} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'timePeriod', e.target.value || null)} placeholder="Time period (optional)" className={inputClass} />
-                <select value={exp.status ?? ''} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'status', (e.target.value || null) as LivedExperience['status'])} className={selectClass}>
-                  <option value="">Status...</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="ongoing">Ongoing</option>
-                  <option value="recurring">Recurring</option>
-                </select>
-                <input value={exp.canHelpWith ?? ''} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'canHelpWith', e.target.value || null)} placeholder="What I can help with" className={inputClass} />
-                <select value={exp.visibility ?? 'public'} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'visibility', e.target.value as LivedExperience['visibility'])} className={selectClass}>
-                  <option value="public">Public</option>
-                  <option value="match_only">Match only</option>
-                  <option value="private">Private</option>
-                </select>
-                <select value={exp.willingToDiscuss ?? 'yes'} onChange={(e) => updateEntry(livedExperiences, setLivedExperiences, i, 'willingToDiscuss', e.target.value as LivedExperience['willingToDiscuss'])} className={selectClass}>
-                  <option value="yes">Willing to discuss</option>
-                  <option value="only_if_asked">Only if asked</option>
-                  <option value="no">Not willing to discuss</option>
-                </select>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={addBtnClass} onClick={() => setLivedExperiences([...livedExperiences, newLivedExperience()])}>+ Add experience</button>
-        </div>
+        <FreeformEntry
+          label="Your experiences"
+          hint="Type naturally. Sam will handle the rest behind the scenes."
+          placeholder='e.g. "I went through a nasty divorce with kids involved"'
+          entries={livedExperiences}
+          onChange={setLivedExperiences}
+          makeEntry={makeLivedExperience}
+        />
       )
     },
     {
       id: 'products',
       title: 'Products & Services I Use',
       count: productsServices.length,
-      hint: 'Vehicles, software, services, appliances — things you know well.',
+      hint: 'Things you own or use that you know well enough to talk about.',
       content: (
-        <div className="space-y-3">
-          {productsServices.map((prod, i) => (
-            <div key={i} className={cardClass}>
-              <button type="button" className={removeBtn} onClick={() => removeEntry(productsServices, setProductsServices, i)}>&times;</button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select value={prod.category} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'category', e.target.value)} className={selectClass}>
-                  <option value="">Category...</option>
-                  <option value="vehicle">Vehicle</option>
-                  <option value="software">Software</option>
-                  <option value="service">Service</option>
-                  <option value="appliance">Appliance</option>
-                  <option value="other">Other</option>
-                </select>
-                <input value={prod.name} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'name', e.target.value)} placeholder="Name / brand / model" className={inputClass} />
-                <input value={prod.duration ?? ''} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'duration', e.target.value || null)} placeholder="Duration of use" className={inputClass} />
-                <input value={prod.usageContext ?? ''} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'usageContext', e.target.value || null)} placeholder="Usage context (mileage, plan, etc.)" className={inputClass} />
-                <input value={prod.opinion ?? ''} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'opinion', e.target.value || null)} placeholder="Key opinion / review" className={`${inputClass} sm:col-span-2`} />
-                <select value={prod.wouldRecommend ?? ''} onChange={(e) => updateEntry(productsServices, setProductsServices, i, 'wouldRecommend', (e.target.value || null) as ProductService['wouldRecommend'])} className={selectClass}>
-                  <option value="">Would recommend?</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                  <option value="with_caveats">With caveats</option>
-                </select>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={addBtnClass} onClick={() => setProductsServices([...productsServices, newProductService()])}>+ Add product or service</button>
-        </div>
+        <FreeformEntry
+          label="Products and services"
+          hint="Vehicles, software, services, appliances — anything you have opinions on."
+          placeholder='e.g. "Tesla Model 3, 40k miles, love it but the service centers are a nightmare"'
+          entries={productsServices}
+          onChange={setProductsServices}
+          makeEntry={makeProductService}
+        />
       )
     },
     {
       id: 'places',
       title: 'Places I Know',
       count: placesKnown.length,
-      hint: 'Neighborhoods, cities, venues you can speak about.',
+      hint: 'Places you know well enough to give someone real advice about.',
       content: (
-        <div className="space-y-3">
-          {placesKnown.map((place, i) => (
-            <div key={i} className={cardClass}>
-              <button type="button" className={removeBtn} onClick={() => removeEntry(placesKnown, setPlacesKnown, i)}>&times;</button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select value={place.type} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'type', e.target.value)} className={selectClass}>
-                  <option value="">Place type...</option>
-                  <option value="neighborhood">Neighborhood</option>
-                  <option value="city">City</option>
-                  <option value="building">Building</option>
-                  <option value="venue">Venue</option>
-                  <option value="other">Other</option>
-                </select>
-                <input value={place.name} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'name', e.target.value)} placeholder="Place name" className={inputClass} />
-                <select value={place.relationship ?? ''} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'relationship', (e.target.value || null) as PlaceKnown['relationship'])} className={selectClass}>
-                  <option value="">Relationship...</option>
-                  <option value="resident">Resident</option>
-                  <option value="former_resident">Former resident</option>
-                  <option value="frequent_visitor">Frequent visitor</option>
-                  <option value="visitor">Visitor</option>
-                </select>
-                <input value={place.timePeriod ?? ''} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'timePeriod', e.target.value || null)} placeholder="Time period" className={inputClass} />
-                <input value={place.insights ?? ''} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'insights', e.target.value || null)} placeholder="Key insights" className={`${inputClass} sm:col-span-2`} />
-                <select value={place.wouldRecommend ?? ''} onChange={(e) => updateEntry(placesKnown, setPlacesKnown, i, 'wouldRecommend', (e.target.value || null) as PlaceKnown['wouldRecommend'])} className={selectClass}>
-                  <option value="">Would recommend?</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                  <option value="with_caveats">With caveats</option>
-                </select>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={addBtnClass} onClick={() => setPlacesKnown([...placesKnown, newPlaceKnown()])}>+ Add place</button>
-        </div>
+        <FreeformEntry
+          label="Places"
+          hint="Neighborhoods, cities, venues — wherever you have insider knowledge."
+          placeholder='e.g. "Lived in Austin TX for 8 years, know the east side like the back of my hand"'
+          entries={placesKnown}
+          onChange={setPlacesKnown}
+          makeEntry={makePlaceKnown}
+        />
       )
     },
     {
       id: 'interests',
       title: 'Interests & Hobbies',
       count: interestsHobbies.length,
-      hint: 'What you enjoy, how seriously, and what you want from it.',
+      hint: 'What you enjoy, what you geek out about, what you want to learn.',
       content: (
-        <div className="space-y-3">
-          {interestsHobbies.map((interest, i) => (
-            <div key={i} className={cardClass}>
-              <button type="button" className={removeBtn} onClick={() => removeEntry(interestsHobbies, setInterestsHobbies, i)}>&times;</button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input value={interest.name} onChange={(e) => updateEntry(interestsHobbies, setInterestsHobbies, i, 'name', e.target.value)} placeholder="Interest name" className={`${inputClass} sm:col-span-2`} />
-                <select value={interest.engagement ?? ''} onChange={(e) => updateEntry(interestsHobbies, setInterestsHobbies, i, 'engagement', (e.target.value || null) as InterestHobby['engagement'])} className={selectClass}>
-                  <option value="">Engagement level...</option>
-                  <option value="casual">Casual</option>
-                  <option value="regular">Regular</option>
-                  <option value="serious">Serious</option>
-                </select>
-                <select value={interest.skillLevel ?? ''} onChange={(e) => updateEntry(interestsHobbies, setInterestsHobbies, i, 'skillLevel', (e.target.value || null) as InterestHobby['skillLevel'])} className={selectClass}>
-                  <option value="">Skill level...</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="expert">Expert</option>
-                </select>
-                <select value={interest.lookingTo ?? ''} onChange={(e) => updateEntry(interestsHobbies, setInterestsHobbies, i, 'lookingTo', (e.target.value || null) as InterestHobby['lookingTo'])} className={selectClass}>
-                  <option value="">Looking to...</option>
-                  <option value="learn">Learn</option>
-                  <option value="share">Share</option>
-                  <option value="collaborate">Collaborate</option>
-                  <option value="just_enjoy">Just enjoy</option>
-                </select>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={addBtnClass} onClick={() => setInterestsHobbies([...interestsHobbies, newInterestHobby()])}>+ Add interest</button>
-        </div>
+        <FreeformEntry
+          label="Interests"
+          hint="Anything from serious pursuits to casual hobbies."
+          placeholder='e.g. "Rock climbing — been doing it 5 years, lead up to 5.11"'
+          entries={interestsHobbies}
+          onChange={setInterestsHobbies}
+          makeEntry={makeInterestHobby}
+        />
       )
     },
     {
       id: 'dealing',
       title: 'Currently Dealing With',
       count: currentlyDealingWith.length,
-      hint: 'Things you\'re navigating right now and what kind of support would help.',
+      hint: 'Things you\'re navigating right now where connecting with someone who gets it would help.',
       content: (
-        <div className="space-y-3">
-          {currentlyDealingWith.map((item, i) => (
-            <div key={i} className={cardClass}>
-              <button type="button" className={removeBtn} onClick={() => removeEntry(currentlyDealingWith, setCurrentlyDealingWith, i)}>&times;</button>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input value={item.situation} onChange={(e) => updateEntry(currentlyDealingWith, setCurrentlyDealingWith, i, 'situation', e.target.value)} placeholder="Situation" className={`${inputClass} sm:col-span-2`} />
-                <input value={item.timeIn ?? ''} onChange={(e) => updateEntry(currentlyDealingWith, setCurrentlyDealingWith, i, 'timeIn', e.target.value || null)} placeholder="How long / what stage" className={inputClass} />
-                <select value={item.lookingFor ?? ''} onChange={(e) => updateEntry(currentlyDealingWith, setCurrentlyDealingWith, i, 'lookingFor', (e.target.value || null) as CurrentlyDealingWith['lookingFor'])} className={selectClass}>
-                  <option value="">Looking for...</option>
-                  <option value="advice">Advice</option>
-                  <option value="support">Support</option>
-                  <option value="just_relating">Just relating</option>
-                </select>
-              </div>
-            </div>
-          ))}
-          <button type="button" className={addBtnClass} onClick={() => setCurrentlyDealingWith([...currentlyDealingWith, newCurrentlyDealingWith()])}>+ Add situation</button>
-        </div>
+        <FreeformEntry
+          label="Current situations"
+          hint="No judgment. Sam uses this to find people who've been where you are."
+          placeholder='e.g. "Trying to negotiate a severance package after being laid off"'
+          entries={currentlyDealingWith}
+          onChange={setCurrentlyDealingWith}
+          makeEntry={makeDealingWith}
+        />
       )
     },
     {
@@ -621,7 +528,7 @@ export default function AccountExtendedProfileForm({ profileState }: AccountExte
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">Detailed profile</p>
         <h2 className="text-2xl font-semibold">More about you</h2>
         <p className="text-sm text-white/70">
-          Help Sam match you with the right people. Share as much or as little as you want.
+          Just say it in your own words. Sam reads between the lines.
         </p>
       </header>
 

@@ -10,8 +10,10 @@ export type UserRole = 'user' | 'admin' | 'manager';
 // --- Profile section JSONB shapes ---
 
 export interface LivedExperience {
-  type: string; // health | legal | financial | career | life_transition | other
-  situation: string;
+  rawText: string; // What the user actually said, in their words
+  // Structured metadata — extracted by Sam, never shown to user
+  type?: string | null; // health | legal | financial | career | life_transition | other
+  situation?: string | null;
   location?: string | null;
   timePeriod?: string | null;
   status?: 'resolved' | 'ongoing' | 'recurring' | null;
@@ -21,8 +23,9 @@ export interface LivedExperience {
 }
 
 export interface ProductService {
-  category: string; // vehicle | software | service | appliance | other
-  name: string;
+  rawText: string;
+  category?: string | null;
+  name?: string | null;
   duration?: string | null;
   usageContext?: string | null;
   opinion?: string | null;
@@ -30,8 +33,9 @@ export interface ProductService {
 }
 
 export interface PlaceKnown {
-  type: string; // neighborhood | city | building | venue | other
-  name: string;
+  rawText: string;
+  type?: string | null;
+  name?: string | null;
   relationship?: 'resident' | 'former_resident' | 'frequent_visitor' | 'visitor' | null;
   timePeriod?: string | null;
   insights?: string | null;
@@ -39,14 +43,16 @@ export interface PlaceKnown {
 }
 
 export interface InterestHobby {
-  name: string;
+  rawText: string;
+  name?: string | null;
   engagement?: 'casual' | 'regular' | 'serious' | null;
   skillLevel?: 'beginner' | 'intermediate' | 'expert' | null;
   lookingTo?: 'learn' | 'share' | 'collaborate' | 'just_enjoy' | null;
 }
 
 export interface CurrentlyDealingWith {
-  situation: string;
+  rawText: string;
+  situation?: string | null;
   timeIn?: string | null;
   lookingFor?: 'advice' | 'support' | 'just_relating' | null;
 }

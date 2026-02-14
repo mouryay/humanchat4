@@ -67,8 +67,9 @@ const normalizeUpdatePayload = (body: unknown): Record<string, unknown> => {
 };
 
 const livedExperienceSchema = z.object({
-  type: z.string(),
-  situation: z.string(),
+  rawText: z.string(),
+  type: z.string().nullable().optional(),
+  situation: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
   timePeriod: z.string().nullable().optional(),
   status: z.enum(['resolved', 'ongoing', 'recurring']).nullable().optional(),
@@ -78,8 +79,9 @@ const livedExperienceSchema = z.object({
 });
 
 const productServiceSchema = z.object({
-  category: z.string(),
-  name: z.string(),
+  rawText: z.string(),
+  category: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
   duration: z.string().nullable().optional(),
   usageContext: z.string().nullable().optional(),
   opinion: z.string().nullable().optional(),
@@ -87,8 +89,9 @@ const productServiceSchema = z.object({
 });
 
 const placeKnownSchema = z.object({
-  type: z.string(),
-  name: z.string(),
+  rawText: z.string(),
+  type: z.string().nullable().optional(),
+  name: z.string().nullable().optional(),
   relationship: z.enum(['resident', 'former_resident', 'frequent_visitor', 'visitor']).nullable().optional(),
   timePeriod: z.string().nullable().optional(),
   insights: z.string().nullable().optional(),
@@ -96,14 +99,16 @@ const placeKnownSchema = z.object({
 });
 
 const interestHobbySchema = z.object({
-  name: z.string(),
+  rawText: z.string(),
+  name: z.string().nullable().optional(),
   engagement: z.enum(['casual', 'regular', 'serious']).nullable().optional(),
   skillLevel: z.enum(['beginner', 'intermediate', 'expert']).nullable().optional(),
   lookingTo: z.enum(['learn', 'share', 'collaborate', 'just_enjoy']).nullable().optional()
 });
 
 const currentlyDealingWithSchema = z.object({
-  situation: z.string(),
+  rawText: z.string(),
+  situation: z.string().nullable().optional(),
   timeIn: z.string().nullable().optional(),
   lookingFor: z.enum(['advice', 'support', 'just_relating']).nullable().optional()
 });

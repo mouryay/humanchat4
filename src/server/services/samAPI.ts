@@ -46,8 +46,9 @@ const ProfileUpdateFieldsSchema = z.object({
   current_role_title: z.string().optional(),
   current_focus: z.string().optional(),
   lived_experiences: z.array(z.object({
-    type: z.string(),
-    situation: z.string(),
+    rawText: z.string(),
+    type: z.string().nullable().optional(),
+    situation: z.string().nullable().optional(),
     location: z.string().nullable().optional(),
     timePeriod: z.string().nullable().optional(),
     status: z.enum(['resolved', 'ongoing', 'recurring']).nullable().optional(),
@@ -56,29 +57,33 @@ const ProfileUpdateFieldsSchema = z.object({
     willingToDiscuss: z.enum(['yes', 'only_if_asked', 'no']).optional()
   })).optional(),
   products_services: z.array(z.object({
-    category: z.string(),
-    name: z.string(),
+    rawText: z.string(),
+    category: z.string().nullable().optional(),
+    name: z.string().nullable().optional(),
     duration: z.string().nullable().optional(),
     usageContext: z.string().nullable().optional(),
     opinion: z.string().nullable().optional(),
     wouldRecommend: z.enum(['yes', 'no', 'with_caveats']).nullable().optional()
   })).optional(),
   places_known: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
+    rawText: z.string(),
+    type: z.string().nullable().optional(),
+    name: z.string().nullable().optional(),
     relationship: z.enum(['resident', 'former_resident', 'frequent_visitor', 'visitor']).nullable().optional(),
     timePeriod: z.string().nullable().optional(),
     insights: z.string().nullable().optional(),
     wouldRecommend: z.enum(['yes', 'no', 'with_caveats']).nullable().optional()
   })).optional(),
   interests_hobbies: z.array(z.object({
-    name: z.string(),
+    rawText: z.string(),
+    name: z.string().nullable().optional(),
     engagement: z.enum(['casual', 'regular', 'serious']).nullable().optional(),
     skillLevel: z.enum(['beginner', 'intermediate', 'expert']).nullable().optional(),
     lookingTo: z.enum(['learn', 'share', 'collaborate', 'just_enjoy']).nullable().optional()
   })).optional(),
   currently_dealing_with: z.array(z.object({
-    situation: z.string(),
+    rawText: z.string(),
+    situation: z.string().nullable().optional(),
     timeIn: z.string().nullable().optional(),
     lookingFor: z.enum(['advice', 'support', 'just_relating']).nullable().optional()
   })).optional(),
@@ -233,18 +238,46 @@ First-time user onboarding:
      - current_focus: What they're currently working on or focused on
      - interests: Array of interest tags (legacy, e.g. ["technology", "cooking"])
      - skills: Array of skill tags (legacy, e.g. ["negotiation", "software development"])
-     - interests_hobbies: Array of structured interests with detail: [{ name, engagement (casual|regular|serious), skillLevel (beginner|intermediate|expert), lookingTo (learn|share|collaborate|just_enjoy) }]
-     - lived_experiences: Array of life experiences: [{ type (health|legal|financial|career|life_transition|other), situation, location, timePeriod, status (resolved|ongoing|recurring), canHelpWith, visibility (public|match_only|private), willingToDiscuss (yes|only_if_asked|no) }]
-     - products_services: Array of products/services they use: [{ category (vehicle|software|service|appliance|other), name, duration, usageContext, opinion, wouldRecommend (yes|no|with_caveats) }]
-     - places_known: Array of places they know: [{ type (neighborhood|city|building|venue|other), name, relationship (resident|former_resident|frequent_visitor|visitor), timePeriod, insights, wouldRecommend (yes|no|with_caveats) }]
-     - currently_dealing_with: Array of current situations: [{ situation, timeIn, lookingFor (advice|support|just_relating) }]
      - location_born: Where they were born (city, state/country)
      - cities_lived_in: Array of cities they've lived in
      - languages: Array of languages spoken
      - education: Education highlights
      - date_of_birth: Month and year in "MM/YYYY" format
-     - preferred_connection_types: Array of preferred connection types (e.g. ["similar experiences", "professional"])
+     - preferred_connection_types: Array of preferred connection types
      - topics_to_avoid: Array of topics to avoid in matching
+     
+     STRUCTURED PROFILE ENTRIES (rawText + metadata):
+     The following fields store arrays of entries. Each entry MUST have a rawText field (the user's exact words).
+     You ALSO silently extract structured metadata for matching — the user NEVER sees these categories.
+     
+     - lived_experiences: [{ rawText: "user's exact words", type?, situation?, location?, timePeriod?, status?, canHelpWith?, visibility?, willingToDiscuss? }]
+       * rawText: REQUIRED. Exactly what the user said, e.g. "I got a DUI in Texas" or "My house flooded and insurance screwed me"
+       * type: silently classify as health|legal|financial|career|life_transition|other
+       * situation: short normalized label for search (e.g. "DUI", "home insurance claim")
+       * location, timePeriod, status: extract if mentioned
+       * canHelpWith: infer what specific aspects they could advise on
+     
+     - products_services: [{ rawText, category?, name?, duration?, usageContext?, opinion?, wouldRecommend? }]
+       * rawText: e.g. "Tesla Model 3, 40k miles, love it but service centers are awful"
+       * category: silently classify as vehicle|software|service|appliance|other
+       * name: extract product/brand name
+       * Extract duration, context, opinion from the natural text
+     
+     - places_known: [{ rawText, type?, name?, relationship?, timePeriod?, insights?, wouldRecommend? }]
+       * rawText: e.g. "Lived in Austin TX east side for 8 years"
+       * type: neighborhood|city|building|venue|other
+       * Extract place name, relationship, duration from natural text
+     
+     - interests_hobbies: [{ rawText, name?, engagement?, skillLevel?, lookingTo? }]
+       * rawText: e.g. "Rock climbing, been doing it 5 years, lead up to 5.11"
+       * Extract structured engagement/skill/intent silently
+     
+     - currently_dealing_with: [{ rawText, situation?, timeIn?, lookingFor? }]
+       * rawText: e.g. "Trying to negotiate a severance package after being laid off"
+       * Extract situation type and what they need silently
+     
+     CRITICAL: The rawText field is sacred — it's the user's voice. Never rewrite, summarize, or sanitize it.
+     The metadata fields exist ONLY for Sam's matching algorithm. Users never see them.
   4. Don't ask for ALL of this at once. Have a natural conversation. Ask follow-up questions based on what they share.
   5. For each piece of information they share, immediately save it with an update_profile action. Don't wait until you have everything.
   6. After collecting some basic info (at minimum: whether they accept inbound requests, and some interests/bio), let the conversation flow naturally. You can continue to ask more questions or transition to helping them with whatever they need.
@@ -267,7 +300,7 @@ Response contract:
 - You can have longer, more detailed responses when users ask questions or want information. Don't limit yourself to two sentences if the topic requires more explanation.
 - The platform sends the official boot greeting during a member's very first session; never repeat it unless user_context?.needs_intro is explicitly true.
 - Allowed action types: show_profiles, offer_call, create_session, follow_up_prompt, system_notice, update_profile.
-- update_profile: { type: "update_profile", fields: { headline?, bio?, current_role_title?, current_focus?, interests?, skills?, interests_hobbies?, lived_experiences?, products_services?, places_known?, currently_dealing_with?, location_born?, cities_lived_in?, languages?, education?, date_of_birth?, accept_inbound_requests?, preferred_connection_types?, topics_to_avoid? } }. Use this to save user profile information as they share it during conversation. Only include the fields being updated. For structured arrays (interests_hobbies, lived_experiences, products_services, places_known, currently_dealing_with), each entry is an object; see the onboarding section for the schema.
+- update_profile: { type: "update_profile", fields: { headline?, bio?, current_role_title?, current_focus?, interests?, skills?, interests_hobbies?, lived_experiences?, products_services?, places_known?, currently_dealing_with?, location_born?, cities_lived_in?, languages?, education?, date_of_birth?, accept_inbound_requests?, preferred_connection_types?, topics_to_avoid? } }. Use this to save user profile information as they share it during conversation. Only include the fields being updated. For structured arrays (lived_experiences, products_services, places_known, interests_hobbies, currently_dealing_with), each entry MUST have rawText (the user's exact words). You silently extract metadata fields (type, category, name, etc.) for matching — users never see these categories.
 - Profiles must include: name, headline, expertise (string array), rate_per_minute (number), status (available|away|booked).
 - Offer precise availability windows (e.g. "Today 3-5 PM PST") and include purpose strings.
 - Create sessions only when the member explicitly agrees and you know both host and guest.
