@@ -20,6 +20,7 @@ interface SessionViewProps {
   messages: Message[];
   registerScrollContainer: (node: HTMLDivElement | null) => void;
   onScrollToLatest?: () => void;
+  isMobile?: boolean;
 }
 
 const isUserMessage = (message: Message, conversation: Conversation) => {
@@ -35,7 +36,7 @@ const formatCountdown = (target: number) => {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 };
 
-export default function SessionView({ conversation, session, invite, messages, registerScrollContainer, onScrollToLatest }: SessionViewProps) {
+export default function SessionView({ conversation, session, invite, messages, registerScrollContainer, onScrollToLatest, isMobile }: SessionViewProps) {
   const [now, setNow] = useState(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const [callSummary, setCallSummary] = useState<(CallEndSummary & { peerName?: string }) | null>(null);
@@ -97,7 +98,7 @@ export default function SessionView({ conversation, session, invite, messages, r
   const isInProgress = session?.status === 'in_progress';
   const isComplete = session?.status === 'complete';
   const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
-  const shouldShowInvitePanel = Boolean(invite);
+  const shouldShowInvitePanel = Boolean(invite) && !isMobile;
   const invitePanel = shouldShowInvitePanel && invite ? <InstantInvitePanel invite={invite} currentUserId={currentUserId} /> : null;
   const peerLabel = useMemo(() => {
     const peer = conversation.participants.find((participant) => participant !== currentUserId);

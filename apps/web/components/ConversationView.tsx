@@ -290,6 +290,7 @@ export default function ConversationView({
                 messages={messages}
                 registerScrollContainer={registerScrollContainer}
                 onScrollToLatest={scrollToLatest}
+                isMobile={isMobile}
               />
             )}
           </div>

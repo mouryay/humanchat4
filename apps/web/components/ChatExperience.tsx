@@ -114,6 +114,43 @@ const ChatShell = () => {
     setMobileDrawer('none');
   };
 
+  // Track mobileDrawer in a ref so callbacks don't capture stale closure values
+  const mobileDrawerRef = useRef(mobileDrawer);
+  mobileDrawerRef.current = mobileDrawer;
+
+  // Track sidebarProfiles for swipe-open hint
+  const sidebarProfilesRef = useRef(sidebarProfiles);
+  sidebarProfilesRef.current = sidebarProfiles;
+
+  // Right-edge swipe to open profiles drawer
+  const rightSwipeStart = useRef<{ x: number; y: number } | null>(null);
+  const handleRightEdgeTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const screenWidth = window.innerWidth;
+    // Only trigger from the right 20px edge
+    if (touch.clientX >= screenWidth - 20 && sidebarProfilesRef.current.length > 0) {
+      rightSwipeStart.current = { x: touch.clientX, y: touch.clientY };
+    }
+  }, []);
+
+  const handleRightEdgeTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!rightSwipeStart.current) return;
+    const touch = e.touches[0];
+    const dx = rightSwipeStart.current.x - touch.clientX;
+    const dy = Math.abs(touch.clientY - rightSwipeStart.current.y);
+    // Swiped left at least 50px with mostly horizontal movement
+    if (dx > 50 && dy < dx) {
+      rightSwipeStart.current = null;
+      if (mobileDrawerRef.current === 'none') {
+        setMobileDrawer('profiles');
+      }
+    }
+  }, []);
+
+  const handleRightEdgeTouchEnd = useCallback(() => {
+    rightSwipeStart.current = null;
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
@@ -272,7 +309,12 @@ const ChatShell = () => {
         )}
 
         {isMobile ? (
-          <section className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden max-h-full">
+          <section
+            className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden max-h-full"
+            onTouchStart={handleRightEdgeTouchStart}
+            onTouchMove={handleRightEdgeTouchMove}
+            onTouchEnd={handleRightEdgeTouchEnd}
+          >
             <ConversationView
               key={`mobile-${activeConversationId ?? samConversationId}`}
               activeConversationId={activeConversationId ?? samConversationId}
@@ -283,7 +325,7 @@ const ChatShell = () => {
               onSidebarProfilesChange={(profiles) => {
                 setSidebarProfiles(profiles);
                 // Auto-open profiles drawer when new profiles arrive on mobile
-                if (profiles.length > 0 && mobileDrawer === 'none') {
+                if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
                   setMobileDrawer('profiles');
                 }
               }}
@@ -405,15 +447,8 @@ const ChatShell = () => {
                 style={{ backgroundColor: '#05060a' }}
               >
                 <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
+                  <div className="border-b border-white/10 px-4 py-3">
                     <span className="text-xs uppercase tracking-[0.3em] text-white/50">People</span>
-                    <button
-                      type="button"
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
-                      onClick={handleCloseDrawers}
-                    >
-                      Close
-                    </button>
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <ProfileSidebar

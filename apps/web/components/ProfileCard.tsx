@@ -127,12 +127,12 @@ export default function ProfileCard({
     }, []);
   }, [profile]);
 
-  const renderActions = () => (
-    <div className="flex gap-3">
+  const renderActions = (compact = false) => (
+    <div className="flex gap-2 w-full">
       {!managedConfidential && (
-        <div className="relative group">
+        <div className="relative group flex-1 min-w-0">
           <button
-            className="btn-premium btn-premium-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full font-semibold rounded-xl transition-all duration-base ease-out bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
             type="button"
             disabled={!canInstantConnect || Boolean(isConnecting)}
             onClick={() => canInstantConnect && !isConnecting && onConnectNow?.(profile)}
@@ -146,50 +146,61 @@ export default function ProfileCard({
           )}
         </div>
       )}
-      <button 
-        className={`btn-premium ${managedConfidential ? 'bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30' : 'btn-premium-secondary'}`}
-        type="button" 
-        onClick={() => onBookTime?.(profile)}
-      >
-        {secondaryLabel}
-      </button>
+      <div className="flex-1 min-w-0">
+        <button 
+          className={`w-full font-semibold rounded-xl transition-all duration-base ease-out disabled:opacity-50 disabled:cursor-not-allowed ${managedConfidential ? 'bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30' : 'bg-background-tertiary text-text-primary border border-border-medium hover:bg-background-hover hover:border-border-strong'} ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
+          type="button" 
+          onClick={() => onBookTime?.(profile)}
+        >
+          {secondaryLabel}
+        </button>
+      </div>
     </div>
   );
 
   return (
     <>
       {/* Premium Profile Card */}
-      <article className="card-premium p-6 w-full max-w-sm">
+      <article className="card-premium p-4 w-full">
         {/* Header with avatar and name */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <img 
             src={avatarSrc} 
             alt={profile.name} 
-            className="h-16 w-16 avatar-chamfered object-cover ring-2 ring-border-subtle" 
+            className="h-12 w-12 avatar-chamfered object-cover ring-2 ring-border-subtle flex-shrink-0" 
             loading="lazy" 
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-text-primary truncate">{profile.name}</h3>
-            <p className="text-sm text-text-secondary truncate">{headlineCopy}</p>
+            <h3 className="text-base font-semibold text-text-primary truncate">{profile.name}</h3>
+            <p className="text-xs text-text-secondary truncate">{headlineCopy}</p>
           </div>
         </div>
 
         {/* Status Badge */}
-        <div className="mb-4">
-        <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
+        <div className="mb-3">
+          <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
+        </div>
+
+        {/* Rate display (compact) */}
+        <div className="mb-3">
+          <RateDisplay
+            conversationType={profile.conversationType}
+            confidentialRate={profile.confidentialRate}
+            displayMode={profile.displayMode}
+            instantRatePerMinute={profile.instantRatePerMinute}
+            scheduledRates={profile.scheduledRates}
+            isOnline={isOnline}
+            charityName={profile.charityName}
+            donationPreference={profile.donationPreference}
+          />
         </div>
 
         {/* Actions */}
-        {renderActions()}
-
-        {/* Contribution Blurb */}
-        {contributionBlurb && (
-          <p className="mt-4 text-sm text-text-secondary leading-relaxed">{contributionBlurb}</p>
-        )}
+        {renderActions(true)}
 
         {/* See Full Profile Button */}
         <button 
-          className="mt-4 w-full text-sm font-medium text-accent-primary hover:text-accent-hover transition-colors duration-base"
+          className="mt-3 w-full text-xs font-medium text-accent-primary hover:text-accent-hover transition-colors duration-base"
           type="button" 
           onClick={() => setShowDetails(true)}
         >
@@ -206,12 +217,12 @@ export default function ProfileCard({
           onClick={() => setShowDetails(false)}
         >
           <div 
-            className="card-premium p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="relative card-premium p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
             {/* Close Button */}
             <button 
-              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-lg bg-background-tertiary hover:bg-background-hover text-text-secondary hover:text-text-primary transition-all duration-base"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all duration-base z-10"
               type="button" 
               aria-label="Close profile" 
               onClick={() => setShowDetails(false)}
@@ -220,22 +231,30 @@ export default function ProfileCard({
             </button>
 
             {/* Header */}
-            <div className="flex items-center gap-6 mb-6">
+            <div className="flex items-center gap-5 mb-5">
               <img 
                 src={avatarSrc} 
                 alt={profile.name} 
-                className="h-20 w-20 avatar-chamfered object-cover ring-2 ring-border-medium" 
+                className="h-16 w-16 sm:h-20 sm:w-20 avatar-chamfered object-cover ring-2 ring-border-medium flex-shrink-0" 
               />
-              <div className="flex-1">
-                <h2 className="text-2xl font-semibold text-text-primary mb-1">{profile.name}</h2>
-                <p className="text-base text-text-secondary">{headlineCopy}</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-1 truncate">{profile.name}</h2>
+                <p className="text-sm text-text-secondary">{headlineCopy}</p>
+                <div className="mt-2">
+                  <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
+                </div>
               </div>
             </div>
 
-            {/* Body */}
-            <div className="space-y-6">
-              <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
-              
+            {/* Bio */}
+            {profile.bio && (
+              <div className="mb-5">
+                <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">{profile.bio}</p>
+              </div>
+            )}
+
+            {/* Rate & Pricing */}
+            <div className="mb-5">
               <RateDisplay
                 conversationType={profile.conversationType}
                 confidentialRate={profile.confidentialRate}
@@ -246,33 +265,35 @@ export default function ProfileCard({
                 charityName={profile.charityName}
                 donationPreference={profile.donationPreference}
               />
-              
-              {contributionBlurb && (
-                <p className="text-sm text-text-secondary leading-relaxed">{contributionBlurb}</p>
-              )}
-
-              {socialLinks.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-text-primary mb-3">Find them online</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {socialLinks.map((link) => (
-                      <a 
-                        key={link.key} 
-                        href={link.url} 
-                        className="flex flex-col gap-1 p-3 rounded-lg border border-border-subtle bg-background-secondary/50 hover:bg-background-hover hover:border-border-medium transition-all duration-base"
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        <span className="text-xs text-text-tertiary">{link.label}</span>
-                        <span className="text-sm text-accent-primary font-medium truncate">{link.display}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {renderActions()}
             </div>
+
+            {contributionBlurb && (
+              <p className="mb-5 text-sm text-text-tertiary leading-relaxed">{contributionBlurb}</p>
+            )}
+
+            {/* Social Links */}
+            {socialLinks.length > 0 && (
+              <div className="mb-5">
+                <h4 className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Links</h4>
+                <div className="flex flex-wrap gap-2">
+                  {socialLinks.map((link) => (
+                    <a 
+                      key={link.key} 
+                      href={link.url} 
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-sm text-accent-primary hover:text-accent-hover transition-all duration-base"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <span className="text-white/40 text-xs">{link.label}</span>
+                      <span className="font-medium truncate max-w-[140px]">{link.display}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            {renderActions()}
           </div>
         </div>
       )}
