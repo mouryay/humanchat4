@@ -10,6 +10,8 @@ import ProfileSidebar from './ProfileSidebar';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useConversationData } from '../hooks/useConversationData';
 import { useChatRequests } from '../hooks/useChatRequests';
+import { usePendingInvites } from '../hooks/usePendingInvites';
+import { acceptInstantInvite, declineInstantInvite } from '../services/instantInviteApi';
 import { fetchUserProfile, type UserProfile } from '../services/profileApi';
 import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../constants/events';
 import { PENDING_INVITE_CONVERSATION_KEY } from '../constants/storageKeys';
@@ -35,6 +37,8 @@ const ChatShell = () => {
     updateStatus,
     updatingId
   } = useChatRequests();
+  const { invitesByConversation, refresh: refreshInvites } = usePendingInvites();
+  const [inviteActionPendingId, setInviteActionPendingId] = useState<string | null>(null);
   const fetchedRequestersRef = useRef<Set<string>>(new Set());
   const [requesterProfiles, setRequesterProfiles] = useState<
     Record<string, Pick<UserProfile, 'name' | 'headline' | 'avatarUrl'>>
@@ -277,6 +281,37 @@ const ChatShell = () => {
     [isMobile, updateStatus]
   );
 
+  const handleInviteAccept = useCallback(
+    async (inviteId: string) => {
+      setInviteActionPendingId(inviteId);
+      try {
+        const { conversationId } = await acceptInstantInvite(inviteId);
+        await refreshInvites();
+        focusConversation(conversationId);
+      } catch (err) {
+        console.error('[ChatExperience] Failed to accept invite', err);
+      } finally {
+        setInviteActionPendingId((prev) => (prev === inviteId ? null : prev));
+      }
+    },
+    [focusConversation, refreshInvites]
+  );
+
+  const handleInviteDecline = useCallback(
+    async (inviteId: string) => {
+      setInviteActionPendingId(inviteId);
+      try {
+        await declineInstantInvite(inviteId);
+        await refreshInvites();
+      } catch (err) {
+        console.error('[ChatExperience] Failed to decline invite', err);
+      } finally {
+        setInviteActionPendingId((prev) => (prev === inviteId ? null : prev));
+      }
+    },
+    [refreshInvites]
+  );
+
   return (
     <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden')}>
       {isTablet && (
@@ -304,6 +339,10 @@ const ChatShell = () => {
               requestError={requestsError}
               onRequestAction={handleRequestAction}
               requestActionPendingId={updatingId}
+              pendingInvites={invitesByConversation}
+              onInviteAccept={handleInviteAccept}
+              onInviteDecline={handleInviteDecline}
+              inviteActionPendingId={inviteActionPendingId}
             />
           </div>
         )}
@@ -371,6 +410,10 @@ const ChatShell = () => {
                       requestError={requestsError}
                       onRequestAction={handleRequestAction}
                       requestActionPendingId={updatingId}
+                      pendingInvites={invitesByConversation}
+                      onInviteAccept={handleInviteAccept}
+                      onInviteDecline={handleInviteDecline}
+                      inviteActionPendingId={inviteActionPendingId}
                     />
                   </div>
                 </div>

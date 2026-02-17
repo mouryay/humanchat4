@@ -1,4 +1,4 @@
-import { db, saveInstantInvite } from '../../../src/lib/db';
+import { db, saveInstantInvite, type InstantInvite } from '../../../src/lib/db';
 import {
   mapConversationRecord,
   mapInviteRecord,
@@ -53,6 +53,18 @@ const upsertSession = async (record: SessionRecord): Promise<void> => {
 const upsertInvite = async (record: InstantInviteRecord): Promise<void> => {
   const mapped = mapInviteRecord(record);
   await saveInstantInvite(mapped);
+};
+
+export const fetchPendingInvites = async (): Promise<InstantInvite[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/conversations/invites/pending`, {
+    credentials: 'include'
+  });
+  const payload = await parseResponse<{ invites: InstantInviteRecord[] }>(response);
+  const mapped = (payload.invites ?? []).map(mapInviteRecord);
+  for (const invite of mapped) {
+    await saveInstantInvite(invite);
+  }
+  return mapped;
 };
 
 export const acceptInstantInvite = async (inviteId: string): Promise<{ conversationId: string; sessionId: string }> => {

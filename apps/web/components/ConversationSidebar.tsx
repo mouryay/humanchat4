@@ -5,7 +5,7 @@ import { useMemo, useRef, useState } from 'react';
 import ConversationListItem from './ConversationListItem';
 import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
-import { deleteConversationCascade, type ChatRequest } from '../../../src/lib/db';
+import { deleteConversationCascade, type ChatRequest, type InstantInvite } from '../../../src/lib/db';
 import styles from './ConversationSidebar.module.css';
 
 interface ConversationSidebarProps {
@@ -18,6 +18,10 @@ interface ConversationSidebarProps {
   requestError?: string | null;
   onRequestAction?: (requestId: string, status: ChatRequest['status']) => Promise<unknown> | void;
   requestActionPendingId?: string | null;
+  pendingInvites?: Map<string, InstantInvite>;
+  onInviteAccept?: (inviteId: string) => Promise<unknown> | void;
+  onInviteDecline?: (inviteId: string) => Promise<unknown> | void;
+  inviteActionPendingId?: string | null;
 }
 
 const formatRelativeTime = (timestamp: number): string => {
@@ -37,7 +41,11 @@ export default function ConversationSidebar({
   requestLoading,
   requestError,
   onRequestAction,
-  requestActionPendingId
+  requestActionPendingId,
+  pendingInvites,
+  onInviteAccept,
+  onInviteDecline,
+  inviteActionPendingId
 }: ConversationSidebarProps) {
   const { conversations, hasHumanConversations, error, reload, refreshing } = useConversationData();
   const { archive, unarchive, isArchived } = useArchivedConversations();
@@ -214,7 +222,17 @@ export default function ConversationSidebar({
                 </li>
               );
             })}
-            {visibleHumanEntries.map((entry) => (
+            {visibleHumanEntries.map((entry) => {
+              const invite = pendingInvites?.get(entry.conversation.conversationId);
+              const inviteOverlay = invite
+                ? {
+                    requestId: invite.inviteId,
+                    onAccept: () => onInviteAccept?.(invite.inviteId),
+                    onDecline: () => onInviteDecline?.(invite.inviteId),
+                    isPending: inviteActionPendingId === invite.inviteId
+                  }
+                : undefined;
+              return (
                   <li key={entry.conversation.conversationId} className="px-4 mb-1">
               <ConversationListItem
                 entry={entry}
@@ -224,9 +242,11 @@ export default function ConversationSidebar({
                 onDelete={handleDeleteRequest}
                 deletePending={deletingId === entry.conversation.conversationId}
                 showMetadata={!collapsed}
+                pendingRequest={inviteOverlay}
               />
                   </li>
-            ))}
+              );
+            })}
           </ul>
 
           {hasMore && (

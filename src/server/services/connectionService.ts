@@ -119,12 +119,6 @@ const assertConnectable = (requester: User, target: User): void => {
   if (requiresRequestWorkflow(target)) {
     throw new ApiError(409, 'REQUEST_REQUIRED', 'Please send a private request so their team can coordinate the chat.');
   }
-  if (!target.is_online) {
-    throw new ApiError(409, 'TARGET_OFFLINE', `${target.name ?? 'That member'} is offline right now.`);
-  }
-  if (target.has_active_session) {
-    throw new ApiError(409, 'TARGET_BUSY', `${target.name ?? 'That member'} is already in a session.`);
-  }
   if (requester.has_active_session) {
     throw new ApiError(409, 'REQUESTER_BUSY', 'You are already in a session.');
   }
@@ -169,22 +163,24 @@ export const initiateInstantConnection = async (
 
     const paymentMode = derivePaymentMode(target);
     const now = new Date();
-    const startTime = now.toISOString();
-    const ratePerMinute = target.instant_rate_per_minute ?? 0;
-    const agreedPrice = paymentMode === 'free' ? 0 : Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
+    const targetAvailable = Boolean(target.is_online && !target.has_active_session);
 
-    if (paymentMode === 'free') {
+    // Always use invite flow: target must accept before a session starts.
+    // If target is offline the invite waits for them to come back online.
+    if (!targetAvailable || paymentMode === 'free') {
       const invite = await createInstantInvite(conversation, requester, target);
       const hydratedConversation: Conversation = {
         ...conversation,
         last_activity: now.toISOString()
       };
 
-      logger.info('Instant invite created for free flow', {
+      logger.info('Instant invite created', {
         requesterId,
         targetUserId,
         conversationId: hydratedConversation.id,
-        inviteId: invite.id
+        inviteId: invite.id,
+        targetOnline: target.is_online,
+        paymentMode
       });
 
       const conversationWithLabels = await attachParticipantLabels(hydratedConversation);
@@ -196,12 +192,16 @@ export const initiateInstantConnection = async (
       };
     }
 
+    // Paid + target online & free: create session immediately
+    const ratePerMinute = target.instant_rate_per_minute ?? 0;
+    const agreedPrice = Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
+
     const session = await createSessionRecord({
       host_user_id: targetUserId,
       guest_user_id: requesterId,
       conversation_id: conversation.id,
       type: 'instant',
-      start_time: startTime,
+      start_time: now.toISOString(),
       duration_minutes: INSTANT_SESSION_MINUTES,
       agreed_price: agreedPrice,
       payment_mode: paymentMode

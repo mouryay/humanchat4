@@ -7,7 +7,8 @@ import { createSessionRecord } from './sessionService.js';
 import { addConversationMessage, attachParticipantLabels } from './conversationService.js';
 import { logger } from '../utils/logger.js';
 
-const INVITE_TTL_MINUTES = 5;
+const INVITE_TTL_ONLINE_MINUTES = 5;
+const INVITE_TTL_OFFLINE_HOURS = 24;
 
 const cloneInvite = (invite: InstantInvite): InstantInvite => ({ ...invite });
 
@@ -100,9 +101,13 @@ export const createInstantInvite = async (
     return cloneInvite(existing);
   }
 
+  const ttlInterval = target.is_online
+    ? `${INVITE_TTL_ONLINE_MINUTES} minutes`
+    : `${INVITE_TTL_OFFLINE_HOURS} hours`;
+
   const insert = await query<InstantInvite>(
     `INSERT INTO instant_invites (conversation_id, requester_user_id, target_user_id, status, expires_at, metadata, created_at, updated_at)
-     VALUES ($1,$2,$3,'pending', NOW() + INTERVAL '${INVITE_TTL_MINUTES} minutes', $4, NOW(), NOW())
+     VALUES ($1,$2,$3,'pending', NOW() + INTERVAL '${ttlInterval}', $4, NOW(), NOW())
      RETURNING *`,
     [conversation.id, requester.id, target.id, JSON.stringify({ requester_name: requester.name ?? 'A member' })]
   );
@@ -220,6 +225,18 @@ export const acceptInstantInvite = async (
     ...result,
     conversation: enrichedConversation
   };
+};
+
+export const getPendingInvitesForUser = async (userId: string): Promise<InstantInvite[]> => {
+  const result = await query<InstantInvite>(
+    `SELECT * FROM instant_invites
+     WHERE target_user_id = $1
+       AND status = 'pending'
+       AND expires_at > NOW()
+     ORDER BY created_at DESC`,
+    [userId]
+  );
+  return result.rows;
 };
 
 export const declineInstantInvite = async (inviteId: string, targetUserId: string): Promise<InstantInvite> => {
