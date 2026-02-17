@@ -278,12 +278,17 @@ export default function SamChatView({
     const selfNames = new Set(
       Array.from(selfNameTokens).map((t) => t.trim().toLowerCase())
     );
-    const onlineById = new Map(onlineProfiles.map((p) => [p.userId, p]));
-    const onlineByName = new Map(
-      onlineProfiles
-        .filter((p) => p.name)
-        .map((p) => [p.name!.trim().toLowerCase(), p])
-    );
+    // Build lookup maps from both online and all platform profiles
+    const allKnown = [...onlineProfiles, ...allPlatformProfiles];
+    const knownById = new Map<string, ProfileSummary>();
+    const knownByName = new Map<string, ProfileSummary>();
+    allKnown.forEach((p) => {
+      if (p.userId && !knownById.has(p.userId)) knownById.set(p.userId, p);
+      if (p.name) {
+        const key = p.name.trim().toLowerCase();
+        if (!knownByName.has(key)) knownByName.set(key, p);
+      }
+    });
 
     orderedMessages.forEach((message) => {
       (message.actions ?? []).forEach((action) => {
@@ -295,8 +300,8 @@ export default function SamChatView({
             if (localUserId && p.userId === localUserId) return;
             if (p.name && selfNames.has(p.name.trim().toLowerCase())) return;
             // Hydrate with live data if available
-            const live = (p.userId && onlineById.get(p.userId)) ||
-              (p.name && onlineByName.get(p.name.trim().toLowerCase()));
+            const live = (p.userId && knownById.get(p.userId)) ||
+              (p.name && knownByName.get(p.name.trim().toLowerCase()));
             const hydrated = live ? {
               ...p,
               isOnline: live.isOnline ?? p.isOnline,
@@ -308,12 +313,28 @@ export default function SamChatView({
               seen.set(hydrated.userId, hydrated);
             }
           } else {
-            // SamShowcaseProfile - try to resolve from online directory
+            // SamShowcaseProfile - resolve from platform directory (online + offline)
             const showcase = profile as SamShowcaseProfile;
             if (showcase.name && selfNames.has(showcase.name.trim().toLowerCase())) return;
-            const match = onlineByName.get(showcase.name?.trim().toLowerCase() ?? '');
+            const nameKey = showcase.name?.trim().toLowerCase() ?? '';
+            const match = knownByName.get(nameKey);
             if (match && !seen.has(match.userId)) {
               seen.set(match.userId, match);
+            } else if (!match && nameKey) {
+              // No directory match — create a minimal ProfileSummary from showcase data
+              const syntheticId = `showcase-${nameKey}`;
+              if (!seen.has(syntheticId)) {
+                seen.set(syntheticId, {
+                  userId: syntheticId,
+                  name: showcase.name ?? 'Human',
+                  headline: showcase.headline,
+                  isOnline: showcase.status === 'available',
+                  hasActiveSession: showcase.status === 'booked',
+                  presenceState: showcase.status === 'available' ? 'active' : 'offline',
+                  instantRatePerMinute: showcase.rate_per_minute,
+                  conversationType: (showcase.rate_per_minute ?? 0) > 0 ? 'paid' : 'free'
+                });
+              }
             }
           }
         });
@@ -321,7 +342,7 @@ export default function SamChatView({
     });
 
     return Array.from(seen.values());
-  }, [orderedMessages, onlineProfiles, localUserId, selfNameTokens]);
+  }, [orderedMessages, onlineProfiles, allPlatformProfiles, localUserId, selfNameTokens]);
 
   // Notify parent of sidebar profiles
   const prevSidebarRef = useRef<string>('');
