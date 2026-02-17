@@ -10,8 +10,8 @@ import UserSettingsMenu from '../components/UserSettingsMenu';
 import CallNotificationListener from '../components/CallNotificationListener';
 
 export const metadata = {
-  title: 'HumanChat — Talk to Anyone, About Anything',
-  description: 'Meet Sam, your AI receptionist who connects you with real human experts in seconds.'
+  title: 'Done talking to AI? Come talk to a human.',
+  description: 'Real people, real trust, any topic, on demand.'
 };
 
 export const viewport = {
