@@ -429,11 +429,16 @@
 
   /* RESPONSIVE */
   @media (max-width: 700px) {
-    .slide { padding: 80px 24px 40px; }
+    .slide { padding: 80px 24px 40px; min-height: auto; }
     .two-col, .phases, .goal-grid, .ask-options { grid-template-columns: 1fr; }
+    /* Force all inline grids inside slides to single column on mobile */
+    .slide-inner > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
     nav { padding: 12px 20px; }
     .nav-dots { display: none; }
     .stat-strip { grid-template-columns: 1fr 1fr; }
+    .card { padding: 28px; }
+    #s1 { min-height: 100vh; }
+    #s10 { min-height: 100vh; }
   }
 </style>
 </head>
