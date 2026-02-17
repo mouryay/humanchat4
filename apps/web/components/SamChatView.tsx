@@ -184,6 +184,7 @@ export default function SamChatView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState(conversation.conversationId);
   const [onlineProfiles, setOnlineProfiles] = useState<ProfileSummary[]>([]);
+  const [allPlatformProfiles, setAllPlatformProfiles] = useState<ProfileSummary[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -352,6 +353,26 @@ export default function SamChatView({
     }
   }, [localUserId]);
 
+  const loadAllProfiles = useCallback(async (): Promise<ProfileSummary[]> => {
+    try {
+      const response = await fetchWithAuthRefresh(`${API_BASE_URL}/api/users/search`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to load platform members');
+      }
+      const payload = await response.json();
+      const directoryUsers = extractDirectoryUsers(payload);
+      return directoryUsers
+        .filter((user) => Boolean(user.id) && user.id !== localUserId)
+        .map((user) => mapDirectoryUser(user));
+    } catch (error) {
+      console.warn('Unable to load all platform members', error);
+      return [];
+    }
+  }, [localUserId]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -362,7 +383,15 @@ export default function SamChatView({
       }
     };
 
+    const hydrateAllProfiles = async () => {
+      const profiles = await loadAllProfiles();
+      if (!cancelled) {
+        setAllPlatformProfiles(profiles);
+      }
+    };
+
     void hydrateOnlineProfiles();
+    void hydrateAllProfiles();
     const interval = window.setInterval(() => {
       void hydrateOnlineProfiles();
     }, 60000);
@@ -371,28 +400,21 @@ export default function SamChatView({
       cancelled = true;
       clearInterval(interval);
     };
-  }, [loadOnlineProfiles]);
+  }, [loadOnlineProfiles, loadAllProfiles]);
 
   useEffect(() => {
     if (!localUserId || localUserId === 'user_local') {
       return;
     }
     setOnlineProfiles((profiles) => profiles.filter((profile) => profile.userId !== localUserId));
+    setAllPlatformProfiles((profiles) => profiles.filter((profile) => profile.userId !== localUserId));
   }, [localUserId]);
 
   const buildAvailableProfiles = useCallback(
-    (overrideOnline?: ProfileSummary[]) => {
+    (overrideOnline?: ProfileSummary[], overrideAll?: ProfileSummary[]) => {
       const registry = new Map<string, ShowcaseEntry>();
       const liveDirectory = (overrideOnline ?? onlineProfiles).filter(
         (profile) => profile.isOnline && !profile.hasActiveSession
-      );
-      const liveIdLookup = new Set(
-        liveDirectory.map((profile) => profile.userId).filter(Boolean) as string[]
-      );
-      const liveNameLookup = new Set(
-        liveDirectory
-          .map((profile) => profile.name?.trim().toLowerCase())
-          .filter((name): name is string => Boolean(name))
       );
       const selfNameLookup = new Set(selfNameTokens);
 
@@ -418,27 +440,16 @@ export default function SamChatView({
         registry.set(key, profile);
       };
 
+      // Register online/available profiles first (they get priority status)
       liveDirectory.map((profile) => profileSummaryToShowcase(profile)).forEach(register);
 
-      if (registry.size === 0 && (liveIdLookup.size > 0 || liveNameLookup.size > 0)) {
-        knownProfiles
-          .filter((profile) => profile.status === 'available')
-          .filter((profile) => {
-            if (profile.userId && liveIdLookup.size > 0) {
-              return liveIdLookup.has(profile.userId);
-            }
-            const normalizedName = profile.name?.trim().toLowerCase();
-            if (normalizedName && liveNameLookup.size > 0) {
-              return liveNameLookup.has(normalizedName);
-            }
-            return false;
-          })
-          .forEach(register);
-      }
+      // Then include ALL platform profiles (offline ones get 'away' status)
+      const allDirectory = overrideAll ?? allPlatformProfiles;
+      allDirectory.map((profile) => profileSummaryToShowcase(profile)).forEach(register);
 
       return Array.from(registry.values());
     },
-    [knownProfiles, localUserId, onlineProfiles, selfNameTokens]
+    [localUserId, onlineProfiles, allPlatformProfiles, selfNameTokens]
   );
 
   const handleContainerRef = useCallback(
@@ -558,12 +569,13 @@ export default function SamChatView({
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     let availableProfiles = buildAvailableProfiles();
-    const hasDirectoryProfiles = knownProfiles.length > 0 || onlineProfiles.length > 0;
+    const hasDirectoryProfiles = knownProfiles.length > 0 || onlineProfiles.length > 0 || allPlatformProfiles.length > 0;
     if (!hasDirectoryProfiles) {
-      const refreshed = await loadOnlineProfiles();
-      if (refreshed.length > 0) {
-        setOnlineProfiles(refreshed);
-        availableProfiles = buildAvailableProfiles(refreshed);
+      const [refreshedOnline, refreshedAll] = await Promise.all([loadOnlineProfiles(), loadAllProfiles()]);
+      if (refreshedOnline.length > 0) setOnlineProfiles(refreshedOnline);
+      if (refreshedAll.length > 0) setAllPlatformProfiles(refreshedAll);
+      if (refreshedOnline.length > 0 || refreshedAll.length > 0) {
+        availableProfiles = buildAvailableProfiles(refreshedOnline, refreshedAll);
       }
     }
 
