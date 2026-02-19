@@ -12,6 +12,7 @@ interface ProfileSidebarProps {
   onBookTime?: (profile: ProfileSummary) => void;
   connectingProfileId?: string | null;
   hideHeader?: boolean;
+  label?: string;
 }
 
 export default function ProfileSidebar({
@@ -19,7 +20,8 @@ export default function ProfileSidebar({
   onConnectNow,
   onBookTime,
   connectingProfileId,
-  hideHeader = false
+  hideHeader = false,
+  label
 }: ProfileSidebarProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -42,7 +44,7 @@ export default function ProfileSidebar({
       {!hideHeader && (
         <div className="border-b border-white/10 px-4 py-3">
           <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-            Recommended people
+            {label ?? 'Recommended people'}
           </p>
         </div>
       )}

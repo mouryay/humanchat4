@@ -47,6 +47,7 @@ const ChatShell = () => {
     Record<string, Pick<UserProfile, 'name' | 'headline' | 'avatarUrl'>>
   >({});
   const [sidebarProfiles, setSidebarProfiles] = useState<ProfileSummary[]>([]);
+  const [sidebarSource, setSidebarSource] = useState<'seeded' | 'sam'>('seeded');
   const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null);
   const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
   const [requestProfile, setRequestProfile] = useState<ProfileSummary | null>(null);
@@ -466,6 +467,7 @@ const ChatShell = () => {
               onSidebarProfilesChange={(profiles) => {
                 if (profiles.length > 0) {
                   setSidebarProfiles(profiles);
+                  setSidebarSource('sam');
                 }
                 if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
                   setMobileDrawer('profiles');
@@ -597,7 +599,7 @@ const ChatShell = () => {
               >
                 <div className="flex h-full flex-col">
                   <div className="border-b border-white/10 px-4 py-3">
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">People</span>
+                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'New on the platform' : 'People'}</span>
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <ProfileSidebar
@@ -622,6 +624,7 @@ const ChatShell = () => {
                 onSidebarProfilesChange={(profiles) => {
                   if (profiles.length > 0) {
                     setSidebarProfiles(profiles);
+                    setSidebarSource('sam');
                   }
                 }}
               />
@@ -640,6 +643,7 @@ const ChatShell = () => {
                 onConnectNow={handleSidebarConnectNow}
                 onBookTime={handleSidebarBookTime}
                 connectingProfileId={connectingProfileId}
+                label={sidebarSource === 'seeded' ? 'New on the platform' : undefined}
               />
             </aside>
           </>
