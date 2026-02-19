@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import type { ProfileSummary } from '../../../src/lib/db';
 import ProfileCard from './ProfileCard';
+
+const DEFAULT_VISIBLE = 5;
 
 interface ProfileSidebarProps {
   profiles: ProfileSummary[];
@@ -18,6 +21,8 @@ export default function ProfileSidebar({
   connectingProfileId,
   hideHeader = false
 }: ProfileSidebarProps) {
+  const [expanded, setExpanded] = useState(false);
+
   if (profiles.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
@@ -29,6 +34,9 @@ export default function ProfileSidebar({
     );
   }
 
+  const visible = expanded ? profiles : profiles.slice(0, DEFAULT_VISIBLE);
+  const hasMore = profiles.length > DEFAULT_VISIBLE && !expanded;
+
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
@@ -39,7 +47,7 @@ export default function ProfileSidebar({
         </div>
       )}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {profiles.map((profile) => (
+        {visible.map((profile) => (
           <ProfileCard
             key={profile.userId}
             profile={profile}
@@ -48,6 +56,15 @@ export default function ProfileSidebar({
             isConnecting={connectingProfileId === profile.userId}
           />
         ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="w-full py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-150"
+          >
+            Show more ({profiles.length - DEFAULT_VISIBLE})
+          </button>
+        )}
       </div>
     </div>
   );

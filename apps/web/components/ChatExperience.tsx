@@ -464,12 +464,9 @@ const ChatShell = () => {
               onBack={handleShowConversationDrawer}
               onShowProfilePanel={handleShowProfileDrawer}
               onSidebarProfilesChange={(profiles) => {
-                setSidebarProfiles((prev) => {
-                  if (profiles.length === 0) return prev;
-                  const ids = new Set(profiles.map((p) => p.userId));
-                  const kept = prev.filter((p) => !ids.has(p.userId));
-                  return [...profiles, ...kept];
-                });
+                if (profiles.length > 0) {
+                  setSidebarProfiles(profiles);
+                }
                 if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
                   setMobileDrawer('profiles');
                 }
@@ -623,13 +620,10 @@ const ChatShell = () => {
                 activeConversationId={activeConversationId}
                 onSelectConversation={handleSelectConversation}
                 onSidebarProfilesChange={(profiles) => {
-                  setSidebarProfiles((prev) => {
-                    if (profiles.length === 0) return prev;
-                    const ids = new Set(profiles.map((p) => p.userId));
-                    const kept = prev.filter((p) => !ids.has(p.userId));
-                    return [...profiles, ...kept];
-                  });
-                }}
+                  if (profiles.length > 0) {
+                    setSidebarProfiles(profiles);
+                  }
+                }
               />
             </section>
             <aside
