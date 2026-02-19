@@ -598,7 +598,7 @@ const ChatShell = () => {
                 onTouchEnd={handleDrawerTouchEnd}
               >
                 <div className="flex h-full flex-col">
-                  <div className="border-b border-white/10 px-4 py-3">
+                  <div className="px-4 py-3">
                     <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'New on the platform' : 'People'}</span>
                   </div>
                   <div className="flex-1 overflow-y-auto">

@@ -130,7 +130,6 @@ html[data-contrast='high'] {
   .card-premium {
     @apply bg-gradient-to-br from-gray-900 to-gray-800;
     @apply backdrop-blur-xl;
-    @apply border border-white/10;
     @apply rounded-2xl;
     @apply shadow-2xl shadow-black/20;
     @apply transition-all duration-slow ease-out;
@@ -138,7 +137,6 @@ html[data-contrast='high'] {
 
   .card-premium:hover {
     @apply shadow-blue-500/20 shadow-2xl;
-    @apply border-white/20;
     @apply -translate-y-1;
   }
 

@@ -42,7 +42,7 @@ export default function ProfileSidebar({
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
-        <div className="border-b border-white/10 px-4 py-3">
+        <div className="px-4 py-3">
           <p className="text-xs uppercase tracking-[0.3em] text-white/50">
             {label ?? 'Recommended people'}
           </p>
@@ -62,7 +62,7 @@ export default function ProfileSidebar({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="w-full py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 transition-all duration-150"
+            className="w-full py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.08] transition-all duration-150"
           >
             Show more ({profiles.length - DEFAULT_VISIBLE})
           </button>
