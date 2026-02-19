@@ -53,8 +53,20 @@ export const fetchChatRequests = async (): Promise<ChatRequest[]> => {
   });
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Session expired. Please refresh the page.');
+    }
     const detail = await response.text().catch(() => '');
-    throw new Error(detail || 'Unable to load requests.');
+    let message = 'Unable to load requests.';
+    try {
+      const parsed = JSON.parse(detail);
+      message = parsed?.error?.message ?? message;
+    } catch {
+      if (detail && detail.length < 200 && !detail.startsWith('{')) {
+        message = detail;
+      }
+    }
+    throw new Error(message);
   }
 
   const payload = await response.json();

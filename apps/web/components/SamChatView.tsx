@@ -188,8 +188,7 @@ export default function SamChatView({
   const [onlineProfiles, setOnlineProfiles] = useState<ProfileSummary[]>([]);
   const [allPlatformProfiles, setAllPlatformProfiles] = useState<ProfileSummary[]>([]);
   const [previousMessagesExpanded, setPreviousMessagesExpanded] = useState(false);
-  const collapseIndexRef = useRef<number | null>(null);
-  const collapseComputedRef = useRef(false);
+  const sessionStartRef = useRef<number>(Date.now());
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -251,27 +250,28 @@ export default function SamChatView({
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [messages, currentUserId]);
 
-  // Compute the collapse boundary ONCE on mount. All messages at or before
-  // this index are hidden behind the "Show previous messages" button.
-  // New messages sent after mount always appear below.
-  if (!collapseComputedRef.current && orderedMessages.length > 0) {
-    collapseComputedRef.current = true;
-    const lastMsg = orderedMessages[orderedMessages.length - 1];
-    const gap = Date.now() - lastMsg.timestamp;
-    if (gap >= IDLE_THRESHOLD_MS) {
-      collapseIndexRef.current = orderedMessages.length;
-    }
-  }
+  // Check if any messages existed before this session started.
+  // If so, they're all collapsed behind the expand button.
+  // Only messages created AFTER the session start (i.e. in this page visit) are visible.
+  const sessionStart = sessionStartRef.current;
 
-  const collapseIndex = collapseIndexRef.current ?? 0;
-  const hasCollapsedMessages = collapseIndex > 0 && !previousMessagesExpanded;
+  const { preSessionMessages, postSessionMessages } = useMemo(() => {
+    const pre = orderedMessages.filter((m) => m.timestamp < sessionStart);
+    const post = orderedMessages.filter((m) => m.timestamp >= sessionStart);
+    return { preSessionMessages: pre, postSessionMessages: post };
+  }, [orderedMessages, sessionStart]);
+
+  const hasCollapsedMessages = preSessionMessages.length > 0 && !previousMessagesExpanded;
 
   const visibleMessages = useMemo(() => {
-    if (previousMessagesExpanded || collapseIndex === 0) {
+    if (previousMessagesExpanded) {
       return orderedMessages;
     }
-    return orderedMessages.slice(collapseIndex);
-  }, [orderedMessages, previousMessagesExpanded, collapseIndex]);
+    if (preSessionMessages.length === 0) {
+      return orderedMessages;
+    }
+    return postSessionMessages;
+  }, [orderedMessages, previousMessagesExpanded, preSessionMessages.length, postSessionMessages]);
 
   const knownProfiles = useMemo(() => {
     const collected = new Map<string, ShowcaseEntry>();
@@ -723,7 +723,7 @@ export default function SamChatView({
                 e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
               }}
             >
-              Show previous messages ({collapseIndex})
+              Show previous messages ({preSessionMessages.length})
             </button>
           </div>
         )}
