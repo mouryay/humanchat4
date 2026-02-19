@@ -623,7 +623,7 @@ const ChatShell = () => {
                   if (profiles.length > 0) {
                     setSidebarProfiles(profiles);
                   }
-                }
+                }}
               />
             </section>
             <aside
