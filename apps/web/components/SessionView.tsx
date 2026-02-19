@@ -44,6 +44,7 @@ export default function SessionView({ conversation, session, invite, messages, r
   const [callMode, setCallMode] = useState<'video' | 'audio' | null>(null);
   const [activeSystemMessage, setActiveSystemMessage] = useState<Message | null>(null);
   const [seenSystemMessageIds, setSeenSystemMessageIds] = useState<Set<number>>(new Set());
+  const [videoFullscreen, setVideoFullscreen] = useState(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -58,7 +59,6 @@ export default function SessionView({ conversation, session, invite, messages, r
   const orderedMessages = useMemo(() => 
     [...messages]
       .filter((message) => {
-        // Filter out messages with empty or whitespace-only content
         const content = message.content?.trim() || '';
         if (!content) return false;
         return true;
@@ -67,39 +67,27 @@ export default function SessionView({ conversation, session, invite, messages, r
     [messages]
   );
   
-  // Extract system messages for notifications
   const systemMessages = useMemo(() => {
     return orderedMessages.filter((msg) => msg.type === 'system_notice');
   }, [orderedMessages]);
 
-  // Show new system messages as notifications
   useEffect(() => {
     if (systemMessages.length === 0) {
       setActiveSystemMessage(null);
       return;
     }
 
-    // Find the most recent system message that hasn't been seen
     const unseenMessage = systemMessages
       .filter((msg) => msg.id !== undefined && !seenSystemMessageIds.has(msg.id))
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
     if (unseenMessage && !activeSystemMessage && unseenMessage.id !== undefined) {
-      const messageId = unseenMessage.id; // Extract to ensure type narrowing
+      const messageId = unseenMessage.id;
       setActiveSystemMessage(unseenMessage);
       setSeenSystemMessageIds((prev) => new Set([...prev, messageId]));
     }
   }, [systemMessages, seenSystemMessageIds, activeSystemMessage]);
 
-  const handleDismissSystemMessage = () => {
-    setActiveSystemMessage(null);
-  };
-
-  const isInProgress = session?.status === 'in_progress';
-  const isComplete = session?.status === 'complete';
-  const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
-  const shouldShowInvitePanel = Boolean(invite) && !isMobile;
-  const invitePanel = shouldShowInvitePanel && invite ? <InstantInvitePanel invite={invite} currentUserId={currentUserId} /> : null;
   const peerLabel = useMemo(() => {
     const peer = conversation.participants.find((participant) => participant !== currentUserId);
     if (!peer) {
@@ -114,22 +102,46 @@ export default function SessionView({ conversation, session, invite, messages, r
     setShowDonationModal(false);
   }, [conversation.conversationId]);
 
+  const handleDismissSystemMessage = () => {
+    setActiveSystemMessage(null);
+  };
+
+  const handleCallEnd = (summary: CallEndSummary) => {
+    setCallSummary({ ...summary, peerName: peerLabel });
+    setShowDonationModal(false);
+    setCallMode(null);
+  };
+
+  const handleDismissSummary = () => {
+    setCallSummary(null);
+    setShowDonationModal(false);
+    onScrollToLatest?.();
+  };
+
+  // --- All hooks above, conditional rendering below ---
+
+  const isInProgress = session?.status === 'in_progress';
+  const isComplete = session?.status === 'complete';
+  const isScheduled = !isInProgress && !isComplete && (session?.startTime ?? 0) > now;
+  const shouldShowInvitePanel = Boolean(invite) && !isMobile;
+  const invitePanel = shouldShowInvitePanel && invite ? <InstantInvitePanel invite={invite} currentUserId={currentUserId} /> : null;
+
   if (!session) {
     return (
       <div className={styles.humanView}>
         {invitePanel}
         {invite?.status === 'pending' && (
-        <div className={styles.pendingSessionNotice}>
+          <div className={styles.pendingSessionNotice}>
             <p className={styles.pendingSessionTitle}>Waiting for a host to accept</p>
             <p className={styles.pendingSessionSub}>Keep chatting here while we wait.</p>
-        </div>
+          </div>
         )}
-          <ChatArea
-            conversation={conversation}
-            messages={messages}
-            registerScrollContainer={registerScrollContainer}
-            currentUserId={currentUserId}
-          />
+        <ChatArea
+          conversation={conversation}
+          messages={messages}
+          registerScrollContainer={registerScrollContainer}
+          currentUserId={currentUserId}
+        />
         {activeSystemMessage && (
           <SystemMessageNotification
             message={activeSystemMessage}
@@ -144,29 +156,25 @@ export default function SessionView({ conversation, session, invite, messages, r
     return (
       <div className={styles.countdown}>
         {invitePanel}
-        <strong>{formatCountdown(session!.startTime)}</strong>
+        <strong>{formatCountdown(session.startTime)}</strong>
         <p>Session starts in</p>
       </div>
     );
   }
 
   if (isComplete) {
-    // Filter out system messages from archived view - they're shown as notifications
     const archivedMessages = orderedMessages.filter((msg) => msg.type !== 'system_notice');
     
-    // Determine message grouping for archived view
     const getMessageGrouping = (index: number) => {
       const currentMessage = archivedMessages[index];
       const currentIsUser = isUserMessage(currentMessage, conversation);
       
-      // Check previous message
       const isGrouped = index > 0 && (() => {
         const previousMessage = archivedMessages[index - 1];
         const previousIsUser = isUserMessage(previousMessage, conversation);
         return currentIsUser === previousIsUser;
       })();
       
-      // Check next message to determine if this is the last in group
       const isLastInGroup = index === archivedMessages.length - 1 || (() => {
         const nextMessage = archivedMessages[index + 1];
         const nextIsUser = isUserMessage(nextMessage, conversation);
@@ -214,22 +222,9 @@ export default function SessionView({ conversation, session, invite, messages, r
     return <div className={styles.error}>Sign in again to join this session.</div>;
   }
 
-  const handleCallEnd = (summary: CallEndSummary) => {
-    setCallSummary({ ...summary, peerName: peerLabel });
-    setShowDonationModal(false);
-    setCallMode(null);
-  };
-
-  const handleDismissSummary = () => {
-    setCallSummary(null);
-    setShowDonationModal(false);
-    onScrollToLatest?.();
-  };
-
   const shouldShowDonationModal = Boolean(callSummary?.donationAllowed && !callSummary.confidentialRate && showDonationModal && session);
   const canLaunchCall = Boolean(session && currentUserId);
   const callActive = Boolean(callMode && canLaunchCall);
-  const [videoFullscreen, setVideoFullscreen] = useState(false);
 
   return (
     <div className={styles.humanView}>
