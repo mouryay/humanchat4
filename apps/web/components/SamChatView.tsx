@@ -188,6 +188,8 @@ export default function SamChatView({
   const [onlineProfiles, setOnlineProfiles] = useState<ProfileSummary[]>([]);
   const [allPlatformProfiles, setAllPlatformProfiles] = useState<ProfileSummary[]>([]);
   const [previousMessagesExpanded, setPreviousMessagesExpanded] = useState(false);
+  const collapseIndexRef = useRef<number | null>(null);
+  const collapseComputedRef = useRef(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -249,24 +251,27 @@ export default function SamChatView({
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [messages, currentUserId]);
 
-  const { isReturningAfterIdle, collapsedCount } = useMemo(() => {
-    if (orderedMessages.length <= 1) {
-      return { isReturningAfterIdle: false, collapsedCount: 0 };
-    }
+  // Compute the collapse boundary ONCE on mount. All messages at or before
+  // this index are hidden behind the "Show previous messages" button.
+  // New messages sent after mount always appear below.
+  if (!collapseComputedRef.current && orderedMessages.length > 0) {
+    collapseComputedRef.current = true;
     const lastMsg = orderedMessages[orderedMessages.length - 1];
     const gap = Date.now() - lastMsg.timestamp;
     if (gap >= IDLE_THRESHOLD_MS) {
-      return { isReturningAfterIdle: true, collapsedCount: orderedMessages.length };
+      collapseIndexRef.current = orderedMessages.length;
     }
-    return { isReturningAfterIdle: false, collapsedCount: 0 };
-  }, [orderedMessages]);
+  }
+
+  const collapseIndex = collapseIndexRef.current ?? 0;
+  const hasCollapsedMessages = collapseIndex > 0 && !previousMessagesExpanded;
 
   const visibleMessages = useMemo(() => {
-    if (!isReturningAfterIdle || previousMessagesExpanded) {
+    if (previousMessagesExpanded || collapseIndex === 0) {
       return orderedMessages;
     }
-    return [];
-  }, [orderedMessages, isReturningAfterIdle, previousMessagesExpanded]);
+    return orderedMessages.slice(collapseIndex);
+  }, [orderedMessages, previousMessagesExpanded, collapseIndex]);
 
   const knownProfiles = useMemo(() => {
     const collected = new Map<string, ShowcaseEntry>();
@@ -294,7 +299,7 @@ export default function SamChatView({
     return names;
   }, [conversation.participantLabels, localUserId]);
 
-  // Use profiles from the MOST RECENT show_profiles action only (not accumulated history)
+  // Use profiles from the MOST RECENT show_profiles action in visible messages only
   const sidebarProfiles = useMemo(() => {
     const selfNames = new Set(
       Array.from(selfNameTokens).map((t) => t.trim().toLowerCase())
@@ -310,10 +315,10 @@ export default function SamChatView({
       }
     });
 
-    // Find the most recent show_profiles action (scan from end)
+    // Find the most recent show_profiles action in visible messages (scan from end)
     let latestProfiles: Array<ProfileSummary | SamShowcaseProfile> | null = null;
-    for (let i = orderedMessages.length - 1; i >= 0; i--) {
-      const actions = orderedMessages[i].actions ?? [];
+    for (let i = visibleMessages.length - 1; i >= 0; i--) {
+      const actions = visibleMessages[i].actions ?? [];
       for (let j = actions.length - 1; j >= 0; j--) {
         const action = actions[j];
         if ((action.type || action.actionType) === 'show_profiles') {
@@ -372,7 +377,7 @@ export default function SamChatView({
     });
 
     return Array.from(seen.values());
-  }, [orderedMessages, onlineProfiles, allPlatformProfiles, localUserId, selfNameTokens]);
+  }, [visibleMessages, onlineProfiles, allPlatformProfiles, localUserId, selfNameTokens]);
 
   // Notify parent of sidebar profiles
   const prevSidebarRef = useRef<string>('');
@@ -612,7 +617,8 @@ export default function SamChatView({
     setThinking(true);
     let workingConversationId = activeConversationId;
 
-    const historyPayload: ConversationHistoryPayload[] = orderedMessages.map((message) => ({
+    const historySource = hasCollapsedMessages ? visibleMessages : orderedMessages;
+    const historyPayload: ConversationHistoryPayload[] = historySource.map((message) => ({
       role: isSamMessage(message) ? 'sam' : 'user',
       content: message.content,
       timestamp: new Date(message.timestamp).toISOString()
@@ -693,7 +699,7 @@ export default function SamChatView({
   return (
     <div className={styles.samView}>
       <div className={styles.messageListContainer}>
-        {isReturningAfterIdle && !previousMessagesExpanded && collapsedCount > 0 && (
+        {hasCollapsedMessages && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
             <button
               type="button"
@@ -717,7 +723,7 @@ export default function SamChatView({
                 e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
               }}
             >
-              Show previous messages ({collapsedCount})
+              Show previous messages ({collapseIndex})
             </button>
           </div>
         )}
