@@ -9,10 +9,8 @@ import ProfilePanel from './ProfilePanel';
 import ProfileSidebar from './ProfileSidebar';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useConversationData } from '../hooks/useConversationData';
-import { useChatRequests } from '../hooks/useChatRequests';
 import { usePendingInvites } from '../hooks/usePendingInvites';
 import { acceptInstantInvite, declineInstantInvite } from '../services/instantInviteApi';
-import { fetchUserProfile, type UserProfile } from '../services/profileApi';
 import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../constants/events';
 import { PENDING_INVITE_CONVERSATION_KEY } from '../constants/storageKeys';
 import type { ProfileSummary } from '../../../src/lib/db';
@@ -33,19 +31,8 @@ const ChatShell = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const { isMobile, isTablet } = useBreakpoint();
   const { conversations } = useConversationData();
-  const {
-    requests,
-    loading: requestsLoading,
-    error: requestsError,
-    updateStatus,
-    updatingId
-  } = useChatRequests();
   const { invitesByConversation, refresh: refreshInvites } = usePendingInvites();
   const [inviteActionPendingId, setInviteActionPendingId] = useState<string | null>(null);
-  const fetchedRequestersRef = useRef<Set<string>>(new Set());
-  const [requesterProfiles, setRequesterProfiles] = useState<
-    Record<string, Pick<UserProfile, 'name' | 'headline' | 'avatarUrl'>>
-  >({});
   const [sidebarProfiles, setSidebarProfiles] = useState<ProfileSummary[]>([]);
   const [sidebarSource, setSidebarSource] = useState<'seeded' | 'sam'>('seeded');
   const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null);
@@ -297,53 +284,6 @@ const ChatShell = () => {
     router.replace('/');
   }, [pendingConversationParam, focusConversation, router]);
 
-  useEffect(() => {
-    const pendingIds = requests
-      .filter((request) => request.status === 'pending')
-      .map((request) => request.requesterId)
-      .filter((requesterId) => !fetchedRequestersRef.current.has(requesterId));
-    if (pendingIds.length === 0) {
-      return undefined;
-    }
-
-    let cancelled = false;
-    const hydrate = async () => {
-      const results = await Promise.all(
-        pendingIds.map(async (requesterId) => {
-          try {
-            return await fetchUserProfile(requesterId);
-          } catch (error) {
-            console.warn('Failed to load requester profile', { requesterId, error });
-            return null;
-          }
-        })
-      );
-      if (cancelled) {
-        return;
-      }
-      setRequesterProfiles((prev) => {
-        const next = { ...prev };
-        results.forEach((profile) => {
-          if (profile) {
-            next[profile.id] = {
-              name: profile.name,
-              headline: profile.headline,
-              avatarUrl: profile.avatarUrl
-            };
-            fetchedRequestersRef.current.add(profile.id);
-          }
-        });
-        return next;
-      });
-    };
-
-    void hydrate();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [requests]);
-
   const handleSidebarConnectNow = useCallback(
     async (profile: ProfileSummary) => {
       if (!profile.userId) return;
@@ -369,25 +309,6 @@ const ChatShell = () => {
       setBookingProfile(profile);
     }
   }, []);
-
-  const handleRequestAction = useCallback(
-    async (requestId: string, status: 'pending' | 'approved' | 'declined') => {
-      try {
-        const result = await updateStatus(requestId, status);
-        if (status === 'approved' && result.conversation) {
-          setActiveConversationId(result.conversation.conversationId);
-          if (isMobile) {
-            setMobileDrawer('none');
-          }
-        }
-        return result;
-      } catch (err) {
-        console.error('[ChatExperience] Request action failed', err);
-        return undefined;
-      }
-    },
-    [isMobile, updateStatus]
-  );
 
   const handleInviteAccept = useCallback(
     async (inviteId: string) => {
@@ -441,12 +362,6 @@ const ChatShell = () => {
               activeConversationId={activeConversationId}
               onSelectConversation={handleSelectConversation}
               collapsed={isTablet && sidebarCollapsed}
-              requests={requests}
-              requestProfiles={requesterProfiles}
-              requestLoading={requestsLoading}
-              requestError={requestsError}
-              onRequestAction={handleRequestAction}
-              requestActionPendingId={updatingId}
               pendingInvites={invitesByConversation}
               onInviteAccept={handleInviteAccept}
               onInviteDecline={handleInviteDecline}
@@ -514,12 +429,6 @@ const ChatShell = () => {
                     <ConversationSidebar
                       activeConversationId={activeConversationId}
                       onSelectConversation={handleSelectConversation}
-                      requests={requests}
-                      requestProfiles={requesterProfiles}
-                      requestLoading={requestsLoading}
-                      requestError={requestsError}
-                      onRequestAction={handleRequestAction}
-                      requestActionPendingId={updatingId}
                       pendingInvites={invitesByConversation}
                       onInviteAccept={handleInviteAccept}
                       onInviteDecline={handleInviteDecline}
