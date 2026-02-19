@@ -48,6 +48,9 @@ const upsertConversation = async (record: ConversationRecord): Promise<void> => 
 const upsertSession = async (record: SessionRecord): Promise<void> => {
   const mapped = mapSessionRecord(record);
   await db.sessions.put(mapped);
+  await db.conversations.update(mapped.conversationId, {
+    linkedSessionId: mapped.sessionId
+  });
 };
 
 const upsertInvite = async (record: InstantInviteRecord): Promise<void> => {

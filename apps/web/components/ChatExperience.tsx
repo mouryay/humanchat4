@@ -372,14 +372,19 @@ const ChatShell = () => {
 
   const handleRequestAction = useCallback(
     async (requestId: string, status: 'pending' | 'approved' | 'declined') => {
-      const result = await updateStatus(requestId, status);
-      if (status === 'approved' && result.conversation) {
-        setActiveConversationId(result.conversation.conversationId);
-        if (isMobile) {
-          setMobileDrawer('none');
+      try {
+        const result = await updateStatus(requestId, status);
+        if (status === 'approved' && result.conversation) {
+          setActiveConversationId(result.conversation.conversationId);
+          if (isMobile) {
+            setMobileDrawer('none');
+          }
         }
+        return result;
+      } catch (err) {
+        console.error('[ChatExperience] Request action failed', err);
+        return undefined;
       }
-      return result;
     },
     [isMobile, updateStatus]
   );

@@ -70,7 +70,8 @@ export const fetchChatRequests = async (): Promise<ChatRequest[]> => {
   }
 
   const payload = await response.json();
-  const rows = (payload?.requests ?? []) as ChatRequestPayload[];
+  const data = payload?.data ?? payload;
+  const rows = (data?.requests ?? []) as ChatRequestPayload[];
   return rows.map((row) => toCamelRequest(row));
 };
 
@@ -93,12 +94,13 @@ export const submitConnectionRequest = async (input: CreateConnectionRequestInpu
   }
 
   const payload = await response.json();
-  if (!payload?.request) {
+  const data = payload?.data ?? payload;
+  if (!data?.request) {
     throw new Error('Malformed request response.');
   }
   return {
-    api: payload.request as ChatRequestPayload,
-    local: toCamelRequest(payload.request as ChatRequestPayload)
+    api: data.request as ChatRequestPayload,
+    local: toCamelRequest(data.request as ChatRequestPayload)
   };
 };
 
@@ -114,19 +116,32 @@ export const updateRequestStatus = async (
   });
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Session expired. Please refresh the page.');
+    }
     const detail = await response.text().catch(() => '');
-    throw new Error(detail || 'Unable to update request.');
+    let message = 'Unable to update request.';
+    try {
+      const parsed = JSON.parse(detail);
+      message = parsed?.error?.message ?? message;
+    } catch {
+      if (detail && detail.length < 200 && !detail.startsWith('{')) {
+        message = detail;
+      }
+    }
+    throw new Error(message);
   }
 
   const payload = await response.json();
-  const request = payload?.request as ChatRequestPayload | undefined;
+  const data = payload?.data ?? payload;
+  const request = data?.request as ChatRequestPayload | undefined;
   if (!request) {
     throw new Error('Malformed request status response.');
   }
   const result: UpdateRequestResult = {
     request: toCamelRequest(request)
   };
-  const conversationPayload = payload?.conversation as ConversationRecord | undefined;
+  const conversationPayload = data?.conversation as ConversationRecord | undefined;
   if (conversationPayload) {
     result.conversation = toConversation(conversationPayload);
   }
