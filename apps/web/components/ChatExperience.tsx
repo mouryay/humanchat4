@@ -18,6 +18,9 @@ import { PENDING_INVITE_CONVERSATION_KEY } from '../constants/storageKeys';
 import type { ProfileSummary } from '../../../src/lib/db';
 import { connectNow as connectNowWithProfile } from '../services/conversationClient';
 import { sessionStatusManager } from '../services/sessionStatusManager';
+import { fetchWithAuthRefresh } from '../utils/fetchWithAuthRefresh';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 import BookingModal from './BookingModal';
 import RequestForm from './RequestForm';
 
@@ -53,6 +56,83 @@ const ChatShell = () => {
     return conversations.find((entry) => entry.conversation.type === 'sam')?.conversation.conversationId ?? 'sam-concierge';
   }, [conversations]);
 
+  // Seed sidebar with 3 recently joined profiles on mount
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    seededRef.current = true;
+
+    const currentUserId = sessionStatusManager.getCurrentUserId();
+    const seed = async () => {
+      try {
+        const res = await fetchWithAuthRefresh(
+          `${API_BASE_URL}/api/users/search?sort=recent&limit=3`,
+          { credentials: 'include' }
+        );
+        if (!res.ok) return;
+        const payload = await res.json();
+        const users = (payload?.data?.users ?? payload?.users ?? []) as Array<{
+          id: string;
+          name?: string | null;
+          headline?: string | null;
+          bio?: string | null;
+          avatar_url?: string | null;
+          conversation_type?: string;
+          instant_rate_per_minute?: number | null;
+          scheduled_rates?: Record<string, number> | null;
+          is_online?: boolean;
+          has_active_session?: boolean;
+          presence_state?: string | null;
+          last_seen_at?: string | null;
+          donation_preference?: string | null;
+          charity_name?: string | null;
+          charity_id?: string | null;
+          managed?: boolean;
+          manager_id?: string | null;
+          manager_display_name?: string | null;
+          display_mode?: string | null;
+          confidential_rate?: boolean | null;
+        }>;
+
+        const mapped: ProfileSummary[] = users
+          .filter((u) => u.id && u.id !== currentUserId)
+          .slice(0, 3)
+          .map((u) => ({
+            userId: u.id,
+            name: u.name ?? 'Human',
+            avatarUrl: u.avatar_url ?? undefined,
+            headline: u.headline ?? undefined,
+            bio: u.bio ?? undefined,
+            conversationType: (u.conversation_type as ProfileSummary['conversationType']) ?? 'free',
+            instantRatePerMinute: u.instant_rate_per_minute ?? undefined,
+            scheduledRates: u.scheduled_rates
+              ? Object.entries(u.scheduled_rates)
+                  .map(([d, p]) => ({ durationMinutes: Number(d), price: p }))
+                  .filter((e) => e.durationMinutes > 0 && e.price > 0)
+              : [],
+            isOnline: Boolean(u.is_online),
+            hasActiveSession: Boolean(u.has_active_session),
+            presenceState: u.presence_state ?? (u.is_online ? 'active' : 'offline'),
+            lastSeenAt: u.last_seen_at ? Date.parse(u.last_seen_at) : undefined,
+            donationPreference: u.donation_preference ?? undefined,
+            charityName: u.charity_name ?? undefined,
+            charityId: u.charity_id ?? undefined,
+            managed: Boolean(u.managed),
+            managerId: u.manager_id ?? undefined,
+            managerName: u.manager_display_name ?? undefined,
+            displayMode: u.display_mode ?? undefined,
+            confidentialRate: u.confidential_rate ?? undefined
+          } as ProfileSummary));
+
+        if (mapped.length > 0) {
+          setSidebarProfiles((prev) => (prev.length === 0 ? mapped : prev));
+        }
+      } catch {
+        // Silent fail — Sam will populate later
+      }
+    };
+    void seed();
+  }, []);
 
   useEffect(() => {
     const focus = searchParams.get('focus');
@@ -384,8 +464,12 @@ const ChatShell = () => {
               onBack={handleShowConversationDrawer}
               onShowProfilePanel={handleShowProfileDrawer}
               onSidebarProfilesChange={(profiles) => {
-                setSidebarProfiles(profiles);
-                // Auto-open profiles drawer when new profiles arrive on mobile
+                setSidebarProfiles((prev) => {
+                  if (profiles.length === 0) return prev;
+                  const ids = new Set(profiles.map((p) => p.userId));
+                  const kept = prev.filter((p) => !ids.has(p.userId));
+                  return [...profiles, ...kept];
+                });
                 if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
                   setMobileDrawer('profiles');
                 }
@@ -538,7 +622,14 @@ const ChatShell = () => {
                 key={`desktop-${activeConversationId}`}
                 activeConversationId={activeConversationId}
                 onSelectConversation={handleSelectConversation}
-                onSidebarProfilesChange={setSidebarProfiles}
+                onSidebarProfilesChange={(profiles) => {
+                  setSidebarProfiles((prev) => {
+                    if (profiles.length === 0) return prev;
+                    const ids = new Set(profiles.map((p) => p.userId));
+                    const kept = prev.filter((p) => !ids.has(p.userId));
+                    return [...profiles, ...kept];
+                  });
+                }}
               />
             </section>
             <aside

@@ -42,7 +42,12 @@ export const updateUserProfile = async (id: string, updates: Partial<User>): Pro
   return getUserById(id);
 };
 
-export const searchUsers = async (q: string, online?: boolean): Promise<User[]> => {
+export const searchUsers = async (
+  q: string,
+  online?: boolean,
+  sort?: 'default' | 'recent',
+  limit?: number
+): Promise<User[]> => {
   const params: unknown[] = [];
   let where = 'WHERE 1=1';
 
@@ -60,7 +65,9 @@ export const searchUsers = async (q: string, online?: boolean): Promise<User[]> 
     }
   }
 
-  const sql = `SELECT * FROM users ${where} ORDER BY is_online DESC, name ASC LIMIT 50`;
+  const orderBy = sort === 'recent' ? 'created_at DESC' : 'is_online DESC, name ASC';
+  const rowLimit = Math.min(limit ?? 50, 50);
+  const sql = `SELECT * FROM users ${where} ORDER BY ${orderBy} LIMIT ${rowLimit}`;
   const result = await query<User>(sql, params);
   return result.rows.map(applyHumanDefaults);
 };
