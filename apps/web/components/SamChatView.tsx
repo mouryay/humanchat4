@@ -294,13 +294,11 @@ export default function SamChatView({
     return names;
   }, [conversation.participantLabels, localUserId]);
 
-  // Collect all ProfileSummary objects from show_profiles actions for the sidebar
+  // Use profiles from the MOST RECENT show_profiles action only (not accumulated history)
   const sidebarProfiles = useMemo(() => {
-    const seen = new Map<string, ProfileSummary>();
     const selfNames = new Set(
       Array.from(selfNameTokens).map((t) => t.trim().toLowerCase())
     );
-    // Build lookup maps from both online and all platform profiles
     const allKnown = [...onlineProfiles, ...allPlatformProfiles];
     const knownById = new Map<string, ProfileSummary>();
     const knownByName = new Map<string, ProfileSummary>();
@@ -312,55 +310,65 @@ export default function SamChatView({
       }
     });
 
-    orderedMessages.forEach((message) => {
-      (message.actions ?? []).forEach((action) => {
-        if ((action.type || action.actionType) !== 'show_profiles') return;
-        const profiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
-        profiles.forEach((profile) => {
-          if (isLegacyProfile(profile)) {
-            const p = profile as ProfileSummary;
-            if (localUserId && p.userId === localUserId) return;
-            if (p.name && selfNames.has(p.name.trim().toLowerCase())) return;
-            // Hydrate with live data if available
-            const live = (p.userId && knownById.get(p.userId)) ||
-              (p.name && knownByName.get(p.name.trim().toLowerCase()));
-            const hydrated = live ? {
-              ...p,
-              isOnline: live.isOnline ?? p.isOnline,
-              hasActiveSession: live.hasActiveSession ?? p.hasActiveSession,
-              presenceState: live.presenceState ?? p.presenceState,
-              lastSeenAt: live.lastSeenAt ?? p.lastSeenAt
-            } : p;
-            if (!seen.has(hydrated.userId)) {
-              seen.set(hydrated.userId, hydrated);
-            }
-          } else {
-            // SamShowcaseProfile - resolve from platform directory (online + offline)
-            const showcase = profile as SamShowcaseProfile;
-            if (showcase.name && selfNames.has(showcase.name.trim().toLowerCase())) return;
-            const nameKey = showcase.name?.trim().toLowerCase() ?? '';
-            const match = knownByName.get(nameKey);
-            if (match && !seen.has(match.userId)) {
-              seen.set(match.userId, match);
-            } else if (!match && nameKey) {
-              // No directory match — create a minimal ProfileSummary from showcase data
-              const syntheticId = `showcase-${nameKey}`;
-              if (!seen.has(syntheticId)) {
-                seen.set(syntheticId, {
-                  userId: syntheticId,
-                  name: showcase.name ?? 'Human',
-                  headline: showcase.headline,
-                  isOnline: showcase.status === 'available',
-                  hasActiveSession: showcase.status === 'booked',
-                  presenceState: showcase.status === 'available' ? 'active' : 'offline',
-                  instantRatePerMinute: showcase.rate_per_minute,
-                  conversationType: (showcase.rate_per_minute ?? 0) > 0 ? 'paid' : 'free'
-                });
-              }
-            }
+    // Find the most recent show_profiles action (scan from end)
+    let latestProfiles: Array<ProfileSummary | SamShowcaseProfile> | null = null;
+    for (let i = orderedMessages.length - 1; i >= 0; i--) {
+      const actions = orderedMessages[i].actions ?? [];
+      for (let j = actions.length - 1; j >= 0; j--) {
+        const action = actions[j];
+        if ((action.type || action.actionType) === 'show_profiles') {
+          latestProfiles = (action as Extract<Action, { type: 'show_profiles' }>).profiles ?? [];
+          break;
+        }
+      }
+      if (latestProfiles) break;
+    }
+
+    if (!latestProfiles || latestProfiles.length === 0) {
+      return [];
+    }
+
+    const seen = new Map<string, ProfileSummary>();
+    latestProfiles.forEach((profile) => {
+      if (isLegacyProfile(profile)) {
+        const p = profile as ProfileSummary;
+        if (localUserId && p.userId === localUserId) return;
+        if (p.name && selfNames.has(p.name.trim().toLowerCase())) return;
+        const live = (p.userId && knownById.get(p.userId)) ||
+          (p.name && knownByName.get(p.name.trim().toLowerCase()));
+        const hydrated = live ? {
+          ...p,
+          isOnline: live.isOnline ?? p.isOnline,
+          hasActiveSession: live.hasActiveSession ?? p.hasActiveSession,
+          presenceState: live.presenceState ?? p.presenceState,
+          lastSeenAt: live.lastSeenAt ?? p.lastSeenAt
+        } : p;
+        if (!seen.has(hydrated.userId)) {
+          seen.set(hydrated.userId, hydrated);
+        }
+      } else {
+        const showcase = profile as SamShowcaseProfile;
+        if (showcase.name && selfNames.has(showcase.name.trim().toLowerCase())) return;
+        const nameKey = showcase.name?.trim().toLowerCase() ?? '';
+        const match = knownByName.get(nameKey);
+        if (match && !seen.has(match.userId)) {
+          seen.set(match.userId, match);
+        } else if (!match && nameKey) {
+          const syntheticId = `showcase-${nameKey}`;
+          if (!seen.has(syntheticId)) {
+            seen.set(syntheticId, {
+              userId: syntheticId,
+              name: showcase.name ?? 'Human',
+              headline: showcase.headline,
+              isOnline: showcase.status === 'available',
+              hasActiveSession: showcase.status === 'booked',
+              presenceState: showcase.status === 'available' ? 'active' : 'offline',
+              instantRatePerMinute: showcase.rate_per_minute,
+              conversationType: (showcase.rate_per_minute ?? 0) > 0 ? 'paid' : 'free'
+            });
           }
-        });
-      });
+        }
+      }
     });
 
     return Array.from(seen.values());
