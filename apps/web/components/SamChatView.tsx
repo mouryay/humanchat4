@@ -116,6 +116,8 @@ interface SamChatViewProps {
 
 const isSamMessage = (message: Message) => message.type === 'sam_response' || message.senderId === 'sam';
 
+const IDLE_THRESHOLD_MS = 12 * 60 * 60 * 1000;
+
 const normalizeProfile = (profile: ProfileSummary | SamShowcaseProfile, index: number): ShowcaseEntry => {
   if ('rate_per_minute' in profile || 'status' in profile) {
     const typed = profile as SamShowcaseProfile & { userId?: string };
@@ -185,6 +187,7 @@ export default function SamChatView({
   const [activeConversationId, setActiveConversationId] = useState(conversation.conversationId);
   const [onlineProfiles, setOnlineProfiles] = useState<ProfileSummary[]>([]);
   const [allPlatformProfiles, setAllPlatformProfiles] = useState<ProfileSummary[]>([]);
+  const [previousMessagesExpanded, setPreviousMessagesExpanded] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => sessionStatusManager.getCurrentUserId());
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -245,6 +248,25 @@ export default function SamChatView({
       })
       .sort((a, b) => a.timestamp - b.timestamp);
   }, [messages, currentUserId]);
+
+  const { isReturningAfterIdle, collapsedCount } = useMemo(() => {
+    if (orderedMessages.length <= 1) {
+      return { isReturningAfterIdle: false, collapsedCount: 0 };
+    }
+    const lastMsg = orderedMessages[orderedMessages.length - 1];
+    const gap = Date.now() - lastMsg.timestamp;
+    if (gap >= IDLE_THRESHOLD_MS) {
+      return { isReturningAfterIdle: true, collapsedCount: orderedMessages.length };
+    }
+    return { isReturningAfterIdle: false, collapsedCount: 0 };
+  }, [orderedMessages]);
+
+  const visibleMessages = useMemo(() => {
+    if (!isReturningAfterIdle || previousMessagesExpanded) {
+      return orderedMessages;
+    }
+    return [];
+  }, [orderedMessages, isReturningAfterIdle, previousMessagesExpanded]);
 
   const knownProfiles = useMemo(() => {
     const collected = new Map<string, ShowcaseEntry>();
@@ -638,21 +660,19 @@ export default function SamChatView({
     }
   };
 
-  // Determine message grouping for better spacing
-  const getMessageGrouping = (index: number) => {
-    const currentMessage = orderedMessages[index];
+  // Message grouping needs to work on visibleMessages
+  const getVisibleMessageGrouping = (index: number) => {
+    const currentMessage = visibleMessages[index];
     const currentFromSam = isSamMessage(currentMessage);
     
-    // Check previous message
     const isGrouped = index > 0 && (() => {
-      const previousMessage = orderedMessages[index - 1];
+      const previousMessage = visibleMessages[index - 1];
       const previousFromSam = isSamMessage(previousMessage);
       return currentFromSam === previousFromSam;
     })();
     
-    // Check next message to determine if this is the last in group
-    const isLastInGroup = index === orderedMessages.length - 1 || (() => {
-      const nextMessage = orderedMessages[index + 1];
+    const isLastInGroup = index === visibleMessages.length - 1 || (() => {
+      const nextMessage = visibleMessages[index + 1];
       const nextFromSam = isSamMessage(nextMessage);
       return currentFromSam !== nextFromSam;
     })();
@@ -665,10 +685,38 @@ export default function SamChatView({
   return (
     <div className={styles.samView}>
       <div className={styles.messageListContainer}>
-        <VirtualMessageList messages={orderedMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
+        {isReturningAfterIdle && !previousMessagesExpanded && collapsedCount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
+            <button
+              type="button"
+              onClick={() => setPreviousMessagesExpanded(true)}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '20px',
+                padding: '8px 20px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+              }}
+            >
+              Show previous messages ({collapsedCount})
+            </button>
+          </div>
+        )}
+        <VirtualMessageList messages={visibleMessages} className={styles.messageList} registerScrollContainer={handleContainerRef}>
           {(message, index) => {
             const fromSam = isSamMessage(message);
-            const { isGrouped, isNewSpeaker, isLastInGroup } = getMessageGrouping(index ?? 0);
+            const { isGrouped, isNewSpeaker, isLastInGroup } = getVisibleMessageGrouping(index ?? 0);
             return (
               <MessageBubble
                 message={message}

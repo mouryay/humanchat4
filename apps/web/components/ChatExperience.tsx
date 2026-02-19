@@ -155,6 +155,28 @@ const ChatShell = () => {
     rightSwipeStart.current = null;
   }, []);
 
+  // Swipe right on the profiles drawer to close it
+  const drawerSwipeStart = useRef<{ x: number; y: number } | null>(null);
+  const handleDrawerTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    drawerSwipeStart.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleDrawerTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!drawerSwipeStart.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - drawerSwipeStart.current.x;
+    const dy = Math.abs(touch.clientY - drawerSwipeStart.current.y);
+    if (dx > 60 && dy < dx) {
+      drawerSwipeStart.current = null;
+      setMobileDrawer('none');
+    }
+  }, []);
+
+  const handleDrawerTouchEnd = useCallback(() => {
+    drawerSwipeStart.current = null;
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
@@ -488,6 +510,9 @@ const ChatShell = () => {
                   }
                 )}
                 style={{ backgroundColor: '#05060a' }}
+                onTouchStart={handleDrawerTouchStart}
+                onTouchMove={handleDrawerTouchMove}
+                onTouchEnd={handleDrawerTouchEnd}
               >
                 <div className="flex h-full flex-col">
                   <div className="border-b border-white/10 px-4 py-3">
