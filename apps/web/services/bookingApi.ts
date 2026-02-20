@@ -126,6 +126,23 @@ export const getUserBookings = async (
 };
 
 /**
+ * Get a single booking by ID
+ */
+export const getBookingById = async (bookingId: string): Promise<Booking> => {
+  const response = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to fetch booking');
+  }
+
+  const result: BookingResponse = await response.json();
+  return result.data;
+};
+
+/**
  * Get expert's bookings (where user is the expert)
  */
 export const getExpertBookings = async (
@@ -145,23 +162,6 @@ export const getExpertBookings = async (
   }
 
   const result: BookingsListResponse = await response.json();
-  return result.data;
-};
-
-/**
- * Get booking by ID
- */
-export const getBookingById = async (bookingId: string): Promise<Booking> => {
-  const response = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
-    credentials: 'include'
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to fetch booking');
-  }
-
-  const result: BookingResponse = await response.json();
   return result.data;
 };
 

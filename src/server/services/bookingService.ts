@@ -149,7 +149,7 @@ export const getExpertAvailabilityOverrides = async (
 
 /**
  * Get expert's existing bookings for a date range (private helper)
- * Updated to support both old (expert_id/user_id) and new (responder_id/requester_id) column names
+ * Uses responder_id only
  */
 const getExpertBookingsBusyTimes = async (
   expertId: string,
@@ -161,7 +161,7 @@ const getExpertBookingsBusyTimes = async (
        COALESCE(scheduled_start, start_time) as start_time,
        COALESCE(scheduled_end, end_time) as end_time
      FROM bookings
-     WHERE COALESCE(responder_id, expert_id) = $1
+     WHERE responder_id = $1
      AND status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment')
      AND COALESCE(scheduled_start, start_time) < $3
      AND COALESCE(scheduled_end, end_time) > $2
@@ -438,17 +438,17 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     }
 
     // Create booking
-    // Support both old (expert_id/user_id/start_time/end_time) and new (responder_id/requester_id/scheduled_start/scheduled_end) columns
+    // Uses responder_id (expert) and requester_id (user/client)
     // Set status to 'awaiting_payment' if price > 0, otherwise 'scheduled'
     const initialStatus = priceCents > 0 ? 'awaiting_payment' : 'scheduled';
     
     const bookingResult = await client.query(
       `INSERT INTO bookings 
-       (expert_id, user_id, responder_id, requester_id, 
+       (responder_id, requester_id, 
         start_time, end_time, scheduled_start, scheduled_end,
         duration_minutes, timezone, 
         status, meeting_title, notes, idempotency_key, price_cents)
-       VALUES ($1, $2, $1, $2, $3, $4, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       VALUES ($1, $2, $3, $4, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         input.expertId,
@@ -531,14 +531,14 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
 
 /**
  * Get booking by ID with full details
- * Updated to support both old and new column names
+ * Uses requester_id/responder_id columns only
  */
 export const getBookingById = async (bookingId: string): Promise<BookingWithDetails> => {
   const result = await query(
     `SELECT 
       b.*,
-      COALESCE(b.expert_id, b.responder_id) as expert_id,
-      COALESCE(b.user_id, b.requester_id) as user_id,
+      b.responder_id as expert_id,
+      b.requester_id as user_id,
       COALESCE(b.start_time, b.scheduled_start) as start_time,
       COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
@@ -548,8 +548,8 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
-     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
+     JOIN users e ON b.responder_id = e.id
+     JOIN users u ON b.requester_id = u.id
      WHERE b.id = $1`,
     [bookingId]
   );
@@ -564,8 +564,8 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
   return {
     id: row.id,
     bookingId: row.id, // Frontend expects bookingId
-    expertId: row.expert_id,
-    userId: row.user_id,
+    expertId: row.responder_id,
+    userId: row.requester_id,
     startTime: new Date(row.start_time).getTime(),
     endTime: new Date(row.end_time).getTime(),
     durationMinutes: row.duration_minutes,
@@ -612,8 +612,8 @@ export const getUserBookings = async (
   const result = await query(
     `SELECT 
       b.*,
-      COALESCE(b.expert_id, b.responder_id) as expert_id,
-      COALESCE(b.user_id, b.requester_id) as user_id,
+      b.responder_id as expert_id,
+      b.requester_id as user_id,
       COALESCE(b.start_time, b.scheduled_start) as start_time,
       COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
@@ -623,9 +623,9 @@ export const getUserBookings = async (
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
-     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
-     WHERE COALESCE(b.user_id, b.requester_id) = $1 ${statusFilter}
+     JOIN users e ON b.responder_id = e.id
+     JOIN users u ON b.requester_id = u.id
+     WHERE b.requester_id = $1 ${statusFilter}
      ORDER BY COALESCE(b.scheduled_start, b.start_time) DESC`,
     params
   );
@@ -634,8 +634,8 @@ export const getUserBookings = async (
   return result.rows.map((row) => ({
     id: row.id,
     bookingId: row.id, // Frontend expects bookingId
-    expertId: row.expert_id,
-    userId: row.user_id,
+    expertId: row.responder_id, // responder is the expert
+    userId: row.requester_id, // requester is the user/client
     startTime: new Date(row.start_time).getTime(),
     endTime: new Date(row.end_time).getTime(),
     durationMinutes: row.duration_minutes,
@@ -679,8 +679,8 @@ export const getExpertBookings = async (
   const result = await query(
     `SELECT 
       b.*,
-      COALESCE(b.expert_id, b.responder_id) as expert_id,
-      COALESCE(b.user_id, b.requester_id) as user_id,
+      b.responder_id as expert_id,
+      b.requester_id as user_id,
       COALESCE(b.start_time, b.scheduled_start) as start_time,
       COALESCE(b.end_time, b.scheduled_end) as end_time,
       e.name as expert_name,
@@ -690,9 +690,9 @@ export const getExpertBookings = async (
       u.avatar_url as user_avatar,
       u.email as user_email
      FROM bookings b
-     JOIN users e ON COALESCE(b.expert_id, b.responder_id) = e.id
-     JOIN users u ON COALESCE(b.user_id, b.requester_id) = u.id
-     WHERE COALESCE(b.expert_id, b.responder_id) = $1 ${statusFilter}
+     JOIN users e ON b.responder_id = e.id
+     JOIN users u ON b.requester_id = u.id
+     WHERE b.responder_id = $1 ${statusFilter}
      ORDER BY COALESCE(b.scheduled_start, b.start_time) DESC`,
     [expertId]
   );
@@ -701,8 +701,8 @@ export const getExpertBookings = async (
   return result.rows.map((row) => ({
     id: row.id,
     bookingId: row.id, // Frontend expects bookingId
-    expertId: row.expert_id,
-    userId: row.user_id,
+    expertId: row.responder_id, // responder is the expert
+    userId: row.requester_id, // requester is the user/client
     startTime: new Date(row.start_time).getTime(),
     endTime: new Date(row.end_time).getTime(),
     durationMinutes: row.duration_minutes,
@@ -894,9 +894,9 @@ export const rescheduleBooking = async (
     // Create new booking
     const newBooking = await client.query(
       `INSERT INTO bookings 
-       (expert_id, user_id, start_time, end_time, duration_minutes, timezone, 
-        status, meeting_title, notes, price)
-       VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
+       (responder_id, requester_id, start_time, end_time, scheduled_start, scheduled_end,
+        duration_minutes, timezone, status, meeting_title, notes, price_cents)
+       VALUES ($1, $2, $3, $4, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
        RETURNING *`,
       [
         oldBooking.expertId,
@@ -907,7 +907,7 @@ export const rescheduleBooking = async (
         oldBooking.timezone,
         oldBooking.meetingTitle,
         oldBooking.meetingNotes,
-        oldBooking.price
+        oldBooking.price || 0
       ]
     );
 

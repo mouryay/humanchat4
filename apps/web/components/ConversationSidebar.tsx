@@ -149,18 +149,18 @@ export default function ConversationSidebar({
                   }
                 : undefined;
               return (
-                <li key={entry.conversation.conversationId} className="px-4 mb-1">
-                  <ConversationListItem
-                    entry={entry}
-                    isActive={activeConversationId === entry.conversation.conversationId}
-                    onSelect={handleSelect}
-                    onArchive={archive}
-                    onDelete={handleDeleteRequest}
-                    deletePending={deletingId === entry.conversation.conversationId}
-                    showMetadata={!collapsed}
-                    pendingRequest={inviteOverlay}
-                  />
-                </li>
+                <ConversationListItem
+                  key={entry.conversation.conversationId}
+                  entry={entry}
+                  isActive={activeConversationId === entry.conversation.conversationId}
+                  onSelect={handleSelect}
+                  onArchive={archive}
+                  onDelete={handleDeleteRequest}
+                  deletePending={deletingId === entry.conversation.conversationId}
+                  showMetadata={!collapsed}
+                  pendingRequest={inviteOverlay}
+                  className="px-4 mb-1"
+                />
               );
             })}
           </ul>

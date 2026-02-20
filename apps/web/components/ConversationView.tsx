@@ -198,6 +198,7 @@ export default function ConversationView({
                   conversationId={conversation.conversationId}
                   isConversationAccepted={true}
                   compact
+                  participantIds={conversation.participants}
                 />
                 {otherParticipant && (
                   <button
@@ -235,6 +236,7 @@ export default function ConversationView({
                 <ChatHeaderCallActions 
                   conversationId={conversation.conversationId}
                   isConversationAccepted={true}
+                  participantIds={conversation.participants}
                 />
               )}
               {otherParticipant && (

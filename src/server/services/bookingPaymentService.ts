@@ -469,13 +469,13 @@ export async function createCheckoutSession(bookingId: string): Promise<{ url: s
       b.price_cents,
       b.duration_minutes,
       b.scheduled_start,
-      COALESCE(b.requester_id, b.user_id) as requester_id,
-      COALESCE(b.responder_id, b.expert_id) as responder_id,
+      b.requester_id,
+      b.responder_id,
       requester.email as requester_email,
       responder.name as responder_name
      FROM bookings b
-     JOIN users requester ON requester.id = COALESCE(b.requester_id, b.user_id)
-     JOIN users responder ON responder.id = COALESCE(b.responder_id, b.expert_id)
+     JOIN users requester ON requester.id = b.requester_id
+     JOIN users responder ON responder.id = b.responder_id
      WHERE b.id = $1`,
     [bookingId]
   );

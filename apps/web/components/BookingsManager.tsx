@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { cancelBooking, getExpertBookings, getUserBookings } from '../services/bookingApi';
-import type { Booking } from '../../../src/lib/db';
+import { db, type Booking } from '../../../src/lib/db';
 
 export type BookingTab = 'upcoming' | 'past' | 'canceled';
 
@@ -42,6 +42,10 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
         bookingMap.set(booking.bookingId, booking);
       });
       const allBookings = Array.from(bookingMap.values()).sort((a, b) => b.startTime - a.startTime);
+      
+      // Sync all bookings to Dexie for offline access
+      await db.bookings.bulkPut(allBookings);
+      
       setBookings(allBookings);
     } catch (err) {
       console.error('Failed to fetch bookings:', err);
@@ -196,7 +200,13 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                 hasAvatar: !!booking.expertAvatar
               });
               return (
-              <div key={booking.bookingId} className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30`}>
+              <div 
+                key={booking.bookingId} 
+                className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30 cursor-pointer`}
+                onClick={() => {
+                  router.push(`/sessions/${booking.bookingId}`);
+                }}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex flex-1 items-start gap-4">
                     <img 
@@ -223,7 +233,10 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                     <div className="flex flex-wrap justify-end gap-2">
                       {activeTab === 'upcoming' && canJoinCall(booking) && (
                         <button
-                          onClick={() => router.push(`/call/${booking.bookingId}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/call/${booking.bookingId}`);
+                          }}
                           className="rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-400"
                         >
                           Join call
@@ -232,13 +245,19 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                       {activeTab === 'upcoming' && booking.status === 'scheduled' && (
                         <>
                           <button
-                            onClick={() => router.push(`/bookings/${booking.bookingId}/reschedule`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/bookings/${booking.bookingId}/reschedule`);
+                            }}
                             className="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white/70 transition hover:border-white/50"
                           >
                             Reschedule
                           </button>
                           <button
-                            onClick={() => handleCancel(booking.bookingId)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancel(booking.bookingId);
+                            }}
                             className="rounded-full border border-rose-400/50 px-4 py-2 text-xs font-semibold text-rose-200 transition hover:border-rose-300"
                           >
                             Cancel
@@ -247,7 +266,10 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                       )}
                       {activeTab === 'upcoming' && booking.status === 'awaiting_payment' && (
                         <button
-                          onClick={() => handleCancel(booking.bookingId)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancel(booking.bookingId);
+                          }}
                           className="rounded-full border border-rose-400/50 px-4 py-2 text-xs font-semibold text-rose-200 transition hover:border-rose-300"
                         >
                           Cancel
@@ -255,7 +277,10 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                       )}
                       {activeTab === 'canceled' && (
                         <button
-                          onClick={() => router.push(`/experts/${booking.expertId}/schedule`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/experts/${booking.expertId}/schedule`);
+                          }}
                           className="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white/80 transition hover:border-white/50"
                         >
                           Rebook
