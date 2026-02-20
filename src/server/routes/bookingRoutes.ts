@@ -39,6 +39,10 @@ const rescheduleBookingSchema = z.object({
   newEndTime: z.string().datetime()
 });
 
+const updateBookingSchema = z.object({
+  meetingNotes: z.string().optional()
+});
+
 // ============================================================================
 // EXPERT "ME" ROUTES - Must come BEFORE :expertId routes to avoid conflicts
 // ============================================================================
@@ -602,6 +606,45 @@ router.post(
       res.json({
         success: true,
         data: cancelledBooking
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/**
+ * PATCH /api/bookings/:bookingId
+ * Update booking details (meeting notes)
+ */
+router.patch(
+  '/bookings/:bookingId',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { bookingId } = req.params;
+      const userId = req.user!.id;
+      const validation = updateBookingSchema.safeParse(req.body);
+
+      if (!validation.success) {
+        throw new ApiError(400, 'INVALID_REQUEST', validation.error.message);
+      }
+
+      const booking = await bookingService.getBookingById(bookingId);
+
+      // Check authorization - only the user who booked can update notes
+      if (booking.userId !== userId && booking.expertId !== userId) {
+        throw new ApiError(403, 'FORBIDDEN', 'Not authorized to update this booking');
+      }
+
+      const updatedBooking = await bookingService.updateBookingNotes(
+        bookingId,
+        validation.data.meetingNotes
+      );
+
+      res.json({
+        success: true,
+        data: updatedBooking
       });
     } catch (error) {
       next(error);

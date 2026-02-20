@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { db, type Booking } from '../../../src/lib/db';
-import { cancelBooking } from '../services/bookingApi';
+import { cancelBooking, updateBookingNotes } from '../services/bookingApi';
 import { startCall } from '../services/callApi';
 import styles from './SessionLobby.module.css';
 
@@ -28,7 +29,19 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
   const [now, setNow] = useState(Date.now());
   const [isStartingCall, setIsStartingCall] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [sessionNotes, setSessionNotes] = useState('');
+  const [sessionNotes, setSessionNotes] = useState(booking.meetingNotes || '');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  // Update sessionNotes when booking changes
+  useEffect(() => {
+    console.log('[SessionLobby] Booking updated:', {
+      bookingId: booking.bookingId,
+      meetingNotes: booking.meetingNotes,
+      hasNotes: !!booking.meetingNotes
+    });
+    setSessionNotes(booking.meetingNotes || '');
+  }, [booking.meetingNotes]);
 
   // Update current time every second for countdown
   useEffect(() => {
@@ -150,6 +163,30 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
     }
   };
 
+  const handleSaveNotes = async () => {
+    if (isSavingNotes) return;
+    
+    setSaveStatus('saving');
+    setIsSavingNotes(true);
+    try {
+      // Save to backend API first
+      const updatedBooking = await updateBookingNotes(booking.bookingId, sessionNotes);
+      
+      // Then update Dexie with the response from backend
+      await db.bookings.put(updatedBooking);
+      
+      setSaveStatus('saved');
+      // Reset to idle after 2 seconds
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+      setSaveStatus('idle');
+      alert('Failed to save agenda. Please try again.');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
   const formatDateTime = (timestamp: number) => {
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
@@ -177,7 +214,12 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <h1 className={styles.title}>Session with {otherUser.name}</h1>
+          <div className={styles.titleRow}>
+            <Link href="/account" className={styles.backButton}>
+              ← Back to Account
+            </Link>
+            <h1 className={styles.title}>Session with {otherUser.name}</h1>
+          </div>
           <div className={styles.statusRow}>
             <span className={`${styles.statusBadge} ${sessionState.statusColor}`}>
               {sessionState.statusBadge}
@@ -196,51 +238,90 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
 
       {/* Session Info Card */}
       <div className={styles.infoCard}>
-        <div className={styles.infoRow}>
-          <div className={styles.infoLabel}>Date & Time</div>
-          <div className={styles.infoValue}>
-            {formatDateTime(booking.startTime)} ({booking.durationMinutes} min)
+        <div className={styles.infoGrid}>
+          <div className={styles.infoItem}>
+            <div className={styles.infoLabel}>DATE & TIME</div>
+            <div className={styles.infoValue}>
+              {formatDateTime(booking.startTime)} ({booking.durationMinutes} min)
+            </div>
           </div>
+          {booking.timezone && (
+            <div className={styles.infoItem}>
+              <div className={styles.infoLabel}>TIMEZONE</div>
+              <div className={styles.infoValue}>{booking.timezone}</div>
+            </div>
+          )}
         </div>
         {booking.meetingTitle && (
-          <div className={styles.infoRow}>
-            <div className={styles.infoLabel}>Topic</div>
+          <div className={styles.infoItem}>
+            <div className={styles.infoLabel}>TOPIC</div>
             <div className={styles.infoValue}>{booking.meetingTitle}</div>
-          </div>
-        )}
-        {booking.timezone && (
-          <div className={styles.infoRow}>
-            <div className={styles.infoLabel}>Timezone</div>
-            <div className={styles.infoValue}>{booking.timezone}</div>
-          </div>
-        )}
-        {booking.price && (
-          <div className={styles.infoRow}>
-            <div className={styles.infoLabel}>Session Fee</div>
-            <div className={styles.infoValue}>${(booking.price / 100).toFixed(2)}</div>
           </div>
         )}
       </div>
 
-      {/* Prep Section (only for future sessions) */}
+      {/* Meeting Agenda (for all users to see) */}
       {sessionState.phase === 'future' && (
         <div className={styles.prepCard}>
-          <h3 className={styles.prepTitle}>Prep with Simple Sam</h3>
+          <h3 className={styles.prepTitle}>
+            📋 Meeting Agenda
+          </h3>
           <p className={styles.prepSubtitle}>
-            Here are 3 quick prompts to make the call productive:
+            {currentUserId === booking.userId 
+              ? "Add topics you'd like to discuss. Your expert will see these before the session."
+              : `${booking.userName}'s discussion topics for this session:`}
           </p>
-          <ul className={styles.prepList}>
-            <li>Share your target role + timeline</li>
-            <li>Paste your current resume highlights</li>
-            <li>List 2–3 projects you want feedback on</li>
-          </ul>
-          <textarea
-            placeholder="Add notes or questions for the session..."
-            className={styles.prepTextarea}
-            rows={3}
-            value={sessionNotes}
-            onChange={(e) => setSessionNotes(e.target.value)}
-          />
+          
+          {currentUserId === booking.userId ? (
+            <>
+              <textarea
+                placeholder="e.g., • Career transition strategy&#10;• Resume review for SaaS Product Manager role&#10;• Advice on negotiating compensation"
+                className={styles.prepTextarea}
+                rows={5}
+                value={sessionNotes}
+                onChange={(e) => {
+                  setSessionNotes(e.target.value);
+                  setSaveStatus('idle');
+                }}
+                onBlur={handleSaveNotes}
+              />
+              <div className={styles.saveRow}>
+                <button 
+                  onClick={handleSaveNotes}
+                  disabled={isSavingNotes || saveStatus === 'saved'}
+                  className={styles.saveButton}
+                >
+                  {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : 'Save Agenda'}
+                </button>
+                {saveStatus === 'saved' && (
+                  <span className={styles.saveStatus}>Auto-saves as you type</span>
+                )}
+              </div>
+              <div className={styles.prepHint}>
+                💡 Tip: Be specific to get the most value from your session
+              </div>
+            </>
+          ) : (
+            <div className={styles.notesDisplay}>
+              {booking.meetingNotes ? (
+                <pre className={styles.notesText}>{booking.meetingNotes}</pre>
+              ) : (
+                <div className={styles.noNotes}>
+                  No agenda items added yet. Check back closer to the session time.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Show agenda in read-only mode during and after session */}
+      {(sessionState.phase === 'live' || sessionState.phase === 'past') && booking.meetingNotes && (
+        <div className={styles.prepCard}>
+          <h3 className={styles.prepTitle}>📋 Discussion Topics</h3>
+          <div className={styles.notesDisplay}>
+            <pre className={styles.notesText}>{booking.meetingNotes}</pre>
+          </div>
         </div>
       )}
 

@@ -147,17 +147,26 @@ export default function ChatHeaderCallActions({
   };
 
   const callsDisabled = !hasActiveSessionWindow || !isConversationAccepted;
-  const tooltipMessage = !hasActiveSessionWindow 
-    ? 'Calls unlock during booked session windows' 
-    : 'Waiting for chat acceptance';
+  const tooltipMessage = useMemo(() => {
+    if (!isConversationAccepted) return 'Waiting for chat acceptance';
+    if (!hasActiveSessionWindow) {
+      if (upcomingBooking) {
+        const startDate = new Date(upcomingBooking.startTime);
+        return `Call available during your scheduled session on ${startDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+      }
+      return 'Schedule a session to enable calls with this expert';
+    }
+    return '';
+  }, [isConversationAccepted, hasActiveSessionWindow, upcomingBooking]);
 
   return (
-    <div className={compact ? styles.callButtonsCompact : styles.callButtons} title={callsDisabled ? tooltipMessage : undefined}>
+    <div className={compact ? styles.callButtonsCompact : styles.callButtons}>
       <button
         onClick={() => handleStartCall('video')}
         disabled={isStarting || callsDisabled}
         className={compact ? styles.callButtonCompact : styles.callButtonPrimary}
         aria-label="Start video call"
+        title={callsDisabled ? tooltipMessage : 'Start video call'}
         style={{ 
           opacity: callsDisabled ? 0.5 : 1,
           cursor: callsDisabled ? 'not-allowed' : 'pointer',
@@ -174,6 +183,7 @@ export default function ChatHeaderCallActions({
         disabled={isStarting || callsDisabled}
         className={compact ? styles.callButtonCompact : styles.callButtonSecondary}
         aria-label="Start audio call"
+        title={callsDisabled ? tooltipMessage : 'Start audio call'}
         style={{ 
           opacity: callsDisabled ? 0.5 : 1,
           cursor: callsDisabled ? 'not-allowed' : 'pointer',

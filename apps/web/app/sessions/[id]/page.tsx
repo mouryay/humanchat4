@@ -39,16 +39,20 @@ export default function SessionDetailPage() {
     let subscription: any;
     let mounted = true;
 
-    // First, check Dexie cache (bookings already loaded by BookingsManager)
+    // Always fetch fresh data from API on page load
     const init = async () => {
-      console.log('[SessionDetailPage] Checking Dexie for booking:', bookingId);
-      
-      // Check if booking exists in Dexie first
-      const cachedBooking = await db.bookings.get(bookingId);
-      
-      if (cachedBooking) {
-        console.log('[SessionDetailPage] Found booking in Dexie:', cachedBooking);
-        // Set up live query for reactive updates
+      try {
+        console.log('[SessionDetailPage] Fetching fresh booking from API:', bookingId);
+        const apiBooking = await getBookingById(bookingId);
+        console.log('[SessionDetailPage] API booking:', apiBooking);
+        
+        // Sync to Dexie
+        await db.bookings.put(apiBooking);
+        console.log('[SessionDetailPage] Synced booking to Dexie');
+        
+        // Now set up the live query for reactive updates
+        if (!mounted) return;
+        
         subscription = liveQuery(async () => {
           const result = await db.bookings.get(bookingId);
           return result;
@@ -65,39 +69,17 @@ export default function SessionDetailPage() {
             setIsLoading(false);
           }
         });
-      } else {
-        // Not in Dexie, try to fetch from API
-        try {
-          console.log('[SessionDetailPage] Booking not in Dexie, fetching from API...');
-          const apiBooking = await getBookingById(bookingId);
-          console.log('[SessionDetailPage] API booking:', apiBooking);
-          
-          // Sync to Dexie
-          await db.bookings.put(apiBooking);
-          console.log('[SessionDetailPage] Synced booking to Dexie');
-          
-          // Now set up the live query
-          if (!mounted) return;
-          
-          subscription = liveQuery(async () => {
-            const result = await db.bookings.get(bookingId);
-            return result;
-          }).subscribe({
-            next: (result) => {
-              if (!mounted) return;
-              setBooking(result || null);
-              setIsLoading(false);
-            },
-            error: (err) => {
-              if (!mounted) return;
-              console.error('[SessionDetailPage] Booking query error:', err);
-              setError('Failed to load booking');
-              setIsLoading(false);
-            }
-          });
-        } catch (err) {
-          console.error('[SessionDetailPage] Failed to fetch from API:', err);
-          if (!mounted) return;
+      } catch (err) {
+        console.error('[SessionDetailPage] Failed to fetch from API:', err);
+        if (!mounted) return;
+        
+        // Fallback to Dexie cache if API fails
+        const cachedBooking = await db.bookings.get(bookingId);
+        if (cachedBooking) {
+          console.log('[SessionDetailPage] Using cached booking from Dexie');
+          setBooking(cachedBooking);
+          setIsLoading(false);
+        } else {
           setError('Booking not found');
           setIsLoading(false);
         }
@@ -165,26 +147,31 @@ export default function SessionDetailPage() {
   }
 
   return (
-    <div className={styles.container}>
-      {/* Top Navigation */}
-      <div className={styles.topNav}>
+    <>
+      {/* Top Header */}
+      <div className={styles.topHeader}>
+        <Link href="/?focus=sam" className={styles.logo}>
+          HUMANCHAT.COM
+        </Link>
         <Link 
           href="/account" 
-          className={styles.backLink}
+          className={styles.backLinkMobile}
         >
           ← Back to Account
         </Link>
       </div>
       
-      {/* Left Sidebar: Full Calendar */}
-      <aside className={styles.sidebar}>
-        <BookingsManager embedded />
-      </aside>
+      <div className={styles.container}>
+        {/* Left Sidebar: Full Calendar */}
+        <aside className={styles.sidebar}>
+          <BookingsManager embedded />
+        </aside>
 
-      {/* Main Content: Session Detail */}
-      <main className={styles.main}>
-        <SessionLobby booking={booking} currentUserId={currentUserId} />
-      </main>
-    </div>
+        {/* Main Content: Session Detail */}
+        <main className={styles.main}>
+          <SessionLobby booking={booking} currentUserId={currentUserId} />
+        </main>
+      </div>
+    </>
   );
 }

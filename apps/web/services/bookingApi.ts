@@ -261,3 +261,28 @@ export const getExpertWeeklyAvailability = async (
     timezone: rule.timezone
   }));
 };
+
+/**
+ * Update booking meeting notes
+ */
+export const updateBookingNotes = async (
+  bookingId: string,
+  meetingNotes: string
+): Promise<Booking> => {
+  const response = await fetch(`${API_BASE}/api/bookings/${bookingId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({ meetingNotes })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to update booking notes');
+  }
+
+  const result: BookingResponse = await response.json();
+  return result.data;
+};

@@ -572,7 +572,7 @@ export const getBookingById = async (bookingId: string): Promise<BookingWithDeta
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.notes,
+    meetingNotes: row.meeting_notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
@@ -642,7 +642,7 @@ export const getUserBookings = async (
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.notes,
+    meetingNotes: row.meeting_notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
@@ -709,7 +709,7 @@ export const getExpertBookings = async (
     timezone: row.timezone,
     status: row.status,
     meetingTitle: row.meeting_title,
-    meetingNotes: row.notes,
+    meetingNotes: row.meeting_notes,
     meetingLink: row.meeting_link,
     calendarEventId: row.calendar_event_id,
     price: row.price,
@@ -844,6 +844,31 @@ export const cancelBooking = async (
     console.error('Failed to send booking cancellation notification:', err);
   }
 
+  return updatedBooking;
+};
+
+/**
+ * Update booking meeting notes
+ */
+export const updateBookingNotes = async (
+  bookingId: string,
+  meetingNotes?: string
+): Promise<BookingWithDetails> => {
+  const booking = await getBookingById(bookingId);
+
+  // Only allow updates to scheduled or awaiting_payment bookings
+  if (!['scheduled', 'awaiting_payment'].includes(booking.status)) {
+    throw new ApiError(400, 'INVALID_REQUEST', 'Cannot update notes for this booking');
+  }
+
+  await query(
+    `UPDATE bookings
+     SET meeting_notes = $1, updated_at = NOW()
+     WHERE id = $2`,
+    [meetingNotes || null, bookingId]
+  );
+
+  const updatedBooking = await getBookingById(bookingId);
   return updatedBooking;
 };
 
