@@ -1,8 +1,12 @@
 node_modules/
 dist/
 .env
+.env*
 .env.local
 .env.*.local
+*.env
+env.*
+apps/web/.env*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -26,3 +30,10 @@ public/
 .terraform/
 infra/.terraform/
 cloud-sql-proxy
+cloud-sql-proxy.exe
+
+# Sensitive files
+*.yaml
+*.yml
+.env.cloudrun*
+apps/web/.env.vercel*
