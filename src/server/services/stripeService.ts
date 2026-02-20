@@ -450,7 +450,11 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 				logger.info('Creating Stripe Connect account', { userId, email: user.email });
 		const account = await stripe.accounts.create({
 			type: 'express',
-			email: user.email
+			email: user.email,
+			capabilities: {
+				card_payments: { requested: true },
+				transfers: { requested: true }
+			}
 		});
 		accountId = account.id;
 		await query('UPDATE users SET stripe_account_id = $2 WHERE id = $1', [userId, accountId]);
@@ -458,6 +462,18 @@ export const createStripeConnectLink = async (userId: string, returnPath?: strin
 			} catch (stripeError: unknown) {
 				const errorMessage = stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error';
 				const stripeErrorDetails = stripeError instanceof Error && 'type' in stripeError ? (stripeError as any).type : undefined;
+				
+				// Check if this is a Connect not enabled error
+				if (errorMessage.includes('connection to Stripe') || errorMessage.includes('retried')) {
+					logger.error('Stripe Connect not enabled or network error', { 
+						userId, 
+						email: user.email,
+						error: errorMessage,
+						hint: 'Enable Stripe Connect at https://dashboard.stripe.com/connect/accounts/overview'
+					});
+					throw new ApiError(500, 'SERVER_ERROR', 'Stripe Connect is not enabled on this account. Please enable it in the Stripe Dashboard at https://dashboard.stripe.com/connect/accounts/overview');
+				}
+				
 				logger.error('Failed to create Stripe Connect account', { 
 					userId, 
 					email: user.email,
