@@ -22,6 +22,7 @@ interface ConversationListItemProps {
   disableGestures?: boolean;
   deletePending?: boolean;
   pendingRequest?: PendingRequestOverlay;
+  className?: string;
 }
 
 const statusIconMap = {
@@ -36,7 +37,7 @@ const statusClassMap: Record<StatusVariant, string> = {
   scheduled: styles.statusScheduled
 };
 
-export default function ConversationListItem({ entry, isActive, onSelect, onArchive, onDelete, showMetadata = true, disableGestures, deletePending, pendingRequest }: ConversationListItemProps) {
+export default function ConversationListItem({ entry, isActive, onSelect, onArchive, onDelete, showMetadata = true, disableGestures, deletePending, pendingRequest, className }: ConversationListItemProps) {
   const { conversation, meta } = entry;
   const isSam = conversation.type === 'sam';
   const unreadCount = conversation.unreadCount ?? 0;
@@ -138,7 +139,7 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
 
   return (
     <li
-      className={clsx(styles.listItem, isActive && styles.active, isSam && styles.samItem)}
+      className={clsx(styles.listItem, isActive && styles.active, isSam && styles.samItem, className)}
       role="button"
       tabIndex={0}
       onClick={handleClick}
