@@ -16,6 +16,7 @@ interface LiveRoomProps {
   roomName: string;
   liveKitToken: string;
   callType: 'video' | 'audio';
+  conversationId?: string;
   isHost?: boolean;
 }
 
@@ -24,6 +25,7 @@ export default function LiveRoom({
   roomName,
   liveKitToken,
   callType,
+  conversationId,
   isHost = false,
 }: LiveRoomProps) {
   const router = useRouter();
@@ -125,13 +127,24 @@ export default function LiveRoom({
 
   const handleEndCall = async (reason: 'normal' | 'error' = 'normal') => {
     try {
+      console.log('[LiveRoom] Ending call:', { callId, conversationId, reason });
       await endCall(callId, reason);
       disconnect();
-      router.push('/chat'); // Navigate back to chat
+      
+      // Wait for call summary message to propagate via WebSocket and be stored in IndexedDB
+      console.log('[LiveRoom] Waiting 1 second for call summary message to arrive...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Navigate back to the specific conversation where call summary was added
+      const chatUrl = conversationId ? `/chat?conversationId=${conversationId}` : '/chat';
+      console.log('[LiveRoom] Navigating to:', chatUrl);
+      router.push(chatUrl);
     } catch (error) {
-      console.error('Failed to end call:', error);
-      // Navigate anyway
-      router.push('/chat');
+      console.error('[LiveRoom] Failed to end call:', error);
+      // Navigate anyway with delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const chatUrl = conversationId ? `/chat?conversationId=${conversationId}` : '/chat';
+      router.push(chatUrl);
     }
   };
 
