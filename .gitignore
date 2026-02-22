@@ -5,7 +5,7 @@ dist/
 .env.local
 .env.*.local
 *.env
-env.*
+/env.*
 apps/web/.env*
 npm-debug.log*
 yarn-debug.log*
@@ -32,8 +32,10 @@ infra/.terraform/
 cloud-sql-proxy
 cloud-sql-proxy.exe
 
-# Sensitive files
+# Sensitive files (Terraform vars, etc.)
+# Note: *.yaml/yml excluded but openapi.yaml needed for build
 *.yaml
 *.yml
+!openapi.yaml
 .env.cloudrun*
 apps/web/.env.vercel*
