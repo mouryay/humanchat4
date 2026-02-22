@@ -220,7 +220,17 @@ export default function ConversationView({
           <>
             <div className={styles.headerTitleStack}>
               <div className={styles.title}>{summary.title}</div>
-              <div className={styles.subtitle}>{summary.subtitle}</div>
+              <div className={styles.subtitleRow}>
+                <span className={styles.subtitle}>{summary.subtitle}</span>
+                {conversation && (
+                  <>
+                    <span className={styles.separator}> | </span>
+                    <span className={styles.metadata}>
+                      Last activity {new Date(conversation.lastActivity).toLocaleTimeString()}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             <div className={styles.headerActions}>
               {(() => {
@@ -248,11 +258,6 @@ export default function ConversationView({
                 >
                   📅 Schedule
                 </button>
-              )}
-              {conversation && (
-                <div className={clsx(styles.metadata, styles.headerActionsMetadata)}>
-                  Last activity • {new Date(conversation.lastActivity).toLocaleTimeString()}
-                </div>
               )}
             </div>
           </>

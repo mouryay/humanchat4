@@ -68,7 +68,13 @@ export default function SessionView({ conversation, session, invite, messages, r
   );
   
   const systemMessages = useMemo(() => {
-    return orderedMessages.filter((msg) => msg.type === 'system_notice');
+    return orderedMessages.filter((msg) => {
+      // Exclude call summaries (📞) from popup notifications - they appear inline
+      if (msg.type === 'system_notice' && msg.content?.trim().startsWith('📞')) {
+        return false;
+      }
+      return msg.type === 'system_notice';
+    });
   }, [orderedMessages]);
 
   useEffect(() => {
@@ -163,7 +169,14 @@ export default function SessionView({ conversation, session, invite, messages, r
   }
 
   if (isComplete) {
-    const archivedMessages = orderedMessages.filter((msg) => msg.type !== 'system_notice');
+    const archivedMessages = orderedMessages.filter((msg) => {
+      // Allow call summary messages (starting with 📞) in archived view
+      if (msg.type === 'system_notice' && msg.content?.trim().startsWith('📞')) {
+        return true;
+      }
+      // Filter out other system notices
+      return msg.type !== 'system_notice';
+    });
     
     const getMessageGrouping = (index: number) => {
       const currentMessage = archivedMessages[index];

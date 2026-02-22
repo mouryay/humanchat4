@@ -24,11 +24,18 @@ export default function ChatArea({ conversation, messages, registerScrollContain
   const orderedMessages = useMemo(() => {
     return [...messages]
       .filter((message) => {
-        // Filter out system messages - they'll be shown as notifications instead
-        if (message.type === 'system_notice') return false;
         // Filter out messages with empty or whitespace-only content
         const content = message.content?.trim() || '';
         if (!content) return false;
+        
+        // Allow call summary messages (starting with 📞) to appear inline
+        if (message.type === 'system_notice' && content.startsWith('📞')) {
+          return true;
+        }
+        
+        // Filter out other system messages - they'll be shown as notifications instead
+        if (message.type === 'system_notice') return false;
+        
         return true;
       })
       .sort((a, b) => a.timestamp - b.timestamp);

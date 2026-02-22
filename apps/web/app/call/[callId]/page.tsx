@@ -71,6 +71,7 @@ export default function CallPage() {
       roomName={callData.roomName}
       liveKitToken={callData.liveKitToken}
       callType={callData.callType}
+      conversationId={callData.conversationId}
       isHost={callData.isHost}
     />
   );
