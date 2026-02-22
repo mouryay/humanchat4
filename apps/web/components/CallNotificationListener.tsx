@@ -54,8 +54,15 @@ export default function CallNotificationListener() {
           console.log('[CallListener] Incoming call from:', message.caller.name);
           setIncomingCall(message as CallRingingMessage);
         } else if (message.type === 'CALL_DECLINED' || message.type === 'CALL_ENDED' || message.type === 'CALL_TIMEOUT') {
+          console.log('[CallListener] Call ended/declined/timeout:', message.type);
           // Clear incoming call modal
           setIncomingCall(null);
+          
+          // If user is in an active call, force disconnect
+          if (message.type === 'CALL_ENDED' && window.location.pathname.includes('/call/')) {
+            console.log('[CallListener] Forcing disconnect from active call');
+            window.location.href = '/chat';
+          }
         }
       } catch (error) {
         console.error('[CallListener] Failed to parse WebSocket message:', error);

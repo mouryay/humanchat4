@@ -9,6 +9,7 @@ import { ApiError } from '../errors/ApiError.js';
 import * as callService from '../services/callService.js';
 import { generateLiveKitToken } from '../services/liveKitService.js';
 import { StartCallRequest, AcceptCallRequest, DeclineCallRequest, EndCallRequest } from '../types/calls.js';
+import { query } from '../db/postgres.js';
 
 const router = Router();
 
@@ -20,16 +21,14 @@ const startCallSchema = z.object({
 });
 
 const acceptCallSchema = z.object({
-  userId: z.string(),
+  // No body params needed - userId comes from auth
 });
 
 const declineCallSchema = z.object({
-  userId: z.string(),
   reason: z.enum(['busy', 'declined', 'other']).optional(),
 });
 
 const endCallSchema = z.object({
-  userId: z.string(),
   endReason: z.enum(['normal', 'timeout', 'error']).optional(),
 });
 
@@ -90,6 +89,7 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { callId } = req.params;
+      
       const parsed = declineCallSchema.safeParse(req.body);
       if (!parsed.success) {
         throw new ApiError(400, 'INVALID_REQUEST', 'Invalid request', parsed.error.flatten());
@@ -191,6 +191,14 @@ router.get(
         throw new ApiError(404, 'NOT_FOUND', 'Call not found');
       }
 
+      // Get participant info (the other person in the call)
+      const otherUserId = call.caller_user_id === userId ? call.callee_user_id : call.caller_user_id;
+      const otherUserResult = await query(
+        `SELECT id, name, avatar_url FROM users WHERE id = $1`,
+        [otherUserId]
+      );
+      const otherUser = otherUserResult.rows[0];
+
       // Use the room name from the database (stored when call was created)
       const roomName = call.livekit_room_name || `call_${callId}`;
       const liveKitToken = await generateLiveKitToken({
@@ -212,6 +220,9 @@ router.get(
         status: call.status,
         roomName,
         liveKitToken,
+        participantName: otherUser?.name || 'Unknown',
+        participantAvatar: otherUser?.avatar_url,
+        isHost: call.caller_user_id === userId,
         initiatedAt: new Date(call.initiated_at).toISOString(),
         connectedAt: call.connected_at ? new Date(call.connected_at).toISOString() : undefined,
         duration: currentDuration,

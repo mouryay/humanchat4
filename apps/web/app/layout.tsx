@@ -8,6 +8,8 @@ import InstantInviteListener from '../components/InstantInviteListener';
 import InstantInviteNavigator from '../components/InstantInviteNavigator';
 import UserSettingsMenu from '../components/UserSettingsMenu';
 import CallNotificationListener from '../components/CallNotificationListener';
+import { CallProvider } from '../context/CallContext';
+import MinimizedCallBar from '../components/MinimizedCallBar';
 
 export const metadata = {
   title: 'Done talking to AI? Come talk to a human.',
@@ -28,18 +30,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="bg-midnight text-white font-body antialiased min-h-screen overflow-x-hidden">
-        <PWAInitializer />
-        <FirebaseSessionBridge />
-        <IdentityInitializer />
-        <InstantInviteListener />
-        <InstantInviteNavigator />
-        <CallNotificationListener />
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-4 py-4 chat-layout-settings">
-          <div className="pointer-events-auto">
-            <UserSettingsMenu />
+        <CallProvider>
+          <PWAInitializer />
+          <FirebaseSessionBridge />
+          <IdentityInitializer />
+          <InstantInviteListener />
+          <InstantInviteNavigator />
+          <CallNotificationListener />
+          <MinimizedCallBar />
+          <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-4 py-4 chat-layout-settings">
+            <div className="pointer-events-auto">
+              <UserSettingsMenu />
+            </div>
           </div>
-        </div>
-        {children}
+          {children}
+        </CallProvider>
       </body>
     </html>
   );
