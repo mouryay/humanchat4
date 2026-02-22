@@ -147,19 +147,29 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
     // Find existing conversation between the two parties
     const allConversations = await db.conversations.toArray();
     
+    console.log('[SessionLobby] handleMessage - Looking for conversation:', {
+      currentUserId,
+      otherUserId: otherUser.id,
+      bookingUserId: booking.userId,
+      bookingExpertId: booking.expertId,
+      totalConversations: allConversations.length
+    });
+    
     const existingConversation = allConversations.find(conv => 
       conv.type === 'human' && 
       conv.participants.includes(booking.userId) && 
       conv.participants.includes(booking.expertId)
     );
     
+    console.log('[SessionLobby] handleMessage - Found conversation:', existingConversation?.conversationId);
+    
     if (existingConversation) {
       // Navigate to existing conversation
       router.push(`/?conversationId=${existingConversation.conversationId}`);
     } else {
-      // Create new conversation (fallback)
-      const otherUserId = booking.userId === currentUserId ? booking.expertId : booking.userId;
-      router.push(`/?userId=${otherUserId}`);
+      // Create new conversation (fallback) - use otherUser.id which is already computed correctly
+      console.log('[SessionLobby] handleMessage - Creating new conversation with:', otherUser.id);
+      router.push(`/?userId=${otherUser.id}`);
     }
   };
 

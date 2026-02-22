@@ -604,7 +604,7 @@ export const getUserBookings = async (
   if (status === 'upcoming') {
     statusFilter = `AND b.status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment') AND COALESCE(b.scheduled_start, b.start_time) > NOW()`;
   } else if (status === 'past') {
-    statusFilter = `AND b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW() AND b.status::VARCHAR != 'scheduled')`;
+    statusFilter = `AND (b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW() AND b.status::VARCHAR != 'scheduled'))`;
   } else if (status === 'canceled') {
     statusFilter = `AND b.status::VARCHAR IN ('cancelled_by_user', 'cancelled_by_expert', 'canceled')`;
   }
@@ -671,7 +671,7 @@ export const getExpertBookings = async (
   if (status === 'upcoming') {
     statusFilter = `AND b.status::VARCHAR IN ('scheduled', 'in_progress', 'confirmed', 'awaiting_payment') AND COALESCE(b.scheduled_start, b.start_time) > NOW()`;
   } else if (status === 'past') {
-    statusFilter = `AND b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW())`;
+    statusFilter = `AND (b.status::VARCHAR = 'completed' OR (COALESCE(b.scheduled_start, b.start_time) < NOW()))`;
   } else if (status === 'canceled') {
     statusFilter = `AND b.status::VARCHAR IN ('cancelled_by_user', 'cancelled_by_expert', 'canceled')`;
   }

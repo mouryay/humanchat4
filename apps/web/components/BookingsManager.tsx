@@ -11,12 +11,13 @@ export type BookingTab = 'upcoming' | 'past' | 'canceled';
 
 interface BookingsManagerProps {
   embedded?: boolean;
+  selectedBookingId?: string;
 }
 
 const panelBackground = 'bg-white/[0.03] border border-white/10';
 const panelBackgroundEmbedded = 'bg-white/[0.03] border border-white/10';
 
-export function BookingsManager({ embedded = false }: BookingsManagerProps) {
+export function BookingsManager({ embedded = false, selectedBookingId }: BookingsManagerProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<BookingTab>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -199,10 +200,13 @@ export function BookingsManager({ embedded = false }: BookingsManagerProps) {
                 expertAvatar: booking.expertAvatar,
                 hasAvatar: !!booking.expertAvatar
               });
+              const isSelected = selectedBookingId === booking.bookingId;
               return (
               <div 
                 key={booking.bookingId} 
-                className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30 cursor-pointer`}
+                className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30 cursor-pointer ${
+                  isSelected ? 'ring-2 ring-blue-400 border-blue-400/50 bg-white/[0.08]' : ''
+                }`}
                 onClick={() => {
                   router.push(`/sessions/${booking.bookingId}`);
                 }}

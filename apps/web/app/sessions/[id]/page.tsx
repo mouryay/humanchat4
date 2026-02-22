@@ -164,9 +164,9 @@ export default function SessionDetailPage() {
       <div className={styles.container}>
         {/* Left Sidebar: Full Calendar */}
         <aside className={styles.sidebar}>
-          <BookingsManager embedded />
+          <BookingsManager embedded selectedBookingId={bookingId} />
         </aside>
-
+        
         {/* Main Content: Session Detail */}
         <main className={styles.main}>
           <SessionLobby booking={booking} currentUserId={currentUserId} />
