@@ -98,7 +98,21 @@
   flex-direction: column;
   gap: 6px;
   flex: 1;
-  min-width: 0;
+  min-width: 200px;
+}
+
+.subtitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.separator {
+  color: rgba(226, 232, 240, 0.5);
+  font-size: 13px;
+  font-weight: 400;
+  margin: 0 4px;
 }
 
 @media (max-width: 767px) {
@@ -385,16 +399,17 @@
 .callButtonPrimary,
 .callButtonSecondary {
   border-radius: 10px;
-  padding: 8px 16px;
+  padding: 10px 24px;
   font-weight: 600;
   font-size: 14px;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  gap: 6px;
+  gap: 8px;
   display: flex;
   align-items: center;
   white-space: nowrap;
+  min-width: 140px;
 }
 
 .callButtonPrimary svg,
@@ -448,13 +463,9 @@
 }
 
 .lockIcon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0.9;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
-  pointer-events: none;
+  margin-left: 6px;
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .bookingCta {

@@ -223,13 +223,12 @@ export default function ChatHeaderCallActions({
         title={callsDisabled ? tooltipMessage : 'Start video call'}
         style={{ 
           opacity: callsDisabled ? 0.5 : 1,
-          cursor: callsDisabled ? 'not-allowed' : 'pointer',
-          position: 'relative'
+          cursor: callsDisabled ? 'not-allowed' : 'pointer'
         }}
       >
-        {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
         <Video size={compact ? 16 : 18} />
         {!compact && <span>Video call</span>}
+        {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
       </button>
 
       <button
@@ -240,13 +239,12 @@ export default function ChatHeaderCallActions({
         title={callsDisabled ? tooltipMessage : 'Start audio call'}
         style={{ 
           opacity: callsDisabled ? 0.5 : 1,
-          cursor: callsDisabled ? 'not-allowed' : 'pointer',
-          position: 'relative'
+          cursor: callsDisabled ? 'not-allowed' : 'pointer'
         }}
       >
-        {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
         <Phone size={compact ? 16 : 18} />
         {!compact && <span>Audio call</span>}
+        {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
       </button>
       
       {!compact && !isExpertAvailableNow && upcomingBooking && (
