@@ -43,8 +43,8 @@ export const upsertAvailabilityRule = async (
 
   const result = await query(
     `INSERT INTO expert_availability_rules 
-     (responder_id, expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
-     VALUES ($1, $1, $2, $3::time, $4::time, $5, $6, TRUE)
+     (responder_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
+     VALUES ($1, $2, $3::time, $4::time, $5, $6, $7)
      ON CONFLICT (responder_id, day_of_week, start_time, end_time)
      DO UPDATE SET 
        slot_duration_minutes = EXCLUDED.slot_duration_minutes,
@@ -58,7 +58,8 @@ export const upsertAvailabilityRule = async (
       input.startTime,
       input.endTime,
       input.slotDurationMinutes ?? 30,
-      input.timezone
+      input.timezone,
+      true
     ]
   );
 
@@ -85,8 +86,8 @@ export const setWeeklyAvailability = async (
       for (const rule of rules) {
         const result = await client.query(
           `INSERT INTO expert_availability_rules 
-           (responder_id, expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
-           VALUES ($1, $1, $2, $3::time, $4::time, $5, $6, TRUE)
+           (responder_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
+           VALUES ($1, $2, $3::time, $4::time, $5, $6, $7)
            RETURNING *`,
           [
             expertId,
@@ -94,7 +95,8 @@ export const setWeeklyAvailability = async (
             rule.startTime,
             rule.endTime,
             rule.slotDurationMinutes ?? 30,
-            rule.timezone
+            rule.timezone,
+            true
           ]
         );
         insertedRules.push(result.rows[0]);
@@ -154,8 +156,8 @@ export const createAvailabilityOverride = async (
 
   const result = await query(
     `INSERT INTO expert_availability_overrides 
-     (responder_id, expert_id, override_date, override_type, start_time, end_time, timezone, reason)
-     VALUES ($1, $1, $2, $3, $4::time, $5::time, $6, $7)
+     (responder_id, override_date, override_type, start_time, end_time, timezone, reason)
+     VALUES ($1, $2, $3, $4::time, $5::time, $6, $7)
      RETURNING *`,
     [
       input.expertId,
