@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Mic, 
   MicOff, 
@@ -10,19 +11,25 @@ import {
   MonitorUp,
   MoreVertical,
   ChevronDown,
-  Maximize2
+  Maximize2,
+  Settings,
+  Users,
+  Info
 } from 'lucide-react';
-import { useTracks, ParticipantTile, useRoomContext, useLocalParticipant } from '@livekit/components-react';
+import { useTracks, VideoTrack, useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { useCallContext } from '../context/CallContext';
+import { useAuthIdentity } from '../hooks/useAuthIdentity';
 
 interface VideoCallPageProps {
   onEndCall: () => void;
 }
 
 export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
+  const router = useRouter();
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
+  const { identity } = useAuthIdentity();
   const {
     participantName,
     status,
@@ -35,11 +42,15 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
     toggleCamera,
     toggleScreenShare,
     toggleMinimize,
+    conversationId,
+    returnUrl,
   } = useCallContext();
 
   const [elapsed, setElapsed] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
   const hideControlsTimeout = useRef<NodeJS.Timeout>();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Get video tracks
   const tracks = useTracks(
@@ -97,6 +108,23 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
     };
   }, []);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -126,6 +154,13 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
     toggleCamera();
   };
 
+  const handleMinimize = () => {
+    toggleMinimize();
+    // Navigate to return URL (where call was initiated from)
+    const targetUrl = returnUrl || `/chat${conversationId ? `?conversationId=${conversationId}` : ''}`;
+    router.push(targetUrl);
+  };
+
   const handleToggleScreenShare = async () => {
     if (localParticipant) {
       await localParticipant.setScreenShareEnabled(!isScreenSharing);
@@ -133,17 +168,14 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
     toggleScreenShare();
   };
 
-  if (isMinimized) return null;
-
   return (
-    <div className="relative h-full w-full">
+    <div className={`relative h-full w-full ${isMinimized ? 'hidden' : ''}`}>
       {/* Main Video Stage */}
       <div className="absolute inset-0">
         {remoteVideoTrack ? (
-          <ParticipantTile
-            participant={remoteVideoTrack.participant}
-            source={Track.Source.Camera}
-            className="h-full w-full"
+          <VideoTrack
+            trackRef={remoteVideoTrack}
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
@@ -164,10 +196,9 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
       {/* Screen Share Overlay (if active) */}
       {screenShareTrack && (
         <div className="absolute inset-0 bg-black z-10">
-          <ParticipantTile
-            participant={screenShareTrack.participant}
-            source={Track.Source.ScreenShare}
-            className="h-full w-full"
+          <VideoTrack
+            trackRef={screenShareTrack}
+            className="h-full w-full object-cover"
           />
         </div>
       )}
@@ -191,27 +222,78 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
         
         <div className="flex items-center gap-3">
           <button
-            onClick={toggleMinimize}
+            onClick={handleMinimize}
             className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center hover:bg-black/50 transition-colors"
           >
             <ChevronDown className="w-5 h-5 text-white" />
           </button>
-          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center hover:bg-black/50 transition-colors">
-            <MoreVertical className="w-5 h-5 text-white" />
-          </button>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-            {getInitials(participantName || 'User')}
+          
+          {/* Menu dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl flex items-center justify-center hover:bg-black/50 transition-colors"
+            >
+              <MoreVertical className="w-5 h-5 text-white" />
+            </button>
+            
+            {showMenu && (
+              <div className="absolute right-0 top-12 w-56 bg-slate-800/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50">
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    // Add call info action
+                  }}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+                >
+                  <Info className="w-5 h-5 text-blue-400" />
+                  <span className="text-white text-sm">Call Information</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    // Add participants action
+                  }}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+                >
+                  <Users className="w-5 h-5 text-green-400" />
+                  <span className="text-white text-sm">View Participants</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    // Add settings action
+                  }}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left border-t border-white/5"
+                >
+                  <Settings className="w-5 h-5 text-gray-400" />
+                  <span className="text-white text-sm">Call Settings</span>
+                </button>
+              </div>
+            )}
           </div>
+          
+          {/* Current user avatar */}
+          {identity?.avatar ? (
+            <img 
+              src={identity.avatar} 
+              alt={identity.name || 'You'} 
+              className="w-10 h-10 rounded-full border-2 border-white/20 object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 border-2 border-white/20 flex items-center justify-center text-white font-semibold text-sm">
+              {getInitials(identity?.name || 'User')}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Picture-in-Picture (Local Video) */}
       {localVideoTrack && !isCameraOff && (
         <div className="absolute top-20 right-6 z-20 w-48 h-36 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20">
-          <ParticipantTile
-            participant={localVideoTrack.participant}
-            source={Track.Source.Camera}
-            className="h-full w-full"
+          <VideoTrack
+            trackRef={localVideoTrack}
+            className="h-full w-full object-cover"
           />
         </div>
       )}

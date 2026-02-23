@@ -84,9 +84,21 @@ export default function CallShell({
 
   const serverUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://humanchat-8w7n96ci.livekit.cloud';
 
-  const handleDisconnected = useCallback(() => {
+  const handleDisconnected = useCallback(async () => {
     console.log('[CallShell] Room disconnected');
     updateStatus('ending');
+    
+    // End call on backend
+    if (callId) {
+      try {
+        const { endCall: endCallApi } = await import('../services/callApi');
+        await endCallApi(callId);
+        console.log('[CallShell] Call ended on backend');
+      } catch (error) {
+        console.error('[CallShell] Failed to end call on backend:', error);
+        // Continue anyway to clean up local state
+      }
+    }
     
     // Small delay before clearing context and navigating
     setTimeout(() => {
@@ -97,7 +109,7 @@ export default function CallShell({
       const chatUrl = conversationId ? `/chat?conversationId=${conversationId}` : '/chat';
       router.push(chatUrl);
     }, 500);
-  }, [updateStatus, endCall, conversationId, router]);
+  }, [updateStatus, endCall, conversationId, router, callId]);
 
   const handleConnected = useCallback(() => {
     console.log('[CallShell] Room connected (local only)');

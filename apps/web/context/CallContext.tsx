@@ -12,6 +12,7 @@ interface CallContextValue {
   conversationId: string | null;
   participantName: string | null;
   participantAvatar: string | null;
+  returnUrl: string | null;
   
   // Call state
   status: CallStatus;
@@ -42,6 +43,7 @@ interface StartCallParams {
   conversationId: string;
   participantName: string;
   participantAvatar?: string;
+  returnUrl: string;
 }
 
 const CallContext = createContext<CallContextValue | undefined>(undefined);
@@ -52,6 +54,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [participantName, setParticipantName] = useState<string | null>(null);
   const [participantAvatar, setParticipantAvatar] = useState<string | null>(null);
+  const [returnUrl, setReturnUrl] = useState<string | null>(null);
   
   const [status, setStatus] = useState<CallStatus>('disconnected');
   const [isMinimized, setIsMinimized] = useState(false);
@@ -68,6 +71,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     setConversationId(params.conversationId);
     setParticipantName(params.participantName);
     setParticipantAvatar(params.participantAvatar || null);
+    setReturnUrl(params.returnUrl);
     setStatus('connecting');
     setConnectedAt(null); // Will be set when actually connected
     setIsMinimized(false);
@@ -79,6 +83,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     setConversationId(null);
     setParticipantName(null);
     setParticipantAvatar(null);
+    setReturnUrl(null);
     setStatus('disconnected');
     setConnectedAt(null);
     setIsMinimized(false);
@@ -121,6 +126,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     conversationId,
     participantName,
     participantAvatar,
+    returnUrl,
     status,
     isMinimized,
     connectedAt,

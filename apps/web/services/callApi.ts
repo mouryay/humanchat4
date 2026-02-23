@@ -54,35 +54,62 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     let error;
+    let rawText = '';
     
     try {
-      error = await response.json();
+      // Read as text first to preserve the body
+      rawText = await response.text();
+      console.log('[fetchWithAuth] Raw error response:', rawText);
+      
+      // Try to parse as JSON
+      error = JSON.parse(rawText);
+      console.log('[fetchWithAuth] Parsed error:', error);
     } catch (parseError) {
-      const rawText = await response.text().catch(() => 'Unknown error');
-      error = { message: rawText || 'Request failed' };
+      console.log('[fetchWithAuth] JSON parse failed, using raw text');
+      // If JSON parsing fails, use the raw text
+      error = { 
+        message: rawText || response.statusText || 'Request failed',
+        statusCode: response.status 
+      };
     }
+    
+    // Handle nested error format: {success: false, error: {code, message}}
+    const actualError = error.error || error;
+    const errorCode = actualError.code;
+    const errorMessage = actualError.message || response.statusText || `HTTP ${response.status}`;
     
     // Suppress expected 400 errors for call operations (race conditions)
     const isCallOperationError = url.includes('/decline') || url.includes('/end');
     const is400Error = response.status === 400;
-    const isAlreadyEndedError = error.message?.includes('declined') || 
-                                error.message?.includes('ended') || 
-                                error.code === 'INVALID_REQUEST';
+    const isAlreadyEndedError = errorMessage?.includes('declined') || 
+                                errorMessage?.includes('ended') || 
+                                errorCode === 'INVALID_REQUEST';
     
     if (isCallOperationError && is400Error && isAlreadyEndedError) {
       const err: any = new Error('Call already ended');
       err.status = 400;
-      err.data = error;
+      err.data = actualError;
       throw err;
     }
     
-    // Log unexpected errors
-    console.error('[API Error]', { url, status: response.status, message: error.message });
+    // Log unexpected errors with full details
+    console.error('[API Error] Full details:', { 
+      url, 
+      status: response.status, 
+      statusText: response.statusText,
+      errorCode,
+      errorMessage,
+      errorDetails: actualError.details,
+      rawResponse: rawText.substring(0, 1000),
+      fullError: error
+    });
     
     throw {
       status: response.status,
-      message: error.message || `HTTP ${response.status}`,
-      ...error,
+      message: errorMessage,
+      code: errorCode,
+      details: actualError.details,
+      ...actualError,
     };
   }
 

@@ -50,10 +50,8 @@ export default function MinimizedCallBar() {
   };
 
   const handleExpand = () => {
+    // Just toggle minimize - GlobalCallRoom will show the full UI
     toggleMinimize();
-    if (callId) {
-      router.push(`/call/${callId}`);
-    }
   };
 
   const handleEndCall = () => {

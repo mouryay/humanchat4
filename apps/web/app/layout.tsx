@@ -10,6 +10,7 @@ import UserSettingsMenu from '../components/UserSettingsMenu';
 import CallNotificationListener from '../components/CallNotificationListener';
 import { CallProvider } from '../context/CallContext';
 import MinimizedCallBar from '../components/MinimizedCallBar';
+import GlobalCallRoom from '../components/GlobalCallRoom';
 
 export const metadata = {
   title: 'Done talking to AI? Come talk to a human.',
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <InstantInviteListener />
           <InstantInviteNavigator />
           <CallNotificationListener />
+          <GlobalCallRoom />
           <MinimizedCallBar />
           <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-4 py-4 chat-layout-settings">
             <div className="pointer-events-auto">
