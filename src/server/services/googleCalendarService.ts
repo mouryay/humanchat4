@@ -34,7 +34,7 @@ export interface BusyTimeSlot {
 
 const mapCalendarConnection = (row: any): CalendarConnection => ({
   id: row.id,
-  expertId: row.expert_id,
+  expertId: row.responder_id || row.expert_id,
   provider: row.provider,
   accessToken: row.access_token,
   refreshToken: row.refresh_token,
@@ -87,9 +87,9 @@ export const handleGoogleCallback = async (
 
     const result = await query(
       `INSERT INTO expert_calendar_connections 
-       (expert_id, provider, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled, last_sync_at)
-       VALUES ($1, 'google', $2, $3, $4, $5, TRUE, NOW())
-       ON CONFLICT (expert_id, provider)
+       (responder_id, expert_id, provider, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled, last_sync_at)
+       VALUES ($1, $1, 'google', $2, $3, $4, $5, TRUE, NOW())
+       ON CONFLICT (responder_id, provider)
        DO UPDATE SET 
          access_token = EXCLUDED.access_token,
          refresh_token = EXCLUDED.refresh_token,
@@ -159,7 +159,7 @@ export const getCalendarConnection = async (
 ): Promise<CalendarConnection | null> => {
   const result = await query(
     `SELECT * FROM expert_calendar_connections
-     WHERE expert_id = $1 AND provider = 'google' AND sync_enabled = TRUE`,
+     WHERE responder_id = $1 AND provider = 'google' AND sync_enabled = TRUE`,
     [expertId]
   );
 
@@ -337,7 +337,7 @@ export const disconnectCalendar = async (expertId: string): Promise<void> => {
   await query(
     `UPDATE expert_calendar_connections
      SET sync_enabled = FALSE, updated_at = NOW()
-     WHERE expert_id = $1 AND provider = 'google'`,
+     WHERE responder_id = $1 AND provider = 'google'`,
     [expertId]
   );
 };
