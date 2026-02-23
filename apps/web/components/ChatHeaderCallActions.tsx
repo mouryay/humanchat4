@@ -251,15 +251,6 @@ export default function ChatHeaderCallActions({
         {!compact && <span>Audio call</span>}
         {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
       </button>
-      
-      {!compact && !isExpertAvailableNow && upcomingBooking && (
-        <button
-          onClick={() => router.push(`/sessions/${upcomingBooking.bookingId}`)}
-          className={styles.bookingCta}
-        >
-          View upcoming session
-        </button>
-      )}
     </div>
   );
 }
