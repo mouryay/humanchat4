@@ -7,6 +7,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  avatar?: string;
 }
 
 const handleResponse = async (response: Response) => {
