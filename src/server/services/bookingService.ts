@@ -95,7 +95,7 @@ export const getExpertAvailabilityRules = async (
 ): Promise<AvailabilityRule[]> => {
   const result = await query(
     `SELECT * FROM expert_availability_rules
-     WHERE expert_id = $1 AND active = TRUE
+     WHERE responder_id = $1 AND active = TRUE
      ORDER BY day_of_week, start_time`,
     [expertId]
   );
@@ -103,7 +103,7 @@ export const getExpertAvailabilityRules = async (
   // Transform snake_case to camelCase
   return result.rows.map((row) => ({
     id: row.id,
-    expertId: row.expert_id,
+    expertId: row.responder_id,
     dayOfWeek: row.day_of_week,
     startTime: row.start_time,
     endTime: row.end_time,
@@ -123,7 +123,7 @@ export const getExpertAvailabilityOverrides = async (
 ): Promise<AvailabilityOverride[]> => {
   const result = await query(
     `SELECT * FROM expert_availability_overrides
-     WHERE expert_id = $1
+     WHERE responder_id = $1
      AND override_date >= $2::date
      AND override_date <= $3::date
      ORDER BY override_date, start_time`,
@@ -134,7 +134,7 @@ export const getExpertAvailabilityOverrides = async (
   // Transform snake_case to camelCase and normalize date/time fields to strings
   return result.rows.map((row) => ({
     id: row.id,
-    expertId: row.expert_id,
+    expertId: row.responder_id,
     overrideDate:
       row.override_date instanceof Date
         ? row.override_date.toISOString().split('T')[0]

@@ -23,7 +23,9 @@ export default function AudioCallPage({ onEndCall }: AudioCallPageProps) {
     isMinimized,
     connectedAt,
     isMuted,
+    isSpeakerOn,
     toggleMute,
+    toggleSpeaker,
     toggleMinimize,
     conversationId,
     returnUrl,
@@ -239,8 +241,13 @@ export default function AudioCallPage({ onEndCall }: AudioCallPageProps) {
           </button>
 
           {/* Speaker */}
-          <button className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center hover:bg-white/15 transition-colors">
-            <Volume2 className="w-7 h-7 text-white" />
+          <button 
+            onClick={toggleSpeaker}
+            className={`w-16 h-16 rounded-full backdrop-blur-xl flex items-center justify-center transition-colors ${
+              isSpeakerOn ? 'bg-white/10 hover:bg-white/15' : 'bg-red-500/20 hover:bg-red-500/30'
+            }`}
+          >
+            <Volume2 className={`w-7 h-7 ${isSpeakerOn ? 'text-white' : 'text-red-400'}`} />
           </button>
 
           {/* End Call */}

@@ -87,8 +87,8 @@ export const handleGoogleCallback = async (
 
     const result = await query(
       `INSERT INTO expert_calendar_connections 
-       (responder_id, expert_id, provider, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled, last_sync_at)
-       VALUES ($1, $1, 'google', $2, $3, $4, $5, TRUE, NOW())
+       (responder_id, provider, access_token, refresh_token, token_expires_at, calendar_id, sync_enabled, last_sync_at)
+       VALUES ($1, 'google', $2, $3, $4, $5, TRUE, NOW())
        ON CONFLICT (responder_id, provider)
        DO UPDATE SET 
          access_token = EXCLUDED.access_token,

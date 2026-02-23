@@ -65,7 +65,7 @@ export default function MinimizedCallBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl border-b border-white/10 shadow-xl">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 pr-20">
         <div className="flex items-center justify-between py-3">
           {/* Left: Call Info (Clickable to expand) */}
           <button
