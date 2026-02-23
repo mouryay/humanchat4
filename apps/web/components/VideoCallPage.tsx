@@ -16,7 +16,7 @@ import {
   Users,
   Info
 } from 'lucide-react';
-import { useTracks, VideoTrack, useRoomContext, useLocalParticipant } from '@livekit/components-react';
+import { useTracks, VideoTrack, useRoomContext, useLocalParticipant, isTrackReference } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { useCallContext } from '../context/CallContext';
 import { useAuthIdentity } from '../hooks/useAuthIdentity';
@@ -49,7 +49,7 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
   const [elapsed, setElapsed] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const hideControlsTimeout = useRef<NodeJS.Timeout>();
+  const hideControlsTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Get video tracks
@@ -61,15 +61,17 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
     { onlySubscribed: false }
   );
 
-  const remoteVideoTrack = tracks.find(
+  const publishedTracks = tracks.filter(isTrackReference);
+
+  const remoteVideoTrack = publishedTracks.find(
     t => !t.participant.isLocal && t.source === Track.Source.Camera
   );
   
-  const localVideoTrack = tracks.find(
+  const localVideoTrack = publishedTracks.find(
     t => t.participant.isLocal && t.source === Track.Source.Camera
   );
 
-  const screenShareTrack = tracks.find(
+  const screenShareTrack = publishedTracks.find(
     t => t.source === Track.Source.ScreenShare
   );
 

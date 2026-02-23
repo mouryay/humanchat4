@@ -8,8 +8,6 @@ import VideoCallPage from '@/components/VideoCallPage';
 import { useCallContext } from '@/context/CallContext';
 import { getCall, endCall as endCallApi } from '@/services/callApi';
 
-const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880';
-
 export default function CallPageV2() {
   const params = useParams();
   const router = useRouter();
@@ -40,13 +38,13 @@ export default function CallPageV2() {
 
         setCallData(data);
         
-        // Initialize call context
         startCall({
           callId: data.callId,
           callType: data.callType,
           conversationId: data.conversationId,
           participantName: data.participantName || 'User',
           participantAvatar: data.participantAvatar,
+          returnUrl: `/chat${data.conversationId ? `?conversationId=${data.conversationId}` : ''}`,
         });
         
       } catch (err: any) {
@@ -106,18 +104,12 @@ export default function CallPageV2() {
   return (
     <CallShell
       roomName={callData.roomName}
-      token={callData.liveKitToken}
-      serverUrl={LIVEKIT_URL}
-      onDisconnect={handleEndCall}
+      liveKitToken={callData.liveKitToken}
     >
-      {(room) => (
-        <>
-          {callType === 'audio' ? (
-            <AudioCallPage room={room} onEndCall={handleEndCall} />
-          ) : (
-            <VideoCallPage room={room} onEndCall={handleEndCall} />
-          )}
-        </>
+      {callType === 'audio' ? (
+        <AudioCallPage onEndCall={handleEndCall} />
+      ) : (
+        <VideoCallPage onEndCall={handleEndCall} />
       )}
     </CallShell>
   );

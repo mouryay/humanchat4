@@ -28,6 +28,7 @@ export default function GlobalCallRoom() {
     }
 
     async function loadCall() {
+      if (!callId) return;
       setLoading(true);
       try {
         const data = await getCall(callId);
