@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import ConversationListItem from './ConversationListItem';
 import { useConversationData, type ConversationListEntry, SAM_CONCIERGE_ID } from '../hooks/useConversationData';
 import { useArchivedConversations } from '../hooks/useArchivedConversations';
@@ -42,6 +42,11 @@ export default function ConversationSidebar({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(10);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const unreadCount = useMemo(() => {
     return conversations.slice(1).filter((entry) =>
@@ -110,8 +115,10 @@ export default function ConversationSidebar({
       collapsed ? "w-24" : "w-[300px]"
     )}>
       <div className="hidden sm:block p-6 bg-gradient-to-b from-background-secondary to-background-secondary/80">
-        {!collapsed && (
-          <h1 className="text-2xl font-semibold text-text-primary">{formattedDate}</h1>
+        {!collapsed && isMounted && (
+          <h1 className="text-2xl font-semibold text-text-primary" suppressHydrationWarning>
+            {formattedDate}
+          </h1>
         )}
       </div>
 

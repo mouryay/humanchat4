@@ -43,9 +43,9 @@ export const upsertAvailabilityRule = async (
 
   const result = await query(
     `INSERT INTO expert_availability_rules 
-     (expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
-     VALUES ($1, $2, $3::time, $4::time, $5, $6, TRUE)
-     ON CONFLICT (expert_id, day_of_week, start_time, end_time)
+     (responder_id, expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
+     VALUES ($1, $1, $2, $3::time, $4::time, $5, $6, TRUE)
+     ON CONFLICT (responder_id, day_of_week, start_time, end_time)
      DO UPDATE SET 
        slot_duration_minutes = EXCLUDED.slot_duration_minutes,
        timezone = EXCLUDED.timezone,
@@ -76,7 +76,7 @@ export const setWeeklyAvailability = async (
     return await transaction(async (client) => {
       // Deactivate all existing rules
       await client.query(
-        'UPDATE expert_availability_rules SET active = FALSE WHERE expert_id = $1',
+        'UPDATE expert_availability_rules SET active = FALSE WHERE responder_id = $1',
         [expertId]
       );
 
@@ -85,8 +85,8 @@ export const setWeeklyAvailability = async (
       for (const rule of rules) {
         const result = await client.query(
           `INSERT INTO expert_availability_rules 
-           (expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
-           VALUES ($1, $2, $3::time, $4::time, $5, $6, TRUE)
+           (responder_id, expert_id, day_of_week, start_time, end_time, slot_duration_minutes, timezone, active)
+           VALUES ($1, $1, $2, $3::time, $4::time, $5, $6, TRUE)
            RETURNING *`,
           [
             expertId,
@@ -114,7 +114,7 @@ export const setWeeklyAvailability = async (
 export const getWeeklyAvailability = async (expertId: string): Promise<any[]> => {
   const result = await query(
     `SELECT * FROM expert_availability_rules
-     WHERE expert_id = $1 AND active = TRUE
+     WHERE responder_id = $1 AND active = TRUE
      ORDER BY day_of_week, start_time`,
     [expertId]
   );
@@ -127,7 +127,7 @@ export const getWeeklyAvailability = async (expertId: string): Promise<any[]> =>
  */
 export const deleteAvailabilityRule = async (ruleId: string, expertId: string): Promise<void> => {
   const result = await query(
-    'UPDATE expert_availability_rules SET active = FALSE WHERE id = $1 AND expert_id = $2',
+    'UPDATE expert_availability_rules SET active = FALSE WHERE id = $1 AND responder_id = $2',
     [ruleId, expertId]
   );
 
@@ -154,8 +154,8 @@ export const createAvailabilityOverride = async (
 
   const result = await query(
     `INSERT INTO expert_availability_overrides 
-     (expert_id, override_date, override_type, start_time, end_time, timezone, reason)
-     VALUES ($1, $2::date, $3, $4::time, $5::time, $6, $7)
+     (responder_id, expert_id, override_date, override_type, start_time, end_time, timezone, reason)
+     VALUES ($1, $1, $2, $3, $4::time, $5::time, $6, $7)
      RETURNING *`,
     [
       input.expertId,
@@ -181,7 +181,7 @@ export const getAvailabilityOverrides = async (
 ): Promise<any[]> => {
   const result = await query(
     `SELECT * FROM expert_availability_overrides
-     WHERE expert_id = $1
+     WHERE responder_id = $1
      AND override_date >= $2::date
      AND override_date <= $3::date
      ORDER BY override_date, start_time`,
@@ -199,7 +199,7 @@ export const deleteAvailabilityOverride = async (
   expertId: string
 ): Promise<void> => {
   const result = await query(
-    'DELETE FROM expert_availability_overrides WHERE id = $1 AND expert_id = $2',
+    'DELETE FROM expert_availability_overrides WHERE id = $1 AND responder_id = $2',
     [overrideId, expertId]
   );
 
@@ -263,7 +263,7 @@ export const getAvailabilitySummary = async (expertId: string): Promise<{
       COUNT(*) as rule_count,
       SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600) as total_hours
      FROM expert_availability_rules
-     WHERE expert_id = $1 AND active = TRUE`,
+     WHERE responder_id = $1 AND active = TRUE`,
     [expertId]
   );
 
@@ -274,7 +274,7 @@ export const getAvailabilitySummary = async (expertId: string): Promise<{
   const blockedResult = await query(
     `SELECT DISTINCT override_date
      FROM expert_availability_overrides
-     WHERE expert_id = $1
+     WHERE responder_id = $1
      AND override_type = 'blocked'
      AND start_time IS NULL
      AND override_date >= $2::date
@@ -285,7 +285,7 @@ export const getAvailabilitySummary = async (expertId: string): Promise<{
 
   // Check calendar connection
   const calendarResult = await query(
-    'SELECT id FROM expert_calendar_connections WHERE expert_id = $1 AND sync_enabled = TRUE LIMIT 1',
+    'SELECT id FROM expert_calendar_connections WHERE responder_id = $1 AND sync_enabled = TRUE LIMIT 1',
     [expertId]
   );
 

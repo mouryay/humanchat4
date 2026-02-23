@@ -439,16 +439,17 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
 
     // Create booking
     // Uses responder_id (expert) and requester_id (user/client)
+    // Also populate legacy expert_id and user_id columns for backward compatibility
     // Set status to 'awaiting_payment' if price > 0, otherwise 'scheduled'
     const initialStatus = priceCents > 0 ? 'awaiting_payment' : 'scheduled';
     
     const bookingResult = await client.query(
       `INSERT INTO bookings 
-       (responder_id, requester_id, 
+       (responder_id, requester_id, expert_id, user_id,
         start_time, end_time, scheduled_start, scheduled_end,
         duration_minutes, timezone, 
         status, meeting_title, notes, idempotency_key, price_cents)
-       VALUES ($1, $2, $3, $4, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       VALUES ($1, $2, $1, $2, $3, $4, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
       [
         input.expertId,
@@ -919,9 +920,10 @@ export const rescheduleBooking = async (
     // Create new booking
     const newBooking = await client.query(
       `INSERT INTO bookings 
-       (responder_id, requester_id, start_time, end_time, scheduled_start, scheduled_end,
+       (responder_id, requester_id, expert_id, user_id,
+        start_time, end_time, scheduled_start, scheduled_end,
         duration_minutes, timezone, status, meeting_title, notes, price_cents)
-       VALUES ($1, $2, $3, $4, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
+       VALUES ($1, $2, $1, $2, $3, $4, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
        RETURNING *`,
       [
         oldBooking.expertId,

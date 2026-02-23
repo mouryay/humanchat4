@@ -62,11 +62,24 @@ export default function IncomingCallModal({
     setIsResponding(true);
 
     try {
+      console.log('[IncomingCallModal] Declining call:', callId);
       await declineCall(callId, 'declined');
+      console.log('[IncomingCallModal] Call declined successfully');
       onClose();
     } catch (error: any) {
-      console.error('Failed to decline call:', error);
+      console.log('[IncomingCallModal] Decline error:', { status: error?.status, message: error?.message });
+      // If call is already ended/declined (400) or not found (404), just close the modal
+      if (error?.status === 400 || error?.status === 404 || 
+          error?.message?.includes('declined') || 
+          error?.message?.includes('ended') ||
+          error?.message?.includes('not found')) {
+        console.log('[IncomingCallModal] Call already ended, closing modal');
+      } else {
+        console.error('[IncomingCallModal] Failed to decline call:', error);
+      }
       onClose(); // Close anyway
+    } finally {
+      setIsResponding(false);
     }
   };
 

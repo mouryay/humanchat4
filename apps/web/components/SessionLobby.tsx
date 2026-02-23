@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { db, type Booking } from '../../../src/lib/db';
 import { cancelBooking, updateBookingNotes } from '../services/bookingApi';
@@ -26,6 +26,8 @@ interface SessionState {
 
 export default function SessionLobby({ booking, currentUserId }: SessionLobbyProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [now, setNow] = useState(Date.now());
   const [isStartingCall, setIsStartingCall] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -108,8 +110,11 @@ export default function SessionLobby({ booking, currentUserId }: SessionLobbyPro
         callType,
       });
       
+      // Build return URL with current path and params
+      const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      
       // Navigate to call page
-      router.push(`/call/${result.callId}?bookingId=${booking.bookingId}`);
+      router.push(`/call/${result.callId}?bookingId=${booking.bookingId}&returnUrl=${encodeURIComponent(currentUrl)}`);
     } catch (error) {
       console.error('Failed to start call:', error);
       alert(error instanceof Error ? error.message : 'Failed to start call');

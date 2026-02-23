@@ -187,7 +187,7 @@ export function BookingsManager({ embedded = false, selectedBookingId }: Booking
         ) : bookings.length === 0 ? (
           <div className={`${cardClass} rounded-2xl p-6 text-center text-white/70`}>
             <p>No {activeTab} bookings yet.</p>
-            <button onClick={() => router.push('/account')} className="mt-3 text-white underline-offset-4 hover:underline">
+            <button onClick={() => router.push('/?focus=sam')} className="mt-3 text-white underline-offset-4 hover:underline">
               Browse experts
             </button>
           </div>
@@ -204,11 +204,14 @@ export function BookingsManager({ embedded = false, selectedBookingId }: Booking
               return (
               <div 
                 key={booking.bookingId} 
-                className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30 cursor-pointer ${
-                  isSelected ? 'ring-2 ring-blue-400 border-blue-400/50 bg-white/[0.08]' : ''
+                className={`${cardClass} rounded-3xl p-6 transition hover:border-white/30 ${
+                  activeTab === 'past' ? '' : 'cursor-pointer'
+                } ${isSelected ? 'ring-2 ring-blue-400 border-blue-400/50 bg-white/[0.08]' : ''
                 }`}
                 onClick={() => {
-                  router.push(`/sessions/${booking.bookingId}`);
+                  if (activeTab !== 'past') {
+                    router.push(`/sessions/${booking.bookingId}`);
+                  }
                 }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">

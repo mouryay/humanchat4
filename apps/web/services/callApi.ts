@@ -43,13 +43,6 @@ interface AcceptCallResponse {
  * Fetch with credentials (cookies)
  */
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  console.log('[fetchWithAuth] Request:', {
-    url,
-    method: options.method || 'GET',
-    hasCookies: document.cookie.length > 0,
-    cookies: document.cookie.substring(0, 100) + '...',
-  });
-
   const response = await fetch(url, {
     ...options,
     credentials: 'include',
@@ -59,23 +52,64 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     },
   });
 
-  console.log('[fetchWithAuth] Response:', {
-    url,
-    status: response.status,
-    statusText: response.statusText,
-    headers: Object.fromEntries(response.headers as any),
-  });
-
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    console.error('[fetchWithAuth] Error response:', {
-      status: response.status,
-      error,
+    let error;
+    let rawText = '';
+    
+    try {
+      // Read as text first to preserve the body
+      rawText = await response.text();
+      console.log('[fetchWithAuth] Raw error response:', rawText);
+      
+      // Try to parse as JSON
+      error = JSON.parse(rawText);
+      console.log('[fetchWithAuth] Parsed error:', error);
+    } catch (parseError) {
+      console.log('[fetchWithAuth] JSON parse failed, using raw text');
+      // If JSON parsing fails, use the raw text
+      error = { 
+        message: rawText || response.statusText || 'Request failed',
+        statusCode: response.status 
+      };
+    }
+    
+    // Handle nested error format: {success: false, error: {code, message}}
+    const actualError = error.error || error;
+    const errorCode = actualError.code;
+    const errorMessage = actualError.message || response.statusText || `HTTP ${response.status}`;
+    
+    // Suppress expected 400 errors for call operations (race conditions)
+    const isCallOperationError = url.includes('/decline') || url.includes('/end');
+    const is400Error = response.status === 400;
+    const isAlreadyEndedError = errorMessage?.includes('declined') || 
+                                errorMessage?.includes('ended') || 
+                                errorCode === 'INVALID_REQUEST';
+    
+    if (isCallOperationError && is400Error && isAlreadyEndedError) {
+      const err: any = new Error('Call already ended');
+      err.status = 400;
+      err.data = actualError;
+      throw err;
+    }
+    
+    // Log unexpected errors with full details
+    console.error('[API Error] Full details:', { 
+      url, 
+      status: response.status, 
+      statusText: response.statusText,
+      errorCode,
+      errorMessage,
+      errorDetails: actualError.details,
+      rawResponse: rawText.substring(0, 1000),
+      fullError: error
     });
+    
     throw {
       status: response.status,
-      message: error.message || `HTTP ${response.status}`,
-      ...error,
+      message: errorMessage,
+      code: errorCode,
+      details: actualError.details,
+      ...actualError,
     };
   }
 
@@ -86,7 +120,6 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
  * Start a new call
  */
 export async function startCall(request: StartCallRequest): Promise<StartCallResponse> {
-  console.log('[callApi] startCall request:', request);
   return fetchWithAuth(`${API_BASE_URL}/api/calls/start`, {
     method: 'POST',
     body: JSON.stringify(request),
@@ -97,18 +130,10 @@ export async function startCall(request: StartCallRequest): Promise<StartCallRes
  * Accept an incoming call
  */
 export async function acceptCall(callId: string): Promise<AcceptCallResponse> {
-  console.log('[callApi] acceptCall:', { callId, apiUrl: API_BASE_URL });
-  try {
-    const result = await fetchWithAuth(`${API_BASE_URL}/api/calls/${callId}/accept`, {
-      method: 'POST',
-      body: JSON.stringify({}),
-    });
-    console.log('[callApi] acceptCall success:', result);
-    return result;
-  } catch (error) {
-    console.error('[callApi] acceptCall error:', error);
-    throw error;
-  }
+  return fetchWithAuth(`${API_BASE_URL}/api/calls/${callId}/accept`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 }
 
 /**
@@ -151,13 +176,5 @@ export async function markCallConnected(callId: string): Promise<void> {
  * Get call details
  */
 export async function getCall(callId: string): Promise<any> {
-  console.log('[callApi] getCall:', { callId, apiUrl: API_BASE_URL });
-  try {
-    const result = await fetchWithAuth(`${API_BASE_URL}/api/calls/${callId}`);
-    console.log('[callApi] getCall success:', result);
-    return result;
-  } catch (error) {
-    console.error('[callApi] getCall error:', error);
-    throw error;
-  }
+  return fetchWithAuth(`${API_BASE_URL}/api/calls/${callId}`);
 }

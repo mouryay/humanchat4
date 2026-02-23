@@ -287,10 +287,11 @@ export async function createBookingHold(params: CreateHoldParams): Promise<Booki
 
     const result = await client.query<BookingRecord>(
       `INSERT INTO bookings (
-        requester_id, responder_id, slot_id, scheduled_start, scheduled_end,
+        requester_id, responder_id, expert_id, user_id,
+        slot_id, scheduled_start, scheduled_end,
         duration_minutes, timezone, price_cents, currency, status, held_until,
         hold_token, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'held', $10, $11, $12)
+      ) VALUES ($1, $2, $2, $1, $3, $4, $5, $6, $7, $8, $9, 'held', $10, $11, $12)
       RETURNING *`,
       [
         requesterId,

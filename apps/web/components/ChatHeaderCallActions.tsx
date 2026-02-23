@@ -9,7 +9,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Video, Phone, Lock } from 'lucide-react';
 import { startCall } from '../services/callApi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { db, type Booking } from '../../../src/lib/db';
 import { liveQuery } from 'dexie';
 import { sessionStatusManager } from '../services/sessionStatusManager';
@@ -30,6 +30,8 @@ export default function ChatHeaderCallActions({
   participantIds = [],
 }: ChatHeaderCallActionsProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isStarting, setIsStarting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -180,8 +182,11 @@ export default function ChatHeaderCallActions({
       
       console.log('[ChatHeaderCallActions] Call started successfully:', result);
 
-      // Navigate to live room
-      router.push(`/call/${result.callId}`);
+      // Build return URL with current path and params
+      const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+      // Navigate to live room with returnUrl
+      router.push(`/call/${result.callId}?returnUrl=${encodeURIComponent(currentUrl)}`);
     } catch (error: any) {
       console.error('[ChatHeaderCallActions] Failed to start call:', error);
       console.error('[ChatHeaderCallActions] Error details:', {
@@ -246,15 +251,6 @@ export default function ChatHeaderCallActions({
         {!compact && <span>Audio call</span>}
         {!isExpertAvailableNow && <Lock size={compact ? 12 : 14} className={styles.lockIcon} />}
       </button>
-      
-      {!compact && !isExpertAvailableNow && upcomingBooking && (
-        <button
-          onClick={() => router.push(`/sessions/${upcomingBooking.bookingId}`)}
-          className={styles.bookingCta}
-        >
-          View upcoming session
-        </button>
-      )}
     </div>
   );
 }
