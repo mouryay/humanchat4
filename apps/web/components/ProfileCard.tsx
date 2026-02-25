@@ -77,7 +77,7 @@ export default function ProfileCard({
   const presenceState = hasLiveStatus ? livePresence : fallbackPresence;
 
   const managedConfidential = Boolean(profile.managed && profile.confidentialRate);
-  const canInstantConnect = Boolean(isOnline && !hasActiveSession && !managedConfidential);
+  const canInstantConnect = !managedConfidential;
   const tooltip = (() => {
     if (managedConfidential) {
       return 'This profile handles chats via private requests. Use Schedule.';
@@ -134,10 +134,10 @@ export default function ProfileCard({
           <button
             className={`w-full font-semibold rounded-xl transition-all duration-base ease-out bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
             type="button"
-            disabled={!canInstantConnect || Boolean(isConnecting)}
-            onClick={() => canInstantConnect && !isConnecting && onConnectNow?.(profile)}
+            disabled={Boolean(isConnecting)}
+            onClick={() => !isConnecting && onConnectNow?.(profile)}
           >
-            {isConnecting ? 'Connecting…' : 'Connect Now'}
+            {isConnecting ? 'Connecting…' : 'Connect'}
           </button>
           {tooltip && (
             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-background-elevated border border-border-medium rounded-lg text-xs text-text-secondary whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-base pointer-events-none z-10">

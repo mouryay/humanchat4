@@ -8,6 +8,7 @@ import { logRequestedPersonInterest, logSkillRequest } from './requestedPeopleSe
 import { ApiError } from '../errors/ApiError.js';
 import { logger } from '../utils/logger.js';
 import { validate as uuidValidate } from 'uuid';
+import { SamProfileSummary } from '../types/index.js';
 
 const SamPayloadSchema = z.object({
   message: z.string().min(1),
@@ -41,6 +42,10 @@ const SamPayloadSchema = z.object({
 export type SamPayload = z.infer<typeof SamPayloadSchema>;
 
 const REQUEST_REGEX = /(?:talk|speak|chat|connect|book)\s+(?:to|with)\s+([A-Za-z][A-Za-z\s.'-]{2,})/i;
+const NAME_SEARCH_PATTERNS: RegExp[] = [
+  /(?:find|search(?:\s+for)?|look(?:ing)?\s+for|show(?:\s+me)?|do\s+you\s+have)\s+([A-Za-z][A-Za-z\s.'-]{1,})/i,
+  /(?:people|person|member|members)\s+(?:named|called)\s+([A-Za-z][A-Za-z\s.'-]{1,})/i
+];
 const SAM_CONCIERGE_ID = 'sam-concierge';
 const SAM_INTRO_MESSAGE =
   "Hello. I am Sam, the AI receptionist at HumanChat. I can chat with you about anything, or help you connect with real humans for live conversations. We are in early testing, so our network is small but growing. What brings you here today?";
@@ -92,6 +97,67 @@ const extractRequestedName = (message: string): string | null => {
     return match[1].trim();
   }
   return null;
+};
+
+const extractNameSearchQuery = (message: string): string | null => {
+  const trimmed = message.trim();
+  if (!trimmed) return null;
+
+  for (const pattern of NAME_SEARCH_PATTERNS) {
+    const match = trimmed.match(pattern);
+    const candidate = match?.[1]?.trim();
+    if (candidate && candidate.length >= 2) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+const profileNameMatchesQuery = (profileName: string, query: string): boolean => {
+  const normalizedName = profileName.trim().toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedName || !normalizedQuery) return false;
+  if (normalizedName.includes(normalizedQuery)) return true;
+
+  const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+  if (queryTokens.length === 0) return false;
+  return queryTokens.every((token) => normalizedName.includes(token));
+};
+
+const maybeHandleProfileNameSearch = (
+  message: string,
+  availableProfiles?: SamProfileSummary[]
+): SamResponse | null => {
+  const query = extractNameSearchQuery(message);
+  if (!query || !availableProfiles || availableProfiles.length === 0) {
+    return null;
+  }
+
+  const matches = availableProfiles.filter((profile) => profileNameMatchesQuery(profile.name, query));
+  if (matches.length > 0) {
+    return {
+      text:
+        matches.length === 1
+          ? `Found 1 match for "${query}" on HumanChat.`
+          : `Found ${matches.length} matches for "${query}" on HumanChat.`,
+      actions: [
+        {
+          type: 'show_profiles',
+          profiles: matches
+        }
+      ]
+    };
+  }
+
+  return {
+    text: `I couldn't find anyone named "${query}" yet. Here are the people currently on HumanChat.`,
+    actions: [
+      {
+        type: 'show_profiles',
+        profiles: availableProfiles
+      }
+    ]
+  };
 };
 
 const maybeHandleRequestedPerson = async (userId: string, message: string): Promise<SamResponse | null> => {
@@ -233,6 +299,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
   const samActivity = await getSamActivityForUser(userId);
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
+  const nameSearchIntercepted = maybeHandleProfileNameSearch(parsed.message, parsed.userContext?.availableProfiles);
   
   // Also check for skill-based requests and log them
   // This runs regardless of whether a specific person was requested
@@ -284,6 +351,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
     
     response =
       intercepted ??
+      nameSearchIntercepted ??
       (await sendToSam({
         userMessage: parsed.message,
         conversationHistory: parsed.conversationHistory,

@@ -146,7 +146,6 @@ const ShowcaseProfileTile = ({
   }
 
   const presenceState = profile.status === 'away' ? 'idle' : 'active';
-  const isAvailable = profile.status === 'available';
 
   return (
     <div className={styles.profileCard}>
@@ -173,10 +172,10 @@ const ShowcaseProfileTile = ({
             <button
               className={styles.primaryButton}
               type="button"
-              disabled={!isAvailable || pendingAction === 'connect'}
+              disabled={pendingAction === 'connect'}
               onClick={() => handleAction('connect')}
             >
-              {pendingAction === 'connect' ? 'Loading…' : 'Connect Now'}
+              {pendingAction === 'connect' ? 'Loading…' : 'Connect'}
             </button>
           )}
           {onBookTime && (

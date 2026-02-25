@@ -21,18 +21,18 @@ const baseProfile: ProfileSummary = {
 };
 
 describe('ProfileCard', () => {
-  it('enables Connect Now when profile is online and idle', async () => {
+  it('enables Connect button when profile is online and idle', async () => {
     const connectSpy = jest.fn();
     render(<ProfileCard profile={baseProfile} onConnectNow={connectSpy} />);
 
-    const connectButton = screen.getByRole('button', { name: /connect now/i });
+    const connectButton = screen.getByRole('button', { name: /connect/i });
     expect(connectButton).toBeEnabled();
 
     await userEvent.click(connectButton);
     expect(connectSpy).toHaveBeenCalledWith(baseProfile);
   });
 
-  it('disables Connect Now while a connection is in progress', () => {
+  it('disables Connect while a connection is in progress', () => {
     const connectSpy = jest.fn();
     render(<ProfileCard profile={baseProfile} onConnectNow={connectSpy} isConnecting />);
 
@@ -54,7 +54,7 @@ describe('ProfileCard', () => {
 
     render(<ProfileCard profile={profile} onConnectNow={connectSpy} onBookTime={bookSpy} />);
 
-    expect(screen.queryByRole('button', { name: /connect now/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^connect$/i })).toBeNull();
     const sendRequestButton = screen.getByRole('button', { name: /send request/i });
     await userEvent.click(sendRequestButton);
     expect(bookSpy).toHaveBeenCalledWith(profile);

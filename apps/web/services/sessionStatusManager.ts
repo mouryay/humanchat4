@@ -273,7 +273,19 @@ class SessionStatusManager {
       throw new Error(`Failed to fetch status for ${userId}`);
     }
 
-    const payload = (await response.json()) as {
+    const rawPayload = (await response.json()) as {
+      data?: {
+        presenceState?: PresenceState;
+        isOnline?: boolean;
+        hasActiveSession?: boolean;
+        lastSeenAt?: string | null;
+      };
+      presenceState?: PresenceState;
+      isOnline?: boolean;
+      hasActiveSession?: boolean;
+      lastSeenAt?: string | null;
+    };
+    const payload = (rawPayload?.data ?? rawPayload) as {
       presenceState?: PresenceState;
       isOnline?: boolean;
       hasActiveSession?: boolean;
@@ -330,13 +342,33 @@ class SessionStatusManager {
       this.ws = new WebSocket(`${WS_BASE_URL.replace(/\/$/, '')}/status`);
       this.ws.addEventListener('message', (event) => {
         try {
-          const data = JSON.parse(event.data as string) as Partial<StatusObject> & { userId?: string };
+          const data = JSON.parse(event.data as string) as
+            | (Partial<StatusObject> & { type?: string; userId?: string })
+            | null;
           if (!data?.userId) return;
-          this.cache.set(data.userId, {
-            ...defaultStatus(data.userId),
-            ...data,
-            presenceState: data.presenceState ?? (data.isOnline ? 'active' : 'offline')
-          });
+
+          const existing = this.cache.get(data.userId) ?? defaultStatus(data.userId);
+          const normalizedPatch: Partial<StatusObject> = { ...data };
+
+          // Legacy user_busy events carry only userId/type; map them to a meaningful busy status.
+          if (data.type === 'user_busy') {
+            normalizedPatch.isOnline = true;
+            normalizedPatch.hasActiveSession = true;
+            normalizedPatch.presenceState = 'active';
+          }
+
+          const merged: StatusObject = {
+            ...existing,
+            ...normalizedPatch,
+            userId: data.userId,
+            presenceState:
+              normalizedPatch.presenceState ??
+              existing.presenceState ??
+              (normalizedPatch.isOnline ?? existing.isOnline ? 'active' : 'offline'),
+            lastUpdated: Date.now()
+          };
+
+          this.cache.set(data.userId, merged);
           this.lastFetched.set(data.userId, Date.now());
           this.broadcast(data.userId);
         } catch (error) {

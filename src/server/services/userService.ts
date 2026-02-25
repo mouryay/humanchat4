@@ -3,9 +3,11 @@ import { redis } from '../db/redis.js';
 import { ApiError } from '../errors/ApiError.js';
 import { User } from '../types/index.js';
 import type { PresenceState } from './presenceService.js';
+import { DEFAULT_IDLE_SECONDS, DEFAULT_STALE_SECONDS } from './presenceService.js';
 
 const HUMAN_FALLBACK = 'Human';
-const ONLINE_TTL_SECONDS = 120;
+const ONLINE_TTL_SECONDS = DEFAULT_STALE_SECONDS;
+const IDLE_TTL_SECONDS = DEFAULT_IDLE_SECONDS;
 
 const normalizeProfileCopy = (value?: string | null): string => {
   const trimmed = value?.trim();
@@ -58,10 +60,17 @@ export const searchUsers = async (
 
   if (online !== undefined) {
     params.push(online);
-    where += ` AND is_online = $${params.length}`;
+    where += ` AND (is_online = $${params.length} OR has_active_session = $${params.length})`;
     if (online) {
       params.push(`${ONLINE_TTL_SECONDS} seconds`);
-      where += ` AND last_seen_at IS NOT NULL AND last_seen_at > NOW() - ($${params.length}::interval) AND presence_state <> 'offline'`;
+      where += ` AND (
+        has_active_session = TRUE
+        OR (
+          last_seen_at IS NOT NULL
+          AND last_seen_at > NOW() - ($${params.length}::interval)
+          AND presence_state <> 'offline'
+        )
+      )`;
     }
   }
 
@@ -101,22 +110,36 @@ export const getUserStatus = async (
   if (!user) {
     throw new ApiError(404, 'NOT_FOUND', 'User not found');
   }
-  const presenceState = (user.presence_state as PresenceState) ?? (user.is_online ? 'active' : 'offline');
+  const lastSeenAtMs = user.last_seen_at ? Date.parse(user.last_seen_at as string) : null;
+  const now = Date.now();
+  const isWithinOnlineWindow = Boolean(lastSeenAtMs && now - lastSeenAtMs <= ONLINE_TTL_SECONDS * 1000);
+  const isWithinIdleWindow = Boolean(lastSeenAtMs && now - lastSeenAtMs <= IDLE_TTL_SECONDS * 1000);
+  const isOnlineEffective =
+    Boolean(user.has_active_session) ||
+    (Boolean(user.is_online) && user.presence_state !== 'offline' && isWithinOnlineWindow);
+
+  let presenceState: PresenceState = 'offline';
+  if (Boolean(user.has_active_session)) {
+    presenceState = 'active';
+  } else if (isOnlineEffective) {
+    presenceState = user.presence_state === 'idle' || !isWithinIdleWindow ? 'idle' : 'active';
+  }
+
   let status: 'online' | 'online_in_call' | 'offline' | 'idle' = 'offline';
-  if (!user.is_online) {
+  if (Boolean(user.has_active_session)) {
+    status = 'online_in_call';
+  } else if (!isOnlineEffective) {
     status = 'offline';
   } else if (presenceState === 'idle') {
     status = 'idle';
-  } else if (user.has_active_session) {
-    status = 'online_in_call';
   } else {
     status = 'online';
   }
   return {
     status,
     presenceState,
-    isOnline: user.is_online,
-    hasActiveSession: user.has_active_session,
+    isOnline: isOnlineEffective,
+    hasActiveSession: Boolean(user.has_active_session),
     lastSeenAt: user.last_seen_at ?? null
   };
 };

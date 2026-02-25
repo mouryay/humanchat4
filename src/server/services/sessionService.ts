@@ -3,6 +3,7 @@ import { query, transaction } from '../db/postgres.js';
 import { ApiError } from '../errors/ApiError.js';
 import { redis } from '../db/redis.js';
 import { Session } from '../types/index.js';
+import { publishPresenceForUserId } from './presenceService.js';
 
 interface SessionPayload {
   host_user_id: string;
@@ -36,8 +37,6 @@ const insertSession = async (client: PoolClient, payload: SessionPayload): Promi
     payload.conversation_id
   ]);
 
-  await redis.publish('status', JSON.stringify({ type: 'user_busy', userId: payload.host_user_id }));
-
   return insert.rows[0];
 };
 
@@ -70,29 +69,61 @@ export const updateSessionStatus = async (id: string, status: Session['status'])
   return session;
 };
 
-export const markSessionStart = async (id: string): Promise<Session> => {
-  const result = await query<Session>(
-    'UPDATE sessions SET status = $2, start_time = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *',
-    [id, 'in_progress']
+const syncUserSessionFlags = async (client: PoolClient, userIds: string[]): Promise<void> => {
+  if (userIds.length === 0) return;
+  await client.query(
+    `UPDATE users u
+     SET has_active_session = EXISTS (
+       SELECT 1
+       FROM sessions s
+       WHERE (s.host_user_id = u.id OR s.guest_user_id = u.id)
+         AND s.status = 'in_progress'
+     ),
+     updated_at = NOW()
+     WHERE u.id = ANY($1::text[])`,
+    [userIds]
   );
-  if (!result.rows[0]) {
-    throw new ApiError(404, 'NOT_FOUND', 'Session not found');
-  }
+};
+
+export const markSessionStart = async (id: string): Promise<Session> => {
+  const session = await transaction(async (client) => {
+    const result = await client.query<Session>(
+      'UPDATE sessions SET status = $2, start_time = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *',
+      [id, 'in_progress']
+    );
+    const updated = result.rows[0];
+    if (!updated) {
+      throw new ApiError(404, 'NOT_FOUND', 'Session not found');
+    }
+
+    await syncUserSessionFlags(client, [updated.host_user_id, updated.guest_user_id]);
+    return updated;
+  });
+
   await redis.publish('session', JSON.stringify({ sessionId: id, event: 'start' }));
-  return result.rows[0];
+  await Promise.allSettled([publishPresenceForUserId(session.host_user_id), publishPresenceForUserId(session.guest_user_id)]);
+  return session;
 };
 
 export const markSessionEnd = async (id: string): Promise<Session> => {
-  const result = await query<Session>(
-    `UPDATE sessions
-     SET status = 'complete', end_time = NOW(), duration_minutes = EXTRACT(EPOCH FROM (NOW() - start_time))/60,
-         updated_at = NOW()
-     WHERE id = $1 RETURNING *`,
-    [id]
-  );
-  if (!result.rows[0]) {
-    throw new ApiError(404, 'NOT_FOUND', 'Session not found');
-  }
+  const session = await transaction(async (client) => {
+    const result = await client.query<Session>(
+      `UPDATE sessions
+       SET status = 'complete', end_time = NOW(), duration_minutes = EXTRACT(EPOCH FROM (NOW() - start_time))/60,
+           updated_at = NOW()
+       WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    const updated = result.rows[0];
+    if (!updated) {
+      throw new ApiError(404, 'NOT_FOUND', 'Session not found');
+    }
+
+    await syncUserSessionFlags(client, [updated.host_user_id, updated.guest_user_id]);
+    return updated;
+  });
+
   await redis.publish('session', JSON.stringify({ sessionId: id, event: 'end' }));
-  return result.rows[0];
+  await Promise.allSettled([publishPresenceForUserId(session.host_user_id), publishPresenceForUserId(session.guest_user_id)]);
+  return session;
 };
