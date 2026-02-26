@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { addConversationMessage, ensureSamConversation, getSamActivityForUser } from './conversationService.js';
 import { sendToSam } from './samAPI.js';
-import { SamResponse, SamChatResult, SamAction, ProfileUpdateFields } from '../types/index.js';
-import { searchUsers, updateUserProfile } from './userService.js';
+import { SamResponse, SamChatResult, SamAction, ProfileUpdateFields, SamOnboardingMeta, User } from '../types/index.js';
+import { getUserById, searchUsers, updateUserProfile } from './userService.js';
 import { logRequestedPersonInterest, logSkillRequest } from './requestedPeopleService.js';
 import { ApiError } from '../errors/ApiError.js';
 import { logger } from '../utils/logger.js';
@@ -204,35 +204,178 @@ const extractSkillRequest = (message: string): string | null => {
 };
 
 const ALLOWED_PROFILE_FIELDS = new Set([
-  'headline', 'bio', 'interests', 'skills', 'experiences',
-  'location_born', 'cities_lived_in', 'date_of_birth',
-  'accept_inbound_requests'
+  'headline',
+  'bio',
+  'interests',
+  'skills',
+  'experiences',
+  'location_born',
+  'cities_lived_in',
+  'date_of_birth',
+  'accept_inbound_requests',
+  'current_role_title',
+  'current_focus',
+  'lived_experiences',
+  'products_services',
+  'places_known',
+  'interests_hobbies',
+  'currently_dealing_with',
+  'languages',
+  'education',
+  'preferred_connection_types',
+  'topics_to_avoid'
 ]);
 
-const processProfileUpdates = async (userId: string, actions: SamAction[]): Promise<void> => {
+const parseOnboardingMeta = (value: unknown): SamOnboardingMeta => {
+  if (!value || typeof value !== 'object') return {};
+  return value as SamOnboardingMeta;
+};
+
+const ONBOARDING_TOPIC_FIELDS: Array<{ topic: string; fields: string[] }> = [
+  { topic: 'inbound_requests', fields: ['accept_inbound_requests'] },
+  { topic: 'bio', fields: ['bio', 'headline'] },
+  { topic: 'role_focus', fields: ['current_role_title', 'current_focus'] },
+  { topic: 'experiences', fields: ['lived_experiences', 'experiences'] },
+  { topic: 'interests', fields: ['interests', 'interests_hobbies', 'skills'] },
+  { topic: 'background', fields: ['location_born', 'cities_lived_in', 'languages', 'education'] },
+  { topic: 'preferences', fields: ['preferred_connection_types', 'topics_to_avoid'] }
+];
+
+const hasMeaningfulText = (value?: string | null): boolean => {
+  if (!value) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 && normalized !== 'human';
+};
+
+const hasAnyEntries = (value: unknown): boolean => Array.isArray(value) && value.length > 0;
+
+const buildProfileProgress = (user: User) => {
+  return {
+    hasInboundPreference: typeof user.accept_inbound_requests === 'boolean',
+    hasBio: hasMeaningfulText(user.bio) || hasMeaningfulText(user.headline),
+    hasRoleFocus: hasMeaningfulText(user.current_role_title) || hasMeaningfulText(user.current_focus),
+    hasExperiences: hasAnyEntries(user.lived_experiences) || hasMeaningfulText(user.experiences),
+    hasInterests: hasAnyEntries(user.interests_hobbies) || hasAnyEntries(user.interests) || hasAnyEntries(user.skills),
+    hasBackground:
+      hasMeaningfulText(user.location_born) ||
+      hasAnyEntries(user.cities_lived_in) ||
+      hasAnyEntries(user.languages) ||
+      hasMeaningfulText(user.education)
+  };
+};
+
+const inferDeclinedTopic = (message: string, lastSamMessage?: string): string | null => {
+  const declined = /\b(no|not now|skip|don't|do not|rather not|not interested|later)\b/i.test(message);
+  if (!declined) return null;
+  const source = (lastSamMessage ?? '').toLowerCase();
+  if (source.includes('inbound') || source.includes('discoverable') || source.includes('receive inbound')) {
+    return 'inbound_requests';
+  }
+  if (source.includes('tell me about yourself') || source.includes('bio') || source.includes('headline')) {
+    return 'bio';
+  }
+  if (source.includes('role') || source.includes('focus')) {
+    return 'role_focus';
+  }
+  if (source.includes('experience')) {
+    return 'experiences';
+  }
+  if (source.includes('interest') || source.includes('hobbies') || source.includes('skills')) {
+    return 'interests';
+  }
+  return null;
+};
+
+const mergeOnboardingMeta = (
+  existing: SamOnboardingMeta,
+  appliedFields: string[],
+  updates: Record<string, unknown>,
+  message: string,
+  lastSamMessage?: string
+): SamOnboardingMeta => {
+  const next: SamOnboardingMeta = {
+    inboundPrompted: Boolean(existing.inboundPrompted),
+    inboundDeclined: Boolean(existing.inboundDeclined),
+    declinedTopics: [...(existing.declinedTopics ?? [])],
+    completedTopics: [...(existing.completedTopics ?? [])],
+    lastUpdatedAt: new Date().toISOString()
+  };
+
+  const completed = new Set(next.completedTopics);
+  for (const mapping of ONBOARDING_TOPIC_FIELDS) {
+    if (mapping.fields.some((field) => appliedFields.includes(field))) {
+      completed.add(mapping.topic);
+    }
+  }
+  next.completedTopics = Array.from(completed);
+
+  if (appliedFields.includes('accept_inbound_requests')) {
+    next.inboundPrompted = true;
+    if (updates.accept_inbound_requests === false) {
+      next.inboundDeclined = true;
+    } else if (updates.accept_inbound_requests === true) {
+      next.inboundDeclined = false;
+    }
+  }
+
+  const declinedTopic = inferDeclinedTopic(message, lastSamMessage);
+  if (declinedTopic) {
+    const declined = new Set(next.declinedTopics);
+    declined.add(declinedTopic);
+    next.declinedTopics = Array.from(declined);
+    if (declinedTopic === 'inbound_requests') {
+      next.inboundPrompted = true;
+      next.inboundDeclined = true;
+    }
+  }
+
+  return next;
+};
+
+const processProfileUpdates = async (
+  userId: string,
+  actions: SamAction[],
+  user: User,
+  message: string,
+  lastSamMessage?: string
+): Promise<void> => {
+  const merged: Record<string, unknown> = {};
+  const appliedFields: string[] = [];
+
   for (const action of actions) {
     if (action.type !== 'update_profile') continue;
     const fields = (action as Extract<SamAction, { type: 'update_profile' }>).fields;
     if (!fields || typeof fields !== 'object') continue;
 
-    const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(fields)) {
       if (!ALLOWED_PROFILE_FIELDS.has(key)) continue;
       if (value === undefined || value === null) continue;
-      sanitized[key] = value;
+      merged[key] = value;
+      appliedFields.push(key);
     }
+  }
 
-    if (Object.keys(sanitized).length === 0) continue;
+  const existingMeta = parseOnboardingMeta(user.sam_onboarding_meta);
+  const nextMeta = mergeOnboardingMeta(existingMeta, appliedFields, merged, message, lastSamMessage);
+  merged.sam_onboarding_meta = nextMeta;
 
+  if (Object.keys(merged).length === 1 && merged.sam_onboarding_meta) {
     try {
-      await updateUserProfile(userId, sanitized as Partial<ProfileUpdateFields>);
-      logger.info('Sam updated user profile via onboarding', {
-        userId,
-        fields: Object.keys(sanitized)
-      });
+      await updateUserProfile(userId, merged as Partial<ProfileUpdateFields>);
     } catch (error) {
-      logger.warn('Failed to apply Sam profile update', { userId, error, fields: Object.keys(sanitized) });
+      logger.warn('Failed to persist Sam onboarding memory', { userId, error });
     }
+    return;
+  }
+
+  try {
+    await updateUserProfile(userId, merged as Partial<ProfileUpdateFields>);
+    logger.info('Sam updated user profile via onboarding', {
+      userId,
+      fields: Object.keys(merged)
+    });
+  } catch (error) {
+    logger.warn('Failed to apply Sam profile update', { userId, error, fields: Object.keys(merged) });
   }
 };
 
@@ -296,7 +439,10 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
 
   await persistMessage(userId, parsed.message, 'user_text');
 
-  const samActivity = await getSamActivityForUser(userId);
+  const [samActivity, currentUser] = await Promise.all([getSamActivityForUser(userId), getUserById(userId)]);
+  const onboardingMeta = parseOnboardingMeta(currentUser.sam_onboarding_meta);
+  const profileProgress = buildProfileProgress(currentUser);
+  const lastSamMessage = [...parsed.conversationHistory].reverse().find((entry) => entry.role === 'sam')?.content;
 
   const intercepted = await maybeHandleRequestedPerson(userId, parsed.message);
   const nameSearchIntercepted = maybeHandleProfileNameSearch(parsed.message, parsed.userContext?.availableProfiles);
@@ -334,20 +480,14 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
     const enrichedContext = {
       ...parsed.userContext,
       isFirstTimeUser: false,
+      profileProgress,
+      onboardingMemory: onboardingMeta,
       sessionContext: {
         isReturningAfterLongIdle: samActivity.isReturningAfterLongIdle,
         hoursIdle: samActivity.hoursIdle,
         lastActivityAt: samActivity.lastActivityAt?.toISOString() ?? null
       }
     };
-
-    // Check if the user has completed onboarding (has interests or bio beyond default)
-    // If the intro was heard but this is among the first few messages, treat as onboarding
-    const messageCount = parsed.conversationHistory.length;
-    if (messageCount <= 20) {
-      // Still early in the conversation - Sam might still be onboarding
-      enrichedContext.isFirstTimeUser = true;
-    }
     
     response =
       intercepted ??
@@ -360,7 +500,7 @@ export const handleSamChat = async (conversationId: string, userId: string, payl
 
     // Process any update_profile actions from Sam's response
     if (response.actions && Array.isArray(response.actions)) {
-      await processProfileUpdates(userId, response.actions);
+      await processProfileUpdates(userId, response.actions, currentUser, parsed.message, lastSamMessage);
     }
   }
 

@@ -57,6 +57,14 @@ export interface CurrentlyDealingWith {
   lookingFor?: 'advice' | 'support' | 'just_relating' | null;
 }
 
+export interface SamOnboardingMeta {
+  inboundPrompted?: boolean;
+  inboundDeclined?: boolean;
+  declinedTopics?: string[];
+  completedTopics?: string[];
+  lastUpdatedAt?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -112,6 +120,8 @@ export interface User {
   // Matching preferences
   preferred_connection_types?: string[] | null;
   topics_to_avoid?: string[] | null;
+  // Sam onboarding memory
+  sam_onboarding_meta?: SamOnboardingMeta | null;
   created_at: string;
   updated_at: string;
 }
