@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default function PitchDeckPage() {
   return (
     <iframe
-      src="/humanchat_deck0.html"
+      src="/humanchat_deck.html"
       style={{
         position: 'fixed',
         top: 0,

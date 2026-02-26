@@ -66,6 +66,43 @@ export function usePendingInvites() {
     return () => { cancelled = true; };
   }, [userId]);
 
+  // Fallback sync: websocket can miss transient events after reconnect.
+  // Polling keeps invite badges fresh even if notifications drop.
+  useEffect(() => {
+    if (!userId) {
+      return undefined;
+    }
+
+    let disposed = false;
+    const sync = async () => {
+      try {
+        await fetchPendingInvites();
+      } catch {
+        // keep local cache when sync fails
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      if (!disposed) {
+        void sync();
+      }
+    }, 8000);
+
+    const onFocus = () => {
+      if (!disposed) {
+        void sync();
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      disposed = true;
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [userId]);
+
   const refresh = useCallback(async () => {
     try {
       await fetchPendingInvites();

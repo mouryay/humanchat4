@@ -1,12 +1,11 @@
 import { ApiError } from '../errors/ApiError.js';
-import { addConversationMessage, attachParticipantLabels, ensureHumanConversation } from './conversationService.js';
-import { createSessionRecord, getSessionById, updateSessionStatus } from './sessionService.js';
+import { attachParticipantLabels, ensureHumanConversation } from './conversationService.js';
+import { getSessionById, updateSessionStatus } from './sessionService.js';
 import { getUserById } from './userService.js';
-import type { Conversation, InstantInvite, PaymentMode, Session, User } from '../types/index.js';
+import type { Conversation, InstantInvite, Session, User } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { createInstantInvite } from './instantInviteService.js';
 
-const INSTANT_SESSION_MINUTES = 30;
 const STALE_PENDING_MINUTES = 10;
 const STALE_ACTIVE_MINUTES = 120;
 
@@ -53,17 +52,6 @@ const expireSessionIfNeeded = async (session: Session): Promise<boolean> => {
     conversationId: session.conversation_id
   });
   return true;
-};
-
-const derivePaymentMode = (host: User): PaymentMode => {
-  switch (host.conversation_type) {
-    case 'charity':
-      return 'charity';
-    case 'free':
-      return 'free';
-    default:
-      return 'paid';
-  }
 };
 
 const resolveExistingSession = async (
@@ -161,75 +149,27 @@ export const initiateInstantConnection = async (
       };
     }
 
-    const paymentMode = derivePaymentMode(target);
     const now = new Date();
-    const targetAvailable = Boolean(target.is_online && !target.has_active_session);
-
-    // Always use invite flow: target must accept before a session starts.
-    // If target is offline the invite waits for them to come back online.
-    if (!targetAvailable || paymentMode === 'free') {
-      const invite = await createInstantInvite(conversation, requester, target);
-      const hydratedConversation: Conversation = {
-        ...conversation,
-        last_activity: now.toISOString()
-      };
-
-      logger.info('Instant invite created', {
-        requesterId,
-        targetUserId,
-        conversationId: hydratedConversation.id,
-        inviteId: invite.id,
-        targetOnline: target.is_online,
-        paymentMode
-      });
-
-      const conversationWithLabels = await attachParticipantLabels(hydratedConversation);
-
-      return {
-        flow: 'invite',
-        conversation: conversationWithLabels,
-        invite
-      };
-    }
-
-    // Paid + target online & free: create session immediately
-    const ratePerMinute = target.instant_rate_per_minute ?? 0;
-    const agreedPrice = Math.max(0, ratePerMinute * INSTANT_SESSION_MINUTES);
-
-    const session = await createSessionRecord({
-      host_user_id: targetUserId,
-      guest_user_id: requesterId,
-      conversation_id: conversation.id,
-      type: 'instant',
-      start_time: now.toISOString(),
-      duration_minutes: INSTANT_SESSION_MINUTES,
-      agreed_price: agreedPrice,
-      payment_mode: paymentMode
-    });
-
-    const notice = `${requester.name ?? 'A member'} is connecting with ${target.name ?? 'their contact'} now.`;
-    await addConversationMessage(conversation.id, null, notice, 'system_notice');
-
+    const invite = await createInstantInvite(conversation, requester, target);
     const hydratedConversation: Conversation = {
       ...conversation,
-      linked_session_id: session.id,
-      last_activity: session.updated_at ?? now.toISOString()
+      last_activity: now.toISOString()
     };
 
-    logger.info('Instant connection created', {
+    logger.info('Instant invite created', {
       requesterId,
       targetUserId,
       conversationId: hydratedConversation.id,
-      sessionId: session.id,
-      paymentMode
+      inviteId: invite.id,
+      targetOnline: target.is_online
     });
 
     const conversationWithLabels = await attachParticipantLabels(hydratedConversation);
 
     return {
-      flow: 'session',
+      flow: 'invite',
       conversation: conversationWithLabels,
-      session
+      invite
     };
   } catch (error) {
     logger.error('Instant connection failed', {
