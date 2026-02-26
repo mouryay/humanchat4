@@ -9,7 +9,7 @@ SCRIPT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
 # (e.g. Redis fanout for chat delivery).
 REQUIRED_SECRET_PAIRS=(
   "DATABASE_URL=DATABASE_URL:latest"
-  "REDIS_URL=REDIS_URL:latest"
+  "REDIS_URL=upstash-redis-url:latest"
   "FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest"
   "FIREBASE_CLIENT_EMAIL=FIREBASE_CLIENT_EMAIL:latest"
   "FIREBASE_PRIVATE_KEY=FIREBASE_PRIVATE_KEY:latest"
