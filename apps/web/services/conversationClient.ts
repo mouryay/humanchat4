@@ -123,10 +123,11 @@ export const sendMessage = async (
   content: string,
   type: 'user_text' | 'sam_response' | 'system_notice' = 'user_text'
 ): Promise<{
-  message_id: string;
+  id: string;
   conversation_id: string;
-  sender_user_id: string;
-  message_text: string;
+  sender_id: string | null;
+  content: string;
+  message_type: 'user_text' | 'sam_response' | 'system_notice';
   created_at: string;
 }> => {
   const url = `${API_BASE_URL}/api/conversations/${conversationId}/messages`;
@@ -152,5 +153,9 @@ export const sendMessage = async (
   }
 
   const data = await response.json();
-  return data.message;
+  const message = data?.data?.message ?? data?.message;
+  if (!message?.id) {
+    throw new Error('Failed to send message: invalid response payload');
+  }
+  return message;
 };

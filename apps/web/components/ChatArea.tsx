@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Conversation, Message } from '../../../src/lib/db';
+import { addMessage } from '../../../src/lib/db';
 import { sendMessage as sendMessageApi } from '../services/conversationClient';
 import styles from './ConversationView.module.css';
 import VirtualMessageList from './VirtualMessageList';
@@ -66,9 +67,15 @@ export default function ChatArea({ conversation, messages, registerScrollContain
     setIsTyping(false);
 
     try {
-      // Send message to backend API - backend will save to PostgreSQL and broadcast via WebSocket
-      // The WebSocket notification will add it to IndexedDB for all participants (including sender)
-      await sendMessageApi(conversation.conversationId, currentUserId, message, 'user_text');
+      // Persist immediately from API response so sender sees it even if WebSocket echo is delayed.
+      const saved = await sendMessageApi(conversation.conversationId, currentUserId, message, 'user_text');
+      await addMessage(conversation.conversationId, {
+        messageId: saved.id,
+        senderId: saved.sender_id ?? currentUserId,
+        content: saved.content,
+        timestamp: new Date(saved.created_at).getTime(),
+        type: saved.message_type
+      });
     } catch (error) {
       console.error('Failed to send message:', error);
       // TODO: Show error toast to user
