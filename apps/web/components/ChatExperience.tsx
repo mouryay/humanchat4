@@ -347,6 +347,10 @@ const ChatShell = () => {
         focusConversation(conversationId);
       } catch (err) {
         console.error('[ChatExperience] Failed to accept invite', err);
+        const message = err instanceof Error ? err.message : 'Failed to accept invite. Please try again.';
+        if (typeof window !== 'undefined') {
+          window.alert(message);
+        }
       } finally {
         setInviteActionPendingId((prev) => (prev === inviteId ? null : prev));
       }
@@ -362,6 +366,10 @@ const ChatShell = () => {
         await refreshInvites();
       } catch (err) {
         console.error('[ChatExperience] Failed to decline invite', err);
+        const message = err instanceof Error ? err.message : 'Failed to decline invite. Please try again.';
+        if (typeof window !== 'undefined') {
+          window.alert(message);
+        }
       } finally {
         setInviteActionPendingId((prev) => (prev === inviteId ? null : prev));
       }

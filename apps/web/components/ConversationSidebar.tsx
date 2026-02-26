@@ -165,6 +165,7 @@ export default function ConversationSidebar({
                   onDelete={handleDeleteRequest}
                   deletePending={deletingId === entry.conversation.conversationId}
                   showMetadata={!collapsed}
+                  disableGestures={Boolean(inviteOverlay)}
                   pendingRequest={inviteOverlay}
                   className="px-4 mb-1"
                 />

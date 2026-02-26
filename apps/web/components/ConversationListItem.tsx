@@ -190,7 +190,16 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
               <button
                 type="button"
                 className={styles.requestAccept}
-                onClick={(e) => { e.stopPropagation(); pendingRequest.onAccept(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pendingRequest.onAccept();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pendingRequest.onAccept();
+                }}
                 disabled={pendingRequest.isPending}
               >
                 {pendingRequest.isPending ? '...' : 'Accept'}
@@ -198,7 +207,16 @@ export default function ConversationListItem({ entry, isActive, onSelect, onArch
               <button
                 type="button"
                 className={styles.requestDecline}
-                onClick={(e) => { e.stopPropagation(); pendingRequest.onDecline(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pendingRequest.onDecline();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  pendingRequest.onDecline();
+                }}
                 disabled={pendingRequest.isPending}
               >
                 Decline
