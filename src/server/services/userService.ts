@@ -47,7 +47,7 @@ export const updateUserProfile = async (id: string, updates: Partial<User>): Pro
 export const searchUsers = async (
   q: string,
   online?: boolean,
-  sort?: 'default' | 'recent',
+  sort?: 'default' | 'recent' | 'active',
   limit?: number
 ): Promise<User[]> => {
   const params: unknown[] = [];
@@ -74,7 +74,12 @@ export const searchUsers = async (
     }
   }
 
-  const orderBy = sort === 'recent' ? 'created_at DESC' : 'is_online DESC, name ASC';
+  const orderBy =
+    sort === 'recent'
+      ? 'created_at DESC'
+      : sort === 'active'
+        ? 'COALESCE(last_seen_at, created_at) DESC, is_online DESC, name ASC'
+        : 'is_online DESC, name ASC';
   const rowLimit = Math.min(limit ?? 50, 50);
   const sql = `SELECT * FROM users ${where} ORDER BY ${orderBy} LIMIT ${rowLimit}`;
   const result = await query<User>(sql, params);

@@ -51,66 +51,94 @@ const ChatShell = () => {
     seededRef.current = true;
 
     const currentUserId = sessionStatusManager.getCurrentUserId();
+    const mapDirectoryUsers = (users: Array<{
+      id: string;
+      name?: string | null;
+      headline?: string | null;
+      bio?: string | null;
+      avatar_url?: string | null;
+      conversation_type?: string;
+      instant_rate_per_minute?: number | null;
+      scheduled_rates?: Record<string, number> | null;
+      is_online?: boolean;
+      has_active_session?: boolean;
+      presence_state?: string | null;
+      last_seen_at?: string | null;
+      donation_preference?: string | null;
+      charity_name?: string | null;
+      charity_id?: string | null;
+      managed?: boolean;
+      manager_id?: string | null;
+      manager_display_name?: string | null;
+      display_mode?: string | null;
+      confidential_rate?: boolean | null;
+    }>): ProfileSummary[] => {
+      return users
+        .filter((u) => u.id && u.id !== currentUserId)
+        .map((u) => ({
+          userId: u.id,
+          name: u.name ?? 'Human',
+          avatarUrl: u.avatar_url ?? undefined,
+          headline: u.headline ?? undefined,
+          bio: u.bio ?? undefined,
+          conversationType: (u.conversation_type as ProfileSummary['conversationType']) ?? 'free',
+          instantRatePerMinute: u.instant_rate_per_minute ?? undefined,
+          scheduledRates: u.scheduled_rates
+            ? Object.entries(u.scheduled_rates)
+                .map(([d, p]) => ({ durationMinutes: Number(d), price: p }))
+                .filter((e) => e.durationMinutes > 0 && e.price > 0)
+            : [],
+          isOnline: Boolean(u.is_online),
+          hasActiveSession: Boolean(u.has_active_session),
+          presenceState: u.presence_state ?? (u.is_online ? 'active' : 'offline'),
+          lastSeenAt: u.last_seen_at ? Date.parse(u.last_seen_at) : undefined,
+          donationPreference: u.donation_preference ?? undefined,
+          charityName: u.charity_name ?? undefined,
+          charityId: u.charity_id ?? undefined,
+          managed: Boolean(u.managed),
+          managerId: u.manager_id ?? undefined,
+          managerName: u.manager_display_name ?? undefined,
+          displayMode: u.display_mode ?? undefined,
+          confidentialRate: u.confidential_rate ?? undefined
+        } as ProfileSummary));
+    };
+
+    const fetchUsers = async (query: string) => {
+      const res = await fetchWithAuthRefresh(`${API_BASE_URL}/api/users/search?${query}`, { credentials: 'include' });
+      if (!res.ok) return [] as ProfileSummary[];
+      const payload = await res.json();
+      const users = (payload?.data?.users ?? payload?.users ?? []) as Array<{
+        id: string;
+        name?: string | null;
+        headline?: string | null;
+        bio?: string | null;
+        avatar_url?: string | null;
+        conversation_type?: string;
+        instant_rate_per_minute?: number | null;
+        scheduled_rates?: Record<string, number> | null;
+        is_online?: boolean;
+        has_active_session?: boolean;
+        presence_state?: string | null;
+        last_seen_at?: string | null;
+        donation_preference?: string | null;
+        charity_name?: string | null;
+        charity_id?: string | null;
+        managed?: boolean;
+        manager_id?: string | null;
+        manager_display_name?: string | null;
+        display_mode?: string | null;
+        confidential_rate?: boolean | null;
+      }>;
+      return mapDirectoryUsers(users);
+    };
+
     const seed = async () => {
       try {
-        const res = await fetchWithAuthRefresh(
-          `${API_BASE_URL}/api/users/search?sort=recent&limit=3`,
-          { credentials: 'include' }
-        );
-        if (!res.ok) return;
-        const payload = await res.json();
-        const users = (payload?.data?.users ?? payload?.users ?? []) as Array<{
-          id: string;
-          name?: string | null;
-          headline?: string | null;
-          bio?: string | null;
-          avatar_url?: string | null;
-          conversation_type?: string;
-          instant_rate_per_minute?: number | null;
-          scheduled_rates?: Record<string, number> | null;
-          is_online?: boolean;
-          has_active_session?: boolean;
-          presence_state?: string | null;
-          last_seen_at?: string | null;
-          donation_preference?: string | null;
-          charity_name?: string | null;
-          charity_id?: string | null;
-          managed?: boolean;
-          manager_id?: string | null;
-          manager_display_name?: string | null;
-          display_mode?: string | null;
-          confidential_rate?: boolean | null;
-        }>;
-
-        const mapped: ProfileSummary[] = users
-          .filter((u) => u.id && u.id !== currentUserId)
-          .slice(0, 3)
-          .map((u) => ({
-            userId: u.id,
-            name: u.name ?? 'Human',
-            avatarUrl: u.avatar_url ?? undefined,
-            headline: u.headline ?? undefined,
-            bio: u.bio ?? undefined,
-            conversationType: (u.conversation_type as ProfileSummary['conversationType']) ?? 'free',
-            instantRatePerMinute: u.instant_rate_per_minute ?? undefined,
-            scheduledRates: u.scheduled_rates
-              ? Object.entries(u.scheduled_rates)
-                  .map(([d, p]) => ({ durationMinutes: Number(d), price: p }))
-                  .filter((e) => e.durationMinutes > 0 && e.price > 0)
-              : [],
-            isOnline: Boolean(u.is_online),
-            hasActiveSession: Boolean(u.has_active_session),
-            presenceState: u.presence_state ?? (u.is_online ? 'active' : 'offline'),
-            lastSeenAt: u.last_seen_at ? Date.parse(u.last_seen_at) : undefined,
-            donationPreference: u.donation_preference ?? undefined,
-            charityName: u.charity_name ?? undefined,
-            charityId: u.charity_id ?? undefined,
-            managed: Boolean(u.managed),
-            managerId: u.manager_id ?? undefined,
-            managerName: u.manager_display_name ?? undefined,
-            displayMode: u.display_mode ?? undefined,
-            confidentialRate: u.confidential_rate ?? undefined
-          } as ProfileSummary));
+        // Recommended people:
+        // 1) prioritize currently online people
+        // 2) if none online, fall back to most recently active members
+        const online = await fetchUsers('online=true&limit=6');
+        const mapped = online.length > 0 ? online.slice(0, 3) : (await fetchUsers('sort=active&limit=3')).slice(0, 3);
 
         if (mapped.length > 0) {
           setSidebarProfiles((prev) => (prev.length === 0 ? mapped : prev));
@@ -513,7 +541,7 @@ const ChatShell = () => {
               >
                 <div className="flex h-full flex-col">
                   <div className="px-4 py-3">
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'New on the platform' : 'People'}</span>
+                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'Recommended people' : 'People'}</span>
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <ProfileSidebar
@@ -557,7 +585,7 @@ const ChatShell = () => {
                 onConnectNow={handleSidebarConnectNow}
                 onBookTime={handleSidebarBookTime}
                 connectingProfileId={connectingProfileId}
-                label={sidebarSource === 'seeded' ? 'New on the platform' : undefined}
+                label={sidebarSource === 'seeded' ? 'Recommended people' : undefined}
               />
             </aside>
           </>

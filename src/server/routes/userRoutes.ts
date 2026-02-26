@@ -14,7 +14,12 @@ router.get('/search', authenticate, authenticatedLimiter, async (req, res, next)
   try {
     const q = (req.query.q as string) ?? '';
     const online = req.query.online ? req.query.online === 'true' : undefined;
-    const sort = req.query.sort === 'recent' ? 'recent' as const : 'default' as const;
+    const sort =
+      req.query.sort === 'recent'
+        ? ('recent' as const)
+        : req.query.sort === 'active'
+          ? ('active' as const)
+          : ('default' as const);
     const limit = req.query.limit ? Math.max(1, Math.min(50, Number(req.query.limit))) : undefined;
     const users = await searchUsers(q, online, sort, limit);
     const trimmed = q.trim();

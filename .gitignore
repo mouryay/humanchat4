@@ -21,6 +21,9 @@ apps/web/.next/
 .vercel/
 # Generated from apps/web/public during builds
 public/
+!apps/web/public/
+apps/web/public/*
+!apps/web/public/humanchat_deck.html
 
 # Terraform local artifacts
 *.tfstate

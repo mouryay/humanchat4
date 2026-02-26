@@ -411,7 +411,7 @@ export default function SamChatView({
 
   const loadAllProfiles = useCallback(async (): Promise<ProfileSummary[]> => {
     try {
-      const response = await fetchWithAuthRefresh(`${API_BASE_URL}/api/users/search`, {
+      const response = await fetchWithAuthRefresh(`${API_BASE_URL}/api/users/search?sort=active`, {
         method: 'GET',
         credentials: 'include'
       });
