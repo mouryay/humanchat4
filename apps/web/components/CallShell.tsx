@@ -2,9 +2,38 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { LiveKitRoom, RoomAudioRenderer, useRoomContext } from '@livekit/components-react';
+import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { Room, RoomEvent } from 'livekit-client';
 import { useCallContext } from '../context/CallContext';
+
+// Component to bridge LiveKit media controls with CallContext
+function MediaControlsBridge() {
+  const { localParticipant } = useLocalParticipant();
+  const { setMediaControls } = useCallContext();
+
+  useEffect(() => {
+    if (localParticipant) {
+      // Provide media control functions to CallContext
+      setMediaControls({
+        toggleAudio: async () => {
+          const isEnabled = localParticipant.isMicrophoneEnabled;
+          await localParticipant.setMicrophoneEnabled(!isEnabled);
+        },
+        toggleVideo: async () => {
+          const isEnabled = localParticipant.isCameraEnabled;
+          await localParticipant.setCameraEnabled(!isEnabled);
+        },
+      });
+    }
+
+    // Cleanup when component unmounts
+    return () => {
+      setMediaControls(null);
+    };
+  }, [localParticipant, setMediaControls]);
+
+  return null;
+}
 
 // Helper component to handle participant disconnect events
 function ParticipantDisconnectHandler({ onRemoteDisconnect, onRemoteConnect }: { onRemoteDisconnect: () => void; onRemoteConnect: () => void }) {
@@ -152,6 +181,7 @@ export default function CallShell({
         className="h-full w-full"
       >
         <RoomAudioRenderer />
+        <MediaControlsBridge />
         <ParticipantDisconnectHandler 
           onRemoteDisconnect={handleDisconnected} 
           onRemoteConnect={handleRemoteConnected}

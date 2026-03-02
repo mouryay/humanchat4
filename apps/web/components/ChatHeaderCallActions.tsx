@@ -14,6 +14,7 @@ import { db, type Booking } from '../../../src/lib/db';
 import { liveQuery } from 'dexie';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 import { getExpertWeeklyAvailability, type WeeklyRule } from '../services/bookingApi';
+import { useCallSounds } from '../hooks/useCallSounds';
 import styles from './ConversationView.module.css';
 
 interface ChatHeaderCallActionsProps {
@@ -37,6 +38,7 @@ export default function ChatHeaderCallActions({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [expertAvailability, setExpertAvailability] = useState<WeeklyRule[]>([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+  const { play: playSound, stop: stopSound } = useCallSounds();
 
   useEffect(() => {
     setCurrentUserId(sessionStatusManager.getCurrentUserId());
@@ -186,6 +188,7 @@ export default function ChatHeaderCallActions({
       const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
       // Navigate to live room with returnUrl
+      // Note: Outgoing ring will be played by the call page to avoid audio stopping during navigation
       router.push(`/call/${result.callId}?returnUrl=${encodeURIComponent(currentUrl)}`);
     } catch (error: any) {
       console.error('[ChatHeaderCallActions] Failed to start call:', error);
