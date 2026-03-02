@@ -35,7 +35,7 @@ export default function CallControls({
 
   const handleToggleMute = () => {
     // Play beep before toggling (isMuted is current state before toggle)
-    playSound(isMhandleed ? 'unmute' : 'mute');
+    playSound(isMuted ? 'unmute' : 'mute');
     onToggleMute();
   };
 
