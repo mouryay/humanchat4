@@ -4,12 +4,14 @@ import { env } from './config/env.js';
 import { setupWebSockets } from './websocket/index.js';
 import { logger } from './utils/logger.js';
 import { startPresenceSweep } from './services/presenceService.js';
+import { startBookingReminderDispatcher } from './services/notificationService.js';
 
 logger.info(`NODE_OPTIONS env: ${process.env.NODE_OPTIONS ?? '(undefined)'}`);
 
 const server = http.createServer(app);
 setupWebSockets(server);
 startPresenceSweep();
+startBookingReminderDispatcher();
 
 server.listen(env.port, () => {
   logger.info(`HumanChat API listening on port ${env.port}`);

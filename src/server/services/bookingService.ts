@@ -11,6 +11,7 @@ import {
   sendBookingUpdateNotification,
   sendBookingCancellationNotification
 } from './bookingNotificationService.js';
+import { sendBookingScheduledNotifications } from './notificationService.js';
 import { env } from '../config/env.js';
 
 export interface AvailabilityRule {
@@ -479,6 +480,7 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     const reminders = [
       { type: '24h', minutes: 24 * 60 },
       { type: '1h', minutes: 60 },
+      { type: '30min', minutes: 30 },
       { type: '15min', minutes: 15 }
     ];
 
@@ -498,6 +500,23 @@ export const createBooking = async (input: CreateBookingInput): Promise<BookingW
     // Send booking confirmation to chat (async)
     sendBookingConfirmationToChat(booking.id, input.expertId, input.userId, user.name, expert.name, input.startTime, input.durationMinutes)
       .catch((err) => console.error('Failed to send booking confirmation to chat:', err));
+
+    sendBookingScheduledNotifications({
+      bookingId: booking.id,
+      expert: {
+        userId: input.expertId,
+        name: expert.name,
+        email: expert.email
+      },
+      requester: {
+        userId: input.userId,
+        name: user.name,
+        email: user.email
+      },
+      startTime: input.startTime.toISOString(),
+      durationMinutes: input.durationMinutes,
+      timezone: input.timezone
+    }).catch((err) => console.error('Failed to send booking scheduled notifications:', err));
 
     // Create calendar event (async, don't block)
     createCalendarEvent(input.expertId, {

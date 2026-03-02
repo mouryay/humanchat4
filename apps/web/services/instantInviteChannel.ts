@@ -2,7 +2,12 @@
 
 import { db, saveInstantInvite, type InstantInvite } from '../../../src/lib/db';
 import { sessionStatusManager } from './sessionStatusManager';
-import { INSTANT_INVITE_TARGETED_EVENT, type InstantInviteTargetedDetail } from '../constants/events';
+import {
+  INSTANT_INVITE_TARGETED_EVENT,
+  NOTIFICATION_EVENT,
+  type InstantInviteTargetedDetail,
+  type RealtimeNotificationDetail
+} from '../constants/events';
 import {
   mapConversationRecord,
   mapInviteRecord,
@@ -32,6 +37,20 @@ interface NewMessageNotification {
     message_type: 'user_text' | 'sam_response' | 'system_notice';
     actions?: unknown;
     created_at: string;
+  };
+}
+
+interface BookingNotification {
+  type: 'booking_notification';
+  userId: string;
+  notification: {
+    id: string;
+    type: 'booking_scheduled' | 'booking_reminder_30m';
+    title: string;
+    body: string;
+    payload: Record<string, unknown>;
+    status: 'unread' | 'read';
+    createdAt: string;
   };
 }
 
@@ -75,11 +94,16 @@ class InstantInviteChannel {
       this.ws = new WebSocket(`${WS_BASE_URL.replace(/\/$/, '')}/notifications/${this.userId}`);
       this.ws.addEventListener('message', (event) => {
         try {
-          const payload = JSON.parse(event.data as string) as InstantInviteNotification | NewMessageNotification;
+          const payload = JSON.parse(event.data as string) as
+            | InstantInviteNotification
+            | NewMessageNotification
+            | BookingNotification;
           if (payload?.type === 'instant_invite' && 'invite' in payload) {
             void this.handleInviteNotification(payload);
           } else if (payload?.type === 'new_message' && 'message' in payload) {
             void this.handleNewMessage(payload);
+          } else if (payload?.type === 'booking_notification' && 'notification' in payload) {
+            this.handleBookingNotification(payload);
           }
         } catch (error) {
           console.warn('Failed to parse notification', error);
@@ -97,6 +121,17 @@ class InstantInviteChannel {
     } catch (error) {
       console.warn('Instant invite channel failed to connect', error);
     }
+  }
+
+  private handleBookingNotification(payload: BookingNotification): void {
+    if (typeof window === 'undefined') return;
+    const detail: RealtimeNotificationDetail = {
+      notification: {
+        ...payload.notification,
+        created_at: payload.notification.createdAt
+      }
+    };
+    window.dispatchEvent(new CustomEvent<RealtimeNotificationDetail>(NOTIFICATION_EVENT, { detail }));
   }
 
   private async handleInviteNotification(payload: InstantInviteNotification): Promise<void> {
