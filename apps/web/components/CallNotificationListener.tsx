@@ -48,10 +48,11 @@ export default function CallNotificationListener() {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        console.log('[CallListener] Received message:', message);
+        console.log('[CallListener] 📨 Received message:', message);
 
         if (message.type === 'CALL_RINGING') {
-          console.log('[CallListener] Incoming call from:', message.caller.name);
+          console.log('[CallListener] 📞 INCOMING CALL from:', message.caller.name);
+          console.log('[CallListener] Setting incoming call state...');
           setIncomingCall(message as CallRingingMessage);
         } else if (message.type === 'CALL_DECLINED' || message.type === 'CALL_ENDED' || message.type === 'CALL_TIMEOUT') {
           console.log('[CallListener] Call ended/declined/timeout:', message.type);
@@ -91,6 +92,8 @@ export default function CallNotificationListener() {
   if (!incomingCall) {
     return null;
   }
+
+  console.log('[CallListener] 🔔 Rendering IncomingCallModal for call:', incomingCall.callId);
 
   return (
     <IncomingCallModal

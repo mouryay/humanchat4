@@ -78,10 +78,8 @@ export default function AudioCallPage({ onEndCall }: AudioCallPageProps) {
       .slice(0, 2);
   };
 
-  const handleToggleMute = async () => {
-    if (localParticipant) {
-      await localParticipant.setMicrophoneEnabled(isMuted);
-    }
+  const handleToggleMute = () => {
+    // CallContext now handles the actual LiveKit media control
     toggleMute();
   };
 

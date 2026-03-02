@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import CallControls from './CallControls';
 import { endCall, markCallConnected } from '../services/callApi';
 import { useWebRTC } from '../hooks/useWebRTC';
+import { useCallSounds } from '../hooks/useCallSounds';
 
 interface LiveRoomProps {
   callId: string;
@@ -38,6 +39,8 @@ export default function LiveRoom({
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(callType === 'audio');
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  
+  const { play: playSound, stop: stopSound } = useCallSounds();
 
   // Use WebRTC hook (LiveKit integration)
   const {
@@ -56,6 +59,10 @@ export default function LiveRoom({
       setConnectionStatus(state);
       if (state === 'connected') {
         setIsConnecting(false);
+        
+        // Stop outgoing ring sound when connected
+        stopSound('outgoing-ring');
+        
         // Mark call as connected in backend to track duration
         try {
           await markCallConnected(callId);
@@ -63,6 +70,9 @@ export default function LiveRoom({
         } catch (error) {
           console.error('[LiveRoom] Failed to mark call as connected:', error);
         }
+      } else if (state === 'disconnected') {
+        // Play call end tone when disconnected
+        playSound('call-end');
       }
     },
     onParticipantConnected: () => {
@@ -122,6 +132,13 @@ export default function LiveRoom({
       setDuration((prev) => prev + 1);
     }, 1000);
 
+      // Play call end tone
+      playSound('call-end');
+      
+      // Stop any ongoing ring sounds
+      stopSound('outgoing-ring');
+      
+      
     return () => clearInterval(interval);
   }, [connectionStatus]);
 

@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { Video, Phone, X } from 'lucide-react';
 import { acceptCall, declineCall } from '../services/callApi';
 import { useRouter } from 'next/navigation';
+import { useCallSounds } from '../hooks/useCallSounds';
 
 interface IncomingCallModalProps {
   callId: string;
@@ -29,15 +30,33 @@ export default function IncomingCallModal({
 }: IncomingCallModalProps) {
   const router = useRouter();
   const [isResponding, setIsResponding] = useState(false);
+  const { play: playSound, stop: stopSound, stopAll } = useCallSounds();
+
+  // Play incoming ringtone when modal opens
+  useEffect(() => {
+    console.log('[IncomingCallModal] 🔊 Component mounted, playing incoming ring...');
+    playSound('incoming-ring');
+
+    // Stop ringtone when component unmounts
+    return () => {
+      console.log('[IncomingCallModal] Component unmounting, stopping incoming ring...');
+      stopSound('incoming-ring');
+    };
+  }, [playSound, stopSound]);
 
   // Auto-dismiss after 60 seconds (timeout)
   useEffect(() => {
     const timeout = setTimeout(() => {
+      
+      // Stop incoming ringtone
+      stopSound('incoming-ring');
+      
+      stopSound('incoming-ring');
       onClose();
     }, 60000);
 
     return () => clearTimeout(timeout);
-  }, [onClose]);
+  }, [onClose, stopSound]);
 
   const handleAccept = async () => {
     setIsResponding(true);
@@ -63,6 +82,10 @@ export default function IncomingCallModal({
 
     try {
       console.log('[IncomingCallModal] Declining call:', callId);
+      
+      // Stop incoming ringtone
+      stopSound('incoming-ring');
+      
       await declineCall(callId, 'declined');
       console.log('[IncomingCallModal] Call declined successfully');
       onClose();
