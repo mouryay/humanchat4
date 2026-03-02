@@ -24,6 +24,10 @@ public/
 !apps/web/public/
 apps/web/public/*
 !apps/web/public/humanchat_deck.html
+!apps/web/public/sounds/
+apps/web/public/sounds/*
+!apps/web/public/sounds/*.mp3
+!apps/web/public/sounds/.gitkeep
 
 # Terraform local artifacts
 *.tfstate

@@ -5,6 +5,11 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 export type CallType = 'audio' | 'video';
 export type CallStatus = 'connecting' | 'connected' | 'ending' | 'disconnected' | 'failed';
 
+export interface MediaControls {
+  toggleAudio: () => Promise<void>;
+  toggleVideo: () => Promise<void>;
+}
+
 interface CallContextValue {
   // Call metadata
   callId: string | null;
@@ -35,6 +40,9 @@ interface CallContextValue {
   toggleScreenShare: () => void;
   updateStatus: (status: CallStatus) => void;
   updateConnectedAt: (timestamp: number) => void;
+  
+  // Media control functions (provided by LiveKit room)
+  setMediaControls: (controls: MediaControls | null) => void;
 }
 
 interface StartCallParams {
@@ -64,6 +72,9 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  
+  // Store media control functions from LiveKit room
+  const [mediaControls, setMediaControls] = useState<MediaControls | null>(null);
 
   const startCall = useCallback((params: StartCallParams) => {
     setCallId(params.callId);
@@ -97,12 +108,32 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => !prev);
-  }, []);
+    // If we have media controls from LiveKit, use them
+    if (mediaControls?.toggleAudio) {
+      mediaControls.toggleAudio().then(() => {
+        setIsMuted(prev => !prev);
+      }).catch(err => {
+        console.error('[CallContext] Failed to toggle audio:', err);
+      });
+    } else {
+      // Fallback: just update state (for backward compatibility)
+      setIsMuted(prev => !prev);
+    }
+  }, [mediaControls]);
 
   const toggleCamera = useCallback(() => {
-    setIsCameraOff(prev => !prev);
-  }, []);
+    // If we have media controls from LiveKit, use them
+    if (mediaControls?.toggleVideo) {
+      mediaControls.toggleVideo().then(() => {
+        setIsCameraOff(prev => !prev);
+      }).catch(err => {
+        console.error('[CallContext] Failed to toggle video:', err);
+      });
+    } else {
+      // Fallback: just update state (for backward compatibility)
+      setIsCameraOff(prev => !prev);
+    }
+  }, [mediaControls]);
 
   const toggleSpeaker = useCallback(() => {
     setIsSpeakerOn(prev => !prev);
@@ -143,6 +174,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     toggleScreenShare,
     updateStatus,
     updateConnectedAt,
+    setMediaControls,
   };
 
   return <CallContext.Provider value={value}>{children}</CallContext.Provider>;

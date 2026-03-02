@@ -142,17 +142,13 @@ export default function VideoCallPage({ onEndCall }: VideoCallPageProps) {
       .slice(0, 2);
   };
 
-  const handleToggleMute = async () => {
-    if (localParticipant) {
-      await localParticipant.setMicrophoneEnabled(isMuted);
-    }
+  const handleToggleMute = () => {
+    // CallContext now handles the actual LiveKit media control
     toggleMute();
   };
 
-  const handleToggleCamera = async () => {
-    if (localParticipant) {
-      await localParticipant.setCameraEnabled(isCameraOff);
-    }
+  const handleToggleCamera = () => {
+    // CallContext now handles the actual LiveKit media control
     toggleCamera();
   };
 

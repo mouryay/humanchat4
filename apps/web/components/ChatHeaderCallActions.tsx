@@ -14,6 +14,7 @@ import { db, type Booking } from '../../../src/lib/db';
 import { liveQuery } from 'dexie';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 import { getExpertWeeklyAvailability, type WeeklyRule } from '../services/bookingApi';
+import { useCallSounds } from '../hooks/useCallSounds';
 import styles from './ConversationView.module.css';
 
 interface ChatHeaderCallActionsProps {
@@ -37,6 +38,7 @@ export default function ChatHeaderCallActions({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [expertAvailability, setExpertAvailability] = useState<WeeklyRule[]>([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+  const { play: playSound, stop: stopSound } = useCallSounds();
 
   useEffect(() => {
     setCurrentUserId(sessionStatusManager.getCurrentUserId());
@@ -181,6 +183,10 @@ export default function ChatHeaderCallActions({
       });
       
       console.log('[ChatHeaderCallActions] Call started successfully:', result);
+
+      // Play outgoing ring sound
+      console.log('[ChatHeaderCallActions] 🔊 Playing outgoing ring...');
+      playSound('outgoing-ring');
 
       // Build return URL with current path and params
       const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;

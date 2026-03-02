@@ -6,6 +6,7 @@
 'use client';
 
 import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, PictureInPicture, PhoneOff } from 'lucide-react';
+import { useCallSounds } from '../hooks/useCallSounds';
 
 interface CallControlsProps {
   isMuted: boolean;
@@ -30,6 +31,14 @@ export default function CallControls({
   onEndCall,
   showCamera = true,
 }: CallControlsProps) {
+  const { play: playSound } = useCallSounds();
+
+  const handleToggleMute = () => {
+    // Play beep before toggling (isMuted is current state before toggle)
+    playSound(isMhandleed ? 'unmute' : 'mute');
+    onToggleMute();
+  };
+
   return (
     <div className="flex items-center justify-center gap-4">
       {/* Mute */}
