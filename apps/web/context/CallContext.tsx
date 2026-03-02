@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useCallSounds } from '../hooks/useCallSounds';
 
 export type CallType = 'audio' | 'video';
 export type CallStatus = 'connecting' | 'connected' | 'ending' | 'disconnected' | 'failed';
@@ -75,6 +76,9 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   
   // Store media control functions from LiveKit room
   const [mediaControls, setMediaControls] = useState<MediaControls | null>(null);
+  
+  // Call sounds for mute/unmute feedback
+  const { play: playSound } = useCallSounds();
 
   const startCall = useCallback((params: StartCallParams) => {
     setCallId(params.callId);
@@ -111,15 +115,24 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     // If we have media controls from LiveKit, use them
     if (mediaControls?.toggleAudio) {
       mediaControls.toggleAudio().then(() => {
-        setIsMuted(prev => !prev);
+        setIsMuted(prev => {
+          const newMutedState = !prev;
+          // Play sound feedback
+          playSound(newMutedState ? 'mute' : 'unmute');
+          return newMutedState;
+        });
       }).catch(err => {
         console.error('[CallContext] Failed to toggle audio:', err);
       });
     } else {
       // Fallback: just update state (for backward compatibility)
-      setIsMuted(prev => !prev);
+      setIsMuted(prev => {
+        const newMutedState = !prev;
+        playSound(newMutedState ? 'mute' : 'unmute');
+        return newMutedState;
+      });
     }
-  }, [mediaControls]);
+  }, [mediaControls, playSound]);
 
   const toggleCamera = useCallback(() => {
     // If we have media controls from LiveKit, use them

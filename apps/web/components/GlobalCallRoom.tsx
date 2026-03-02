@@ -70,6 +70,12 @@ export default function GlobalCallRoom() {
     if (status === 'connected' || status === 'disconnected' || status === 'failed') {
       console.log('[GlobalCallRoom] 🛑 Stopping outgoing ring');
       stopSound('outgoing-ring');
+      
+      // Play call-end sound when call disconnects or fails
+      if (status === 'disconnected' || status === 'failed') {
+        console.log('[GlobalCallRoom] 🔊 Playing call-end sound');
+        playSound('call-end');
+      }
     }
 
     // Cleanup: stop outgoing ring when component unmounts
@@ -145,6 +151,10 @@ export default function GlobalCallRoom() {
   }, [callId, identity?.id, endCallContext, router, callData?.participantName]);
 
   const handleEndCall = async () => {
+    // Play call-end sound
+    console.log('[GlobalCallRoom] 🔊 Playing call-end sound (user ended call)');
+    playSound('call-end');
+    
     // Import and call endCall API
     try {
       const { endCall: endCallApi } = await import('../services/callApi');
