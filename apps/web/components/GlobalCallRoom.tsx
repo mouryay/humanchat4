@@ -53,13 +53,16 @@ export default function GlobalCallRoom() {
     loadCall();
   }, [callId, endCallContext]);
 
-  // Play outgoing ring sound when call is connecting
+  // Play outgoing ring sound when call is connecting (only for caller)
   useEffect(() => {
     if (!callId || !callData) return;
 
-    // Play outgoing ring when status is 'connecting'
-    if (status === 'connecting') {
-      console.log('[GlobalCallRoom] 🔊 Playing outgoing ring...');
+    // Only play outgoing ring if current user is the caller (isHost)
+    const isCaller = callData.isHost;
+
+    // Play outgoing ring when status is 'connecting' AND user is the caller
+    if (status === 'connecting' && isCaller) {
+      console.log('[GlobalCallRoom] 🔊 Playing outgoing ring for caller...');
       playSound('outgoing-ring');
     }
 
