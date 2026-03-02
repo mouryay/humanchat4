@@ -184,14 +184,11 @@ export default function ChatHeaderCallActions({
       
       console.log('[ChatHeaderCallActions] Call started successfully:', result);
 
-      // Play outgoing ring sound
-      console.log('[ChatHeaderCallActions] 🔊 Playing outgoing ring...');
-      playSound('outgoing-ring');
-
       // Build return URL with current path and params
       const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
       // Navigate to live room with returnUrl
+      // Note: Outgoing ring will be played by the call page to avoid audio stopping during navigation
       router.push(`/call/${result.callId}?returnUrl=${encodeURIComponent(currentUrl)}`);
     } catch (error: any) {
       console.error('[ChatHeaderCallActions] Failed to start call:', error);

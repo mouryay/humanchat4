@@ -8,17 +8,19 @@ import { getCall } from '../services/callApi';
 import CallShell from './CallShell';
 import AudioCallPage from './AudioCallPage';
 import VideoCallPage from './VideoCallPage';
+import { useCallSounds } from '../hooks/useCallSounds';
 
 /**
  * GlobalCallRoom - Mounts LiveKit room globally when a call is active
  * This keeps the connection alive even when user navigates away from /call/[callId]
  */
 export default function GlobalCallRoom() {
-  const { callId, callType, isMinimized, endCall: endCallContext } = useCallContext();
+  const { callId, callType, isMinimized, endCall: endCallContext, status } = useCallContext();
   const { identity } = useAuthIdentity();
   const [callData, setCallData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { play: playSound, stop: stopSound, stopAll } = useCallSounds();
 
   // Load call data when callId changes
   useEffect(() => {
@@ -50,6 +52,28 @@ export default function GlobalCallRoom() {
 
     loadCall();
   }, [callId, endCallContext]);
+
+  // Play outgoing ring sound when call is connecting
+  useEffect(() => {
+    if (!callId || !callData) return;
+
+    // Play outgoing ring when status is 'connecting'
+    if (status === 'connecting') {
+      console.log('[GlobalCallRoom] 🔊 Playing outgoing ring...');
+      playSound('outgoing-ring');
+    }
+
+    // Stop outgoing ring when call connects or ends
+    if (status === 'connected' || status === 'disconnected' || status === 'failed') {
+      console.log('[GlobalCallRoom] 🛑 Stopping outgoing ring');
+      stopSound('outgoing-ring');
+    }
+
+    // Cleanup: stop outgoing ring when component unmounts
+    return () => {
+      stopSound('outgoing-ring');
+    };
+  }, [callId, callData, status, playSound, stopSound]);
 
   // Listen for call events via WebSocket
   useEffect(() => {
