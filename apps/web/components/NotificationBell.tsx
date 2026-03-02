@@ -14,7 +14,11 @@ const formatTime = (value?: string): string => {
   }
 };
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  compact?: boolean;
+}
+
+export default function NotificationBell({ compact = false }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const { items, unreadCount, loading, busy, markRead, markAllRead } = useNotifications();
 
@@ -23,7 +27,10 @@ export default function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative rounded-full border border-white/20 bg-white/5 p-2 text-white/80 hover:bg-white/10"
+        className={clsx(
+          'relative border border-white/20 bg-white/5 text-white/80 hover:bg-white/10',
+          compact ? 'h-9 w-9 rounded-[10px] p-0' : 'rounded-full p-2'
+        )}
         aria-label="Open notifications"
       >
         <Bell size={16} />

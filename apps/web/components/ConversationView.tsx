@@ -15,6 +15,7 @@ import { sessionStatusManager } from '../services/sessionStatusManager';
 import { SAM_DISPLAY_NAME } from '../hooks/useConversationData';
 import UserSettingsMenu from './UserSettingsMenu';
 import ChatHeaderCallActions from './ChatHeaderCallActions';
+import NotificationBell from './NotificationBell';
 
 interface ConversationViewProps {
   activeConversationId?: string;
@@ -213,6 +214,7 @@ export default function ConversationView({
               </div>
             )}
             <div className={styles.mobileHeaderAccount}>
+              <NotificationBell compact />
               <UserSettingsMenu variant="header" />
             </div>
           </div>
@@ -259,6 +261,7 @@ export default function ConversationView({
                   📅 Schedule
                 </button>
               )}
+              <NotificationBell />
             </div>
           </>
         )}

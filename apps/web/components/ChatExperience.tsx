@@ -21,7 +21,6 @@ import { fetchWithAuthRefresh } from '../utils/fetchWithAuthRefresh';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 import BookingModal from './BookingModal';
 import RequestForm from './RequestForm';
-import NotificationBell from './NotificationBell';
 
 const ChatShell = () => {
   const router = useRouter();
@@ -380,9 +379,6 @@ const ChatShell = () => {
 
   return (
     <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden')}>
-      <div className="absolute right-3 top-3 z-40">
-        <NotificationBell />
-      </div>
       {isTablet && (
         <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
           <button
