@@ -42,13 +42,13 @@ export default function ProfileSidebar({
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
-        <div className="px-4 py-3">
+        <div className="px-5 pt-4 pb-3 border-b border-white/5">
           <p className="text-xs uppercase tracking-[0.3em] text-white/50">
             {label ?? 'Recommended people'}
           </p>
         </div>
       )}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {visible.map((profile) => (
           <ProfileCard
             key={profile.userId}

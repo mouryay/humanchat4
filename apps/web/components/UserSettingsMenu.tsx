@@ -102,7 +102,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
   const isHeaderVariant = variant === 'header';
   const buttonClassName = isHeaderVariant
     ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-white/70 transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
-    : 'relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/5 text-sm font-semibold text-white transition hover:border-white/50';
+    : 'relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/15 backdrop-blur';
 
   return (
     <div
@@ -154,14 +154,14 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute top-full right-0 mt-2 w-56 rounded-2xl border border-white/10 bg-[#0a0e1a]/90 p-3 text-sm text-white shadow-2xl backdrop-blur-2xl transition duration-150 z-[99999]',
+          'absolute top-full right-0 mt-2 w-[min(90vw,360px)] rounded-xl border border-white/10 bg-[#0b0d13] p-3 text-sm text-white shadow-2xl transition duration-150 z-[99999]',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        <div className="mb-3 rounded-xl bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.35em] text-white/70">
+        <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/60">
           Account status
         </div>
         {identity ? (

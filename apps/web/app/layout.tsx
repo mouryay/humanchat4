@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <CallNotificationListener />
           <GlobalCallRoom />
           <MinimizedCallBar />
-          <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-4 py-4 chat-layout-settings">
+          <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-3 py-3 md:px-4 md:py-4 md:pr-[calc(var(--sidebar-width)+16px)] chat-layout-settings">
             <div className="pointer-events-auto flex items-center gap-2">
               <NotificationBell />
               <UserSettingsMenu />

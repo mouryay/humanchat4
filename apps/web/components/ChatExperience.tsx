@@ -580,12 +580,12 @@ const ChatShell = () => {
               />
             </section>
             <aside
-              className="flex h-full shrink-0 flex-col border-l border-white/10"
+              className="flex h-full shrink-0 flex-col border-l border-white/5"
               style={{ 
                 width: 'var(--sidebar-width)', 
                 minWidth: 'var(--sidebar-width)', 
                 backgroundColor: '#05060a',
-                boxShadow: '-2px 0 12px rgba(0, 0, 0, 0.15)'
+                boxShadow: '-2px 0 16px rgba(0, 0, 0, 0.2)'
               }}
             >
               <ProfileSidebar

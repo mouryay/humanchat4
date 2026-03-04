@@ -33,7 +33,7 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
       const button = buttonRef.current;
       if (!button) return;
       const rect = button.getBoundingClientRect();
-      const width = Math.min(window.innerWidth * 0.9, 380);
+      const width = Math.min(window.innerWidth * 0.9, 360);
       const margin = 12;
       const left = Math.max(margin, Math.min(rect.right - width, window.innerWidth - width - margin));
       const top = rect.bottom + 8;
@@ -76,8 +76,8 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
-          'relative border border-white/20 bg-white/5 text-white/80 hover:bg-white/10',
-          compact ? 'h-9 w-9 rounded-[10px] p-0' : 'rounded-full p-2'
+          'relative border border-white/20 bg-white/10 text-white/80 hover:bg-white/15',
+          compact ? 'h-9 w-9 rounded-[10px] p-0' : 'h-10 w-10 rounded-[12px] p-0 backdrop-blur'
         )}
         aria-label="Open notifications"
       >
@@ -91,7 +91,7 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
 
       {open && (
         <div
-          className="fixed z-[100000] w-[min(90vw,380px)] rounded-xl border border-white/10 bg-[#0b0d13] shadow-2xl"
+          className="fixed z-[100000] w-[min(90vw,360px)] rounded-xl border border-white/10 bg-[#0b0d13] shadow-2xl"
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
