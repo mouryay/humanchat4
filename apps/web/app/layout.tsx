@@ -7,6 +7,7 @@ import IdentityInitializer from '../components/IdentityInitializer';
 import InstantInviteListener from '../components/InstantInviteListener';
 import InstantInviteNavigator from '../components/InstantInviteNavigator';
 import UserSettingsMenu from '../components/UserSettingsMenu';
+import NotificationBell from '../components/NotificationBell';
 import CallNotificationListener from '../components/CallNotificationListener';
 import { CallProvider } from '../context/CallContext';
 import MinimizedCallBar from '../components/MinimizedCallBar';
@@ -41,7 +42,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <GlobalCallRoom />
           <MinimizedCallBar />
           <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-4 py-4 chat-layout-settings">
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto flex items-center gap-2">
+              <NotificationBell />
               <UserSettingsMenu />
             </div>
           </div>

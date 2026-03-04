@@ -2,8 +2,9 @@
 
 import { Bell } from 'lucide-react';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
+import { useAuthIdentity } from '../hooks/useAuthIdentity';
 
 const formatTime = (value?: string): string => {
   if (!value) return '';
@@ -20,11 +21,58 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ compact = false }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 56, left: 16 });
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const { identity, loading: identityLoading } = useAuthIdentity();
   const { items, unreadCount, loading, busy, markRead, markAllRead } = useNotifications();
 
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+      const rect = button.getBoundingClientRect();
+      const width = Math.min(window.innerWidth * 0.9, 380);
+      const margin = 12;
+      const left = Math.max(margin, Math.min(rect.right - width, window.innerWidth - width - margin));
+      const top = rect.bottom + 8;
+      setMenuPosition({ top, left });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (!wrapperRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onOutside);
+    document.addEventListener('touchstart', onOutside);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('touchstart', onOutside);
+    };
+  }, [open]);
+
+  if (!identity && !identityLoading) {
+    return null;
+  }
+
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
@@ -42,7 +90,10 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-[min(90vw,380px)] rounded-xl border border-white/10 bg-[#0b0d13] shadow-2xl">
+        <div
+          className="fixed z-[100000] w-[min(90vw,380px)] rounded-xl border border-white/10 bg-[#0b0d13] shadow-2xl"
+          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+        >
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
             <span className="text-xs uppercase tracking-[0.25em] text-white/60">Notifications</span>
             <button

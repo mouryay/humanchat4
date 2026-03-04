@@ -261,7 +261,7 @@ export default function ConversationView({
                   📅 Schedule
                 </button>
               )}
-              <NotificationBell />
+              {isMobile && <NotificationBell />}
             </div>
           </>
         )}
