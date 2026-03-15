@@ -20,8 +20,12 @@ router.get('/search', authenticate, authenticatedLimiter, async (req, res, next)
         : req.query.sort === 'active'
           ? ('active' as const)
           : ('default' as const);
+    const conversationType =
+      req.query.conversation_type === 'free' || req.query.conversation_type === 'paid' || req.query.conversation_type === 'charity'
+        ? (req.query.conversation_type as 'free' | 'paid' | 'charity')
+        : undefined;
     const limit = req.query.limit ? Math.max(1, Math.min(50, Number(req.query.limit))) : undefined;
-    const users = await searchUsers(q, online, sort, limit);
+    const users = await searchUsers(q, online, sort, limit, conversationType);
     const trimmed = q.trim();
     if (users.length === 0 && trimmed.length >= 3) {
       await logRequestedPersonInterest({

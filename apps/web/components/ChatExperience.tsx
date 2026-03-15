@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import clsx from 'clsx';
 import ConversationSidebar from './ConversationSidebar';
 import ConversationView from './ConversationView';
+import PeopleSearchView from './PeopleSearchView';
 import ProfilePanel from './ProfilePanel';
 import ProfileSidebar from './ProfileSidebar';
 import { useBreakpoint } from '../hooks/useBreakpoint';
@@ -26,6 +27,7 @@ const ChatShell = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
+  const [mainView, setMainView] = useState<'search' | 'conversation'>('search');
   const [shouldOpenSam, setShouldOpenSam] = useState(false);
   const [mobileDrawer, setMobileDrawer] = useState<'none' | 'conversations' | 'profile' | 'profiles'>('none');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -160,32 +162,16 @@ const ChatShell = () => {
   useEffect(() => {
     if (!shouldOpenSam) return;
     setActiveConversationId(samConversationId);
+    setMainView('conversation');
     if (isMobile) {
       setMobileDrawer('none');
     }
   }, [shouldOpenSam, samConversationId, isMobile]);
 
-  useEffect(() => {
-    if (activeConversationId || shouldOpenSam) {
-      return;
-    }
-
-    if (typeof window !== 'undefined') {
-      const pendingStored = window.sessionStorage?.getItem(PENDING_INVITE_CONVERSATION_KEY);
-      if (pendingStored) {
-        return;
-      }
-    }
-
-    const firstConversationId = conversations[0]?.conversation.conversationId;
-    if (firstConversationId) {
-      setActiveConversationId(firstConversationId);
-    }
-  }, [activeConversationId, conversations, shouldOpenSam]);
-
   const focusConversation = useCallback(
     (conversationId: string) => {
       setActiveConversationId(conversationId);
+      setMainView('conversation');
       if (isMobile) {
         setMobileDrawer('none');
       } else {
@@ -197,6 +183,7 @@ const ChatShell = () => {
 
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
+    setMainView('conversation');
     if (isMobile) {
       setMobileDrawer('none');
     }
@@ -413,23 +400,33 @@ const ChatShell = () => {
             onTouchMove={handleRightEdgeTouchMove}
             onTouchEnd={handleRightEdgeTouchEnd}
           >
-            <ConversationView
-              key={`mobile-${activeConversationId ?? samConversationId}`}
-              activeConversationId={activeConversationId ?? samConversationId}
-              onSelectConversation={handleSelectConversation}
-              isMobile
-              onBack={handleShowConversationDrawer}
-              onShowProfilePanel={handleShowProfileDrawer}
-              onSidebarProfilesChange={(profiles) => {
-                if (profiles.length > 0) {
-                  setSidebarProfiles(profiles);
-                  setSidebarSource('sam');
-                }
-                if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
-                  setMobileDrawer('profiles');
-                }
-              }}
-            />
+            {mainView === 'search' ? (
+              <PeopleSearchView
+                isMobile
+                onOpenConversations={handleShowConversationDrawer}
+                onConnectNow={handleSidebarConnectNow}
+                onBookTime={handleSidebarBookTime}
+                connectingProfileId={connectingProfileId}
+              />
+            ) : (
+              <ConversationView
+                key={`mobile-${activeConversationId ?? samConversationId}`}
+                activeConversationId={activeConversationId ?? samConversationId}
+                onSelectConversation={handleSelectConversation}
+                isMobile
+                onBack={handleShowConversationDrawer}
+                onShowProfilePanel={handleShowProfileDrawer}
+                onSidebarProfilesChange={(profiles) => {
+                  if (profiles.length > 0) {
+                    setSidebarProfiles(profiles);
+                    setSidebarSource('sam');
+                  }
+                  if (profiles.length > 0 && mobileDrawerRef.current === 'none') {
+                    setMobileDrawer('profiles');
+                  }
+                }}
+              />
+            )}
 
             <div
               className={clsx('pointer-events-none absolute inset-0 z-30 flex', {
@@ -567,17 +564,25 @@ const ChatShell = () => {
         ) : (
           <>
             <section className="flex flex-1 flex-col overflow-hidden">
-              <ConversationView
-                key={`desktop-${activeConversationId}`}
-                activeConversationId={activeConversationId}
-                onSelectConversation={handleSelectConversation}
-                onSidebarProfilesChange={(profiles) => {
-                  if (profiles.length > 0) {
-                    setSidebarProfiles(profiles);
-                    setSidebarSource('sam');
-                  }
-                }}
-              />
+              {mainView === 'search' ? (
+                <PeopleSearchView
+                  onConnectNow={handleSidebarConnectNow}
+                  onBookTime={handleSidebarBookTime}
+                  connectingProfileId={connectingProfileId}
+                />
+              ) : (
+                <ConversationView
+                  key={`desktop-${activeConversationId}`}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={handleSelectConversation}
+                  onSidebarProfilesChange={(profiles) => {
+                    if (profiles.length > 0) {
+                      setSidebarProfiles(profiles);
+                      setSidebarSource('sam');
+                    }
+                  }}
+                />
+              )}
             </section>
             <aside
               className="flex h-full shrink-0 flex-col border-l border-white/5"

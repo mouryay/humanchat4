@@ -48,7 +48,8 @@ export const searchUsers = async (
   q: string,
   online?: boolean,
   sort?: 'default' | 'recent' | 'active',
-  limit?: number
+  limit?: number,
+  conversationType?: 'free' | 'paid' | 'charity'
 ): Promise<User[]> => {
   const params: unknown[] = [];
   let where = 'WHERE 1=1';
@@ -72,6 +73,11 @@ export const searchUsers = async (
         )
       )`;
     }
+  }
+
+  if (conversationType) {
+    params.push(conversationType);
+    where += ` AND conversation_type = $${params.length}`;
   }
 
   const orderBy =
