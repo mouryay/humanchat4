@@ -104,7 +104,7 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
             top: `${menuPosition.top}px`,
             left: `${menuPosition.left}px`,
             borderColor: 'var(--border-medium)',
-            background: 'color-mix(in srgb, var(--background-elevated) 94%, black)'
+            background: 'var(--background-tertiary)'
           }}
         >
           <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: 'var(--border-subtle)' }}>

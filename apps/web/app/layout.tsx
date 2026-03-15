@@ -31,7 +31,7 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-displ
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
-      <body className="bg-midnight text-white font-body antialiased min-h-screen overflow-x-hidden">
+      <body className="bg-background-primary text-text-primary font-body antialiased min-h-screen overflow-x-hidden">
         <CallProvider>
           <PWAInitializer />
           <FirebaseSessionBridge />
