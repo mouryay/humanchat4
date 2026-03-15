@@ -142,7 +142,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         style={{
           touchAction: 'manipulation',
           borderColor: 'var(--border-medium)',
-          background: 'var(--background-tertiary)',
+          background: 'color-mix(in srgb, var(--background-tertiary) 72%, transparent)',
           color: 'var(--text-secondary)'
         }}
       >
@@ -164,7 +164,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         )}
         style={{
           borderColor: 'var(--border-medium)',
-          background: 'var(--background-tertiary)',
+          background: 'color-mix(in srgb, var(--background-elevated) 94%, black)',
           color: 'var(--text-primary)'
         }}
         onClick={(e) => e.stopPropagation()}
@@ -175,7 +175,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
           className="mb-3 rounded-xl border px-3 py-2 text-xs uppercase tracking-[0.25em]"
           style={{
             borderColor: 'var(--border-subtle)',
-            background: 'var(--background-elevated)',
+            background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)',
             color: 'var(--text-tertiary)'
           }}
         >
@@ -186,7 +186,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
             className="mb-3 rounded-xl border px-3 py-2 text-sm"
             style={{
               borderColor: 'var(--border-subtle)',
-              background: 'var(--background-elevated)'
+              background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)'
             }}
           >
             <p style={{ color: 'var(--text-primary)' }}>{identity.name}</p>
@@ -197,7 +197,7 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
             className="mb-3 rounded-xl border px-3 py-2 text-xs"
             style={{
               borderColor: 'var(--border-subtle)',
-              background: 'var(--background-elevated)',
+              background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)',
               color: 'var(--text-secondary)'
             }}
           >
