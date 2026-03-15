@@ -129,9 +129,7 @@ const HeroLoginPanel = (_: HeroLoginPanelProps, ref: ForwardedRef<HeroLoginPanel
 
   return (
     <section id="login-panel" className="flex flex-col overflow-hidden rounded-[28px] border border-white/10 bg-black/40 p-5 sm:p-5 lg:p-6 lg:h-full">
-      <h2 className="mt-2 font-display text-xl sm:text-xl lg:text-2xl leading-tight text-white">
-        Log in to talk to Simple Sam (AI), who connects you with humans based on your specifics.
-      </h2>
+      <h2 className="mt-2 font-display text-xl sm:text-xl lg:text-2xl leading-tight text-white">Login</h2>
 
       <div className="mt-4 sm:mt-5 flex flex-col gap-4 sm:gap-4 lg:mt-6">
         <button
