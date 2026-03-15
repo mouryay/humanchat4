@@ -38,21 +38,14 @@ const HomePageExperience = () => {
   }, [showOverlay, isMobile]);
 
   return (
-    <div className="relative min-h-screen text-text-primary" style={{ backgroundColor: 'var(--background-primary)' }}>
+    <div className="relative min-h-screen bg-midnight text-white">
       {(!showOverlay || !isMobile) && <ChatExperience />}
       {showOverlay && (
         <>
-          <div
-            className="fixed inset-0 z-[60] backdrop-blur-sm"
-            style={{ background: 'color-mix(in srgb, var(--background-primary) 88%, black)' }}
-          />
+          <div className="fixed inset-0 z-[60] bg-[#030519] backdrop-blur-sm" />
           <div className="fixed inset-0 z-[70] flex flex-col justify-start sm:justify-center p-4 sm:p-8 overflow-y-auto">
             <div 
-              className="w-full max-w-4xl mx-auto my-auto rounded-[32px] sm:rounded-[48px] border backdrop-blur-xl flex flex-col overflow-hidden"
-              style={{
-                borderColor: 'var(--border-medium)',
-                background: 'color-mix(in srgb, var(--background-secondary) 92%, black)'
-              }}
+              className="w-full max-w-4xl mx-auto my-auto rounded-[32px] sm:rounded-[48px] border border-white/10 bg-[#050718]/95 backdrop-blur-xl flex flex-col overflow-hidden"
             >
               <HeroExperience />
             </div>

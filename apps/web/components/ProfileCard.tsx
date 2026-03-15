@@ -93,7 +93,7 @@ export default function ProfileCard({
   const headlineCopy = ensureHumanCopy(profile.headline);
   const avatarSrc =
     profile.avatarUrl ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name ?? 'Human')}&background=A0714F&color=fff&size=128`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name ?? 'Human')}&background=3B82F6&color=fff&size=128`;
   const contributionBlurb = useMemo(() => {
     if (managedConfidential) {
       return `${profile.name ?? 'This talent'} keeps these chats private. Send a request and their team will coordinate the details.`;
@@ -132,12 +132,7 @@ export default function ProfileCard({
       {!managedConfidential && (
         <div className="relative group flex-1 min-w-0">
           <button
-            className={`w-full font-semibold rounded-xl transition-all duration-base ease-out hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
-            style={{
-              background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))',
-              color: 'var(--pitch-ink)',
-              boxShadow: '0 8px 20px color-mix(in srgb, var(--accent-primary) 35%, transparent)'
-            }}
+            className={`w-full font-semibold rounded-xl transition-all duration-base ease-out bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
             type="button"
             disabled={Boolean(isConnecting)}
             onClick={() => !isConnecting && onConnectNow?.(profile)}
@@ -153,16 +148,7 @@ export default function ProfileCard({
       )}
       <div className="flex-1 min-w-0">
         <button 
-          className={`w-full font-semibold rounded-xl transition-all duration-base ease-out disabled:opacity-50 disabled:cursor-not-allowed ${managedConfidential ? '' : 'bg-background-tertiary text-text-primary border border-border-medium hover:bg-background-hover hover:border-border-strong'} ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
-          style={
-            managedConfidential
-              ? {
-                  background: 'color-mix(in srgb, #8f5d94 28%, transparent)',
-                  border: '1px solid color-mix(in srgb, #8f5d94 46%, transparent)',
-                  color: 'var(--text-primary)'
-                }
-              : undefined
-          }
+          className={`w-full font-semibold rounded-xl transition-all duration-base ease-out disabled:opacity-50 disabled:cursor-not-allowed ${managedConfidential ? 'bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30' : 'bg-background-tertiary text-text-primary border border-border-medium hover:bg-background-hover hover:border-border-strong'} ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
           type="button" 
           onClick={() => onBookTime?.(profile)}
         >
@@ -225,8 +211,7 @@ export default function ProfileCard({
       {/* Premium Full Profile Modal */}
       {showDetails && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md"
-          style={{ background: 'rgba(13, 8, 4, 0.78)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
           role="dialog" 
           aria-modal="true" 
           onClick={() => setShowDetails(false)}
@@ -237,11 +222,7 @@ export default function ProfileCard({
           >
             {/* Close Button */}
             <button 
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-base z-10"
-              style={{
-                background: 'color-mix(in srgb, var(--background-tertiary) 80%, transparent)',
-                color: 'var(--text-tertiary)'
-              }}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all duration-base z-10"
               type="button" 
               aria-label="Close profile" 
               onClick={() => setShowDetails(false)}
@@ -293,21 +274,17 @@ export default function ProfileCard({
             {/* Social Links */}
             {socialLinks.length > 0 && (
               <div className="mb-5">
-                <h4 className="text-xs uppercase tracking-[0.2em] mb-3" style={{ color: 'var(--text-tertiary)' }}>Links</h4>
+                <h4 className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Links</h4>
                 <div className="flex flex-wrap gap-2">
                   {socialLinks.map((link) => (
                     <a 
                       key={link.key} 
                       href={link.url} 
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-accent-primary hover:text-accent-hover transition-all duration-base"
-                      style={{
-                        border: '1px solid var(--border-subtle)',
-                        background: 'color-mix(in srgb, var(--background-tertiary) 72%, transparent)'
-                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-sm text-accent-primary hover:text-accent-hover transition-all duration-base"
                       rel="noreferrer"
                       target="_blank"
                     >
-                      <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{link.label}</span>
+                      <span className="text-white/40 text-xs">{link.label}</span>
                       <span className="font-medium truncate max-w-[140px]">{link.display}</span>
                     </a>
                   ))}

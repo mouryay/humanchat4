@@ -29,7 +29,7 @@ export default function ProfileSidebar({
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="mb-3 text-3xl opacity-40">👥</div>
-        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <p className="text-sm text-white/40">
           People Sam recommends will appear here.
         </p>
       </div>
@@ -42,8 +42,8 @@ export default function ProfileSidebar({
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
-        <div className="px-5 pt-4 pb-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--text-tertiary)' }}>
+        <div className="px-5 pt-4 pb-3 border-b border-white/5">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/50">
             {label ?? 'Recommended people'}
           </p>
         </div>
@@ -62,12 +62,7 @@ export default function ProfileSidebar({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="w-full py-2.5 rounded-xl text-sm transition-all duration-150"
-            style={{
-              color: 'var(--text-tertiary)',
-              background: 'color-mix(in srgb, var(--background-tertiary) 65%, transparent)',
-              border: '1px solid var(--border-subtle)'
-            }}
+            className="w-full py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 bg-white/[0.04] hover:bg-white/[0.08] transition-all duration-150"
           >
             Show more ({profiles.length - DEFAULT_VISIBLE})
           </button>

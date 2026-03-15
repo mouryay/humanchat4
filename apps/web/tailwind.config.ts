@@ -6,42 +6,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Premium dark theme palette
         background: {
-          primary: 'var(--background-primary)',
-          secondary: 'var(--background-secondary)',
-          tertiary: 'var(--background-tertiary)',
-          elevated: 'var(--background-elevated)',
-          hover: 'var(--background-hover)'
+          primary: '#0A0A0A',      // Deep black (Linear style)
+          secondary: '#111111',    // Slightly lighter
+          tertiary: '#1A1A1A',     // Card backgrounds
+          elevated: '#1F1F1F',      // Elevated cards
+          hover: '#1F1F1F',        // Hover states
         },
         text: {
-          primary: 'var(--text-primary)',
-          secondary: 'var(--text-secondary)',
-          tertiary: 'var(--text-tertiary)',
-          muted: 'var(--text-muted)'
+          primary: '#FFFFFF',      // Pure white
+          secondary: '#A1A1AA',    // Subtle gray (zinc-400)
+          tertiary: '#71717A',     // Muted (zinc-500)
+          muted: '#52525B',        // Very muted (zinc-600)
         },
         accent: {
-          primary: 'var(--accent-primary)',
-          hover: 'var(--accent-hover)',
-          light: 'var(--accent-light)',
-          glow: 'var(--accent-glow)',
-          muted: 'var(--accent-muted)'
+          primary: '#3B82F6',      // Blue-500 (Vercel blue)
+          hover: '#2563EB',        // Blue-600
+          light: '#60A5FA',        // Blue-400
+          glow: 'rgba(59, 130, 246, 0.3)',
         },
         border: {
-          subtle: 'var(--border-subtle)',
-          medium: 'var(--border-medium)',
-          strong: 'var(--border-strong)',
-          glow: 'var(--border-glow)'
+          subtle: 'rgba(255, 255, 255, 0.05)',
+          medium: 'rgba(255, 255, 255, 0.1)',
+          strong: 'rgba(255, 255, 255, 0.15)',
+          glow: 'rgba(59, 130, 246, 0.3)',
         },
-        status: {
-          online: 'var(--status-online)',
-          idle: 'var(--status-idle)',
-          error: 'var(--status-error)'
-        },
-        // Keep existing aliases for compatibility
-        midnight: 'var(--background-primary)',
-        indigoGlow: 'var(--accent-primary)',
-        aqua: 'var(--accent-light)',
-        peach: 'var(--accent-muted)'
+        // Keep existing for backward compatibility
+        midnight: '#0A0A0A',
+        indigoGlow: '#3B82F6',
+        aqua: '#5EF0FF',
+        peach: '#FBC5AC'
       },
       fontFamily: {
         // Geist/Inter system stack
@@ -76,13 +71,13 @@ const config: Config = {
         xl: '0 25px 50px rgba(0, 0, 0, 0.7)',
         '2xl': '0 30px 60px rgba(0, 0, 0, 0.8)',
         // Glow effects
-        glow: '0 0 20px var(--accent-glow)',
-        'glow-lg': '0 0 40px color-mix(in srgb, var(--accent-primary) 40%, transparent)',
-        'glow-blue': '0 0 20px var(--accent-glow), 0 0 40px color-mix(in srgb, var(--accent-primary) 25%, transparent)',
+        glow: '0 0 20px rgba(59, 130, 246, 0.2)',
+        'glow-lg': '0 0 40px rgba(59, 130, 246, 0.3)',
+        'glow-blue': '0 0 20px rgba(59, 130, 246, 0.2), 0 0 40px rgba(59, 130, 246, 0.1)',
         // Colored shadows
-        'blue-sm': '0 2px 8px color-mix(in srgb, var(--accent-primary) 28%, transparent)',
-        'blue-md': '0 4px 16px color-mix(in srgb, var(--accent-primary) 34%, transparent)',
-        'blue-lg': '0 8px 32px color-mix(in srgb, var(--accent-primary) 40%, transparent)'
+        'blue-sm': '0 2px 8px rgba(59, 130, 246, 0.15)',
+        'blue-md': '0 4px 16px rgba(59, 130, 246, 0.2)',
+        'blue-lg': '0 8px 32px rgba(59, 130, 246, 0.25)',
       },
       backdropBlur: {
         xs: '2px',
@@ -112,7 +107,7 @@ const config: Config = {
         'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       backgroundImage: {
-        'radial-fade': 'radial-gradient(circle at top, color-mix(in srgb, var(--accent-primary) 25%, transparent), color-mix(in srgb, var(--background-primary) 90%, black))',
+        'radial-fade': 'radial-gradient(circle at top, rgba(91, 103, 242, 0.25), rgba(4, 6, 21, 0.9))',
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'glass': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
