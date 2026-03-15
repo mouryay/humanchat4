@@ -57,52 +57,52 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
   }
 
   return (
-    <div className="flex flex-col gap-5 text-text-primary">
+    <div className="flex flex-col gap-5 text-white">
       {/* Profile card preview */}
-      <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}>
-        <p className="text-xs mb-3 text-text-tertiary">This is how Sam introduces you</p>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <p className="text-xs text-white/40 mb-3">This is how Sam introduces you</p>
         <div className="flex items-center gap-4">
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white/20">
             {profile.avatarUrl ? (
               <Image src={profile.avatarUrl} alt="Avatar" fill sizes="56px" className="object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-text-secondary">{initials}</span>
+              <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-white/70">{initials}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-lg font-semibold text-text-primary truncate font-display">{profile.name}</p>
+            <p className="text-lg font-semibold text-white truncate">{profile.name}</p>
             {profile.headline && (
-              <p className="text-sm text-text-secondary truncate">{profile.headline}</p>
+              <p className="text-sm text-white/60 truncate">{profile.headline}</p>
             )}
           </div>
         </div>
         {profile.bio && (
-          <p className="mt-3 text-sm leading-relaxed text-text-secondary line-clamp-3">{profile.bio}</p>
+          <p className="mt-3 text-sm leading-relaxed text-white/70 line-clamp-3">{profile.bio}</p>
         )}
         {!profile.bio && (
-          <p className="mt-3 text-sm text-text-tertiary italic">No bio yet. Write something in the "About you" box above.</p>
+          <p className="mt-3 text-sm text-white/30 italic">No bio yet. Write something in the "About you" box above.</p>
         )}
       </div>
 
       {/* Completion meter */}
-      <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-medium text-text-secondary">Profile completeness</p>
-          <span className="text-sm font-semibold text-text-primary">{completionPct}%</span>
+          <p className="text-sm font-medium text-white/80">Profile completeness</p>
+          <span className="text-sm font-semibold text-white">{completionPct}%</span>
         </div>
-        <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: 'var(--pitch-sand)' }}>
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-4">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', width: `${completionPct}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-indigoGlow to-aqua transition-all duration-500"
+            style={{ width: `${completionPct}%` }}
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
           {completionSections.map((section) => (
             <div key={section.label} className="flex items-center gap-2 text-sm">
-              <span className={section.filled ? 'text-status-online' : 'text-text-tertiary'}>
+              <span className={section.filled ? 'text-emerald-400' : 'text-white/20'}>
                 {section.filled ? '●' : '○'}
               </span>
-              <span className={section.filled ? 'text-text-secondary' : 'text-text-tertiary'}>
+              <span className={section.filled ? 'text-white/70' : 'text-white/30'}>
                 {section.label}
                 {section.count && section.count > 0 ? ` (${section.count})` : ''}
               </span>
@@ -133,15 +133,15 @@ export default function ProfileDetailsSummary({ profileState }: ProfileDetailsSu
         if (sections.length === 0) return null;
 
         return (
-          <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}>
-            <p className="text-xs text-text-tertiary mb-3">What Sam knows about you, in your words</p>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-xs text-white/40 mb-3">What Sam knows about you, in your words</p>
             <div className="space-y-4">
               {sections.map((section) => (
                 <div key={section.label}>
-                  <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-tertiary mb-2">{section.label}</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.15em] text-white/50 mb-2">{section.label}</p>
                   <div className="space-y-1.5">
                     {section.items.map((item, i) => (
-                      <p key={i} className="text-sm text-text-secondary leading-relaxed pl-3 border-l-2" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <p key={i} className="text-sm text-white/70 leading-relaxed pl-3 border-l-2 border-white/10">
                         {item}
                       </p>
                     ))}

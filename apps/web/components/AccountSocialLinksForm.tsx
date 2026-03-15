@@ -160,15 +160,15 @@ export default function AccountSocialLinksForm({ profileState }: AccountSocialLi
   };
 
   if (!profile) {
-    return <p className="text-sm text-text-secondary">Sign in to edit your links.</p>;
+    return <p className="text-sm text-white/70">Sign in to edit your links.</p>;
   }
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
           {socialFields.map((field) => (
-            <label key={field.key} className="flex flex-col gap-2 text-sm text-text-secondary">
+            <label key={field.key} className="flex flex-col gap-2 text-sm text-white/80">
               <span className="font-semibold">{field.label}</span>
-              <p className="text-xs text-text-tertiary">{field.helper}</p>
+              <p className="text-xs text-white/50">{field.helper}</p>
               <input
                 type="url"
                 inputMode="url"
@@ -180,8 +180,8 @@ export default function AccountSocialLinksForm({ profileState }: AccountSocialLi
                   }))
                 }
                 placeholder={field.placeholder}
-                className={`rounded-2xl border px-4 py-3 text-base ${
-                  linkErrors[field.key] ? 'border-rose-400/70 bg-rose-500/10 text-text-primary' : 'border-border-medium bg-background-tertiary text-text-primary'
+                className={`rounded-2xl border px-4 py-3 text-base text-white focus:border-aqua/60 ${
+                  linkErrors[field.key] ? 'border-rose-400/70 bg-rose-500/10' : 'border-white/15 bg-white/5'
                 }`}
               />
               {linkErrors[field.key] && <span className="text-xs text-rose-300">Enter a valid URL (must include https://).</span>}
@@ -196,8 +196,7 @@ export default function AccountSocialLinksForm({ profileState }: AccountSocialLi
             <button
               type="submit"
               disabled={disableSubmit}
-              className="rounded-full px-6 py-3 text-sm font-semibold disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', color: 'var(--pitch-cream)' }}
+              className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save links'}
             </button>

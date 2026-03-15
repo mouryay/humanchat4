@@ -42,20 +42,17 @@ export default function AccountPage() {
   ];
 
   return (
-    <main
-      className="account-page min-h-screen text-text-primary"
-      style={{ background: 'radial-gradient(circle at top, rgba(160,113,79,0.14), transparent 52%), var(--background-primary)' }}
-    >
+    <main className="min-h-screen bg-midnight text-white bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_50%)]">
       <header className="px-6 pt-8 pb-2">
         <div className="flex items-center justify-center">
           <Link
             href="/"
-            className="group relative text-lg font-bold uppercase tracking-[0.45em] text-text-secondary transition hover:text-text-primary"
+            className="group relative text-lg font-bold uppercase tracking-[0.45em] text-white/90 transition hover:text-white"
           >
             <span
               className="relative z-10"
               style={{
-                textShadow: '0 0 20px rgba(160,113,79,0.22), 0 1px 2px rgba(44,31,20,0.1)'
+                textShadow: '0 0 30px rgba(59,130,246,0.4), 0 2px 8px rgba(0,0,0,0.6), 0 0 2px rgba(255,255,255,0.15)'
               }}
             >
               Humanchat.com
@@ -64,7 +61,7 @@ export default function AccountPage() {
               className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
               aria-hidden
               style={{
-                textShadow: '0 0 36px rgba(160,113,79,0.28), 0 0 72px rgba(160,113,79,0.12)'
+                textShadow: '0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(59,130,246,0.2)'
               }}
             />
           </Link>
@@ -78,8 +75,7 @@ export default function AccountPage() {
             return (
               <section
                 key={panel.id}
-                className="rounded-3xl border backdrop-blur-sm transition-colors"
-                style={{ borderColor: 'var(--border-subtle)', background: 'color-mix(in srgb, var(--background-tertiary) 86%, transparent)' }}
+                className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-sm transition-colors hover:border-white/15"
               >
                 <button
                   type="button"
@@ -87,14 +83,14 @@ export default function AccountPage() {
                   className="flex w-full items-center justify-between gap-3 px-6 py-5 text-left"
                 >
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.35em] font-medium text-text-tertiary">{panel.label}</p>
-                    <p className="mt-0.5 text-sm text-text-secondary">{panel.tagline}</p>
+                    <p className="text-[11px] uppercase tracking-[0.35em] text-white/45 font-medium">{panel.label}</p>
+                    <p className="mt-0.5 text-sm text-white/65">{panel.tagline}</p>
                   </div>
-                  <span className="text-lg text-text-tertiary transition-transform duration-200" style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(0deg)' }}>
+                  <span className="text-lg text-white/40 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(0deg)' : 'rotate(0deg)' }}>
                     {isOpen ? '−' : '+'}
                   </span>
                 </button>
-                {isOpen && <div className="border-t px-6 py-5" style={{ borderColor: 'var(--border-subtle)' }}>{panel.content}</div>}
+                {isOpen && <div className="border-t border-white/8 px-6 py-5">{panel.content}</div>}
               </section>
             );
           })}
