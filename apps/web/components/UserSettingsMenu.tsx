@@ -101,8 +101,8 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
 
   const isHeaderVariant = variant === 'header';
   const buttonClassName = isHeaderVariant
-    ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-white/70 transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
-    : 'relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/15 backdrop-blur';
+    ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border transition touch-action: manipulation'
+    : 'relative flex h-10 w-10 items-center justify-center rounded-[12px] border text-sm font-semibold transition backdrop-blur';
 
   return (
     <div
@@ -139,7 +139,12 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
         }}
         className={buttonClassName}
         aria-label={statusLabel}
-        style={{ touchAction: 'manipulation' }}
+        style={{
+          touchAction: 'manipulation',
+          borderColor: 'var(--border-medium)',
+          background: 'color-mix(in srgb, var(--background-tertiary) 72%, transparent)',
+          color: 'var(--text-secondary)'
+        }}
       >
         <span className="sr-only">{statusLabel}</span>
         {isHeaderVariant ? (
@@ -154,23 +159,48 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
       </button>
       <div
         className={clsx(
-          'absolute top-full right-0 mt-2 w-[min(90vw,360px)] rounded-xl border border-white/10 bg-[#0b0d13] p-3 text-sm text-white shadow-2xl transition duration-150 z-[99999]',
+          'absolute top-full right-0 mt-2 w-[min(90vw,360px)] rounded-xl border p-3 text-sm shadow-2xl transition duration-150 z-[99999]',
           open ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible translate-y-1 opacity-0 pointer-events-none'
         )}
+        style={{
+          borderColor: 'var(--border-medium)',
+          background: 'color-mix(in srgb, var(--background-elevated) 94%, black)',
+          color: 'var(--text-primary)'
+        }}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
       >
-        <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/60">
+        <div
+          className="mb-3 rounded-xl border px-3 py-2 text-xs uppercase tracking-[0.25em]"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)',
+            color: 'var(--text-tertiary)'
+          }}
+        >
           Account status
         </div>
         {identity ? (
-          <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
-            <p className="text-white">{identity.name}</p>
-            {identity.email && <p className="text-xs text-white/60">{identity.email}</p>}
+          <div
+            className="mb-3 rounded-xl border px-3 py-2 text-sm"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)'
+            }}
+          >
+            <p style={{ color: 'var(--text-primary)' }}>{identity.name}</p>
+            {identity.email && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{identity.email}</p>}
           </div>
         ) : (
-          <p className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+          <p
+            className="mb-3 rounded-xl border px-3 py-2 text-xs"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              background: 'color-mix(in srgb, var(--background-tertiary) 70%, transparent)',
+              color: 'var(--text-secondary)'
+            }}
+          >
             Not signed in — open the login panel or continue from signup.
           </p>
         )}
@@ -179,7 +209,8 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
             <>
               <Link
                 href="/account"
-                className="block rounded-xl px-3 py-2 text-white/90 transition hover:bg-white/10 min-h-[44px] flex items-center touch-action: manipulation relative z-[10000]"
+                className="block rounded-xl px-3 py-2 transition min-h-[44px] flex items-center touch-action: manipulation relative z-[10000]"
+                style={{ color: 'var(--text-secondary)' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   // Close menu after a short delay to allow navigation
@@ -189,13 +220,14 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
                 Account
               </Link>
               <div className="relative z-[10000]">
-                <LogoutButton className="w-full rounded-xl border border-white/10 px-3 py-2 text-left text-white/90 hover:bg-white/10 min-h-[44px] touch-action: manipulation" />
+                <LogoutButton className="w-full rounded-xl border border-border-subtle px-3 py-2 text-left text-text-secondary bg-background-tertiary min-h-[44px] touch-action: manipulation" />
               </div>
             </>
           ) : (
             <Link
               href="/"
-              className="block rounded-xl border border-white/15 px-3 py-2 text-center text-white/90 transition hover:border-white"
+              className="block rounded-xl border px-3 py-2 text-center transition"
+              style={{ borderColor: 'var(--border-medium)', color: 'var(--text-secondary)' }}
             >
               Go to login panel
             </Link>

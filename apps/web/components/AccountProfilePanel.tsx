@@ -140,12 +140,19 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
   };
 
   return (
-    <section className="rounded-3xl border border-white/12 bg-[rgba(7,11,22,0.9)] p-6 text-white shadow-[0_25px_80px_rgba(2,6,23,0.55)]">
+    <section
+      className="rounded-3xl border p-6 shadow-[0_25px_80px_rgba(2,6,23,0.55)]"
+      style={{
+        borderColor: 'var(--border-medium)',
+        background: 'color-mix(in srgb, var(--background-secondary) 90%, black)',
+        color: 'var(--text-primary)'
+      }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-white/50">Your profile</p>
-          <h2 className="mt-1 text-3xl font-semibold text-white">How members see you</h2>
-          <p className="mt-2 text-sm text-white/60">Update your public card without leaving the account hub.</p>
+          <p className="text-xs uppercase tracking-[0.35em]" style={{ color: 'var(--text-tertiary)' }}>Your profile</p>
+          <h2 className="mt-1 text-3xl font-semibold" style={{ color: 'var(--text-primary)' }}>How members see you</h2>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Update your public card without leaving the account hub.</p>
         </div>
         <div className="flex flex-col items-end gap-3">
           <span className={clsx('inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]', statusColor)}>
@@ -158,7 +165,8 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/40"
+                  className="rounded-full border px-4 py-2 text-sm font-semibold transition"
+                  style={{ borderColor: 'var(--border-medium)', color: 'var(--text-secondary)' }}
                   disabled={saving}
                 >
                   Cancel
@@ -166,7 +174,8 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-midnight transition hover:bg-white/90"
+                  className="rounded-full px-4 py-2 text-sm font-semibold transition"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))', color: 'var(--pitch-ink)' }}
                   disabled={saving}
                 >
                   {saving ? 'Saving…' : 'Save profile'}
@@ -176,7 +185,8 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/40"
+                className="rounded-full border px-4 py-2 text-sm font-semibold transition"
+                style={{ borderColor: 'var(--border-medium)', color: 'var(--text-secondary)' }}
                 disabled={loading || !profile}
               >
                 Edit profile
@@ -186,26 +196,26 @@ export default function AccountProfilePanel({ profileState }: AccountProfilePane
         </div>
       </div>
 
-      {loading && <p className="mt-6 text-sm text-white/70">Loading your details…</p>}
+      {loading && <p className="mt-6 text-sm" style={{ color: 'var(--text-secondary)' }}>Loading your details…</p>}
 
       {!loading && (error || localError) && (
         <p className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-50">{localError || error}</p>
       )}
 
       {!loading && !profile && !error && (
-        <p className="mt-6 text-sm text-white/70">Sign in to manage your profile.</p>
+        <p className="mt-6 text-sm" style={{ color: 'var(--text-secondary)' }}>Sign in to manage your profile.</p>
       )}
 
       {!loading && profile && !isEditing && (
-        <div className="mt-6 space-y-4 text-sm text-white/70">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="mt-6 space-y-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'color-mix(in srgb, var(--background-tertiary) 72%, transparent)' }}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/50">Identity</p>
-                <h3 className="text-xl font-semibold text-white">{profile.name}</h3>
-                <p className="text-white/60">{profile.email}</p>
+                <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-tertiary)' }}>Identity</p>
+                <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>{profile.name}</h3>
+                <p style={{ color: 'var(--text-secondary)' }}>{profile.email}</p>
               </div>
-              <p className="text-right text-base text-white/80">{profile.headline ?? 'Add a headline to share your focus.'}</p>
+              <p className="text-right text-base" style={{ color: 'var(--text-secondary)' }}>{profile.headline ?? 'Add a headline to share your focus.'}</p>
             </div>
             <p className="mt-3 leading-relaxed">{profile.bio ?? 'Describe what members get when they meet you.'}</p>
           </div>

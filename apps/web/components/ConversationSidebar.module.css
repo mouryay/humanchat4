@@ -4,7 +4,7 @@
 
 .sidebar {
   width: var(--sidebar-width);
-  background: #05060a;
+  background: var(--background-secondary);
   height: 100%;
   min-height: 0;
   display: flex;
@@ -22,7 +22,11 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  background: linear-gradient(to bottom, rgba(9, 10, 18, 1), rgba(9, 10, 18, 0.8));
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--background-elevated) 92%, black),
+    color-mix(in srgb, var(--background-secondary) 82%, transparent)
+  );
 }
 
 .headerEyebrow {
@@ -30,7 +34,7 @@
   font-size: 11px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.65);
+  color: var(--text-tertiary);
 }
 
 .headerTitle {
@@ -43,7 +47,7 @@
 .headerSubtitle {
   margin: 8px 0 0;
   font-size: 13px;
-  color: rgba(148, 163, 184, 0.85);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
@@ -64,7 +68,7 @@
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.8);
+  color: var(--text-tertiary);
 }
 
 .sectionMeta {
@@ -82,10 +86,14 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(241, 245, 249, 0.95);
-  background: linear-gradient(120deg, rgba(14, 165, 233, 0.42), rgba(124, 58, 237, 0.45));
-  border: 1px solid rgba(14, 165, 233, 0.6);
-  box-shadow: 0 12px 32px rgba(14, 165, 233, 0.2);
+  color: var(--text-primary);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--accent-primary) 48%, transparent),
+    color-mix(in srgb, var(--accent-hover) 50%, transparent)
+  );
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--accent-primary) 28%, transparent);
 }
 
 .list {
@@ -107,7 +115,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.9);
+  color: var(--text-tertiary);
 }
 
 .listItem {
@@ -124,23 +132,37 @@
 }
 
 .listItem:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--background-hover) 80%, transparent);
   transform: translateX(2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.25)) !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-primary) 34%, transparent),
+    color-mix(in srgb, var(--accent-hover) 30%, transparent)
+  ) !important;
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--accent-primary) 35%, transparent),
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 color-mix(in srgb, var(--accent-light) 18%, transparent) !important;
   transform: translateX(4px) !important;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid var(--border-medium);
 }
 
 .samItem.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.25)) !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-primary) 34%, transparent),
+    color-mix(in srgb, var(--accent-hover) 30%, transparent)
+  ) !important;
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--accent-primary) 35%, transparent),
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 color-mix(in srgb, var(--accent-light) 18%, transparent) !important;
   transform: translateX(4px) !important;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid var(--border-medium);
 }
 
 .samItem {
@@ -172,13 +194,13 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(148, 163, 184, 0.2);
+  background: color-mix(in srgb, var(--accent-primary) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 16px;
-  color: #f8fafc;
+  color: var(--text-primary);
   flex-shrink: 0;
 }
 
@@ -218,7 +240,7 @@
 .name {
   font-size: 15px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: var(--text-primary);
   /* Remove truncation - name gets full width */
 }
 
@@ -232,7 +254,7 @@
 
 .timestamp {
   font-size: 11px;
-  color: #86868B;
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
@@ -243,9 +265,9 @@
 }
 
 .actionButton {
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid var(--border-medium);
   background: transparent;
-  color: rgba(248, 250, 252, 0.85);
+  color: var(--text-secondary);
   border-radius: 999px;
   padding: 2px 10px;
   font-size: 11px;
@@ -286,7 +308,7 @@
 .menuButton {
   background: none;
   border: none;
-  color: rgba(148, 163, 184, 0.8);
+  color: var(--text-tertiary);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -301,16 +323,16 @@
 }
 
 .menuButton:hover {
-  background: rgba(148, 163, 184, 0.15);
-  color: rgba(148, 163, 184, 0.95);
+  background: color-mix(in srgb, var(--background-hover) 75%, transparent);
+  color: var(--text-secondary);
 }
 
 .dropdownMenu {
   position: absolute;
   top: calc(100% + 2px);
   right: 0;
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: color-mix(in srgb, var(--background-elevated) 95%, black);
+  border: 1px solid var(--border-medium);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   z-index: 100;
@@ -344,7 +366,7 @@
 
 .preview {
   font-size: 13px;
-  color: rgba(226, 232, 240, 0.95);
+  color: var(--text-secondary);
   white-space: nowrap;
   font-weight: 400;
   overflow: hidden;
@@ -372,18 +394,18 @@
 }
 
 .requestAccept {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: var(--pitch-ink);
 }
 
 .requestAccept:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, var(--accent-hover), color-mix(in srgb, var(--accent-hover) 70%, black));
 }
 
 .requestDecline {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--background-tertiary) 75%, transparent);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .requestDecline:hover:not(:disabled) {
@@ -424,22 +446,22 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(226, 232, 240, 0.9);
-  background: rgba(15, 23, 42, 0.78);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--background-tertiary) 82%, transparent);
+  border: 1px solid var(--border-medium);
   box-shadow: 0 8px 22px rgba(2, 6, 23, 0.45);
 }
 
 .statusActive {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.45);
-  color: #34d399;
+  background: color-mix(in srgb, var(--status-online) 28%, transparent);
+  border-color: color-mix(in srgb, var(--status-online) 46%, transparent);
+  color: color-mix(in srgb, var(--status-online) 72%, white);
 }
 
 .statusScheduled {
-  background: rgba(251, 191, 36, 0.18);
-  border-color: rgba(251, 191, 36, 0.4);
-  color: #fde68a;
+  background: color-mix(in srgb, var(--status-idle) 28%, transparent);
+  border-color: color-mix(in srgb, var(--status-idle) 44%, transparent);
+  color: color-mix(in srgb, var(--status-idle) 68%, white);
 }
 
 .emptyState {

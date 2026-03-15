@@ -76,14 +76,22 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
-          'relative border border-white/20 bg-white/10 text-white/80 hover:bg-white/15',
+          'relative border text-white/80',
           compact ? 'h-9 w-9 rounded-[10px] p-0' : 'h-10 w-10 rounded-[12px] p-0 backdrop-blur'
         )}
+        style={{
+          borderColor: 'var(--border-medium)',
+          background: 'color-mix(in srgb, var(--background-tertiary) 72%, transparent)',
+          color: 'var(--text-secondary)'
+        }}
         aria-label="Open notifications"
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-emerald-400 px-1.5 py-0.5 text-[10px] font-semibold text-black">
+          <span
+            className="absolute -right-1 -top-1 min-w-[18px] rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+            style={{ background: 'var(--status-online)', color: 'var(--text-primary)' }}
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -91,16 +99,22 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
 
       {open && (
         <div
-          className="fixed z-[100000] w-[min(90vw,360px)] rounded-xl border border-white/10 bg-[#0b0d13] shadow-2xl"
-          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+          className="fixed z-[100000] w-[min(90vw,360px)] rounded-xl border shadow-2xl"
+          style={{
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+            borderColor: 'var(--border-medium)',
+            background: 'color-mix(in srgb, var(--background-elevated) 94%, black)'
+          }}
         >
-          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-            <span className="text-xs uppercase tracking-[0.25em] text-white/60">Notifications</span>
+          <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: 'var(--border-subtle)' }}>
+            <span className="text-xs uppercase tracking-[0.25em]" style={{ color: 'var(--text-tertiary)' }}>Notifications</span>
             <button
               type="button"
               disabled={busy || unreadCount === 0}
               onClick={() => void markAllRead()}
-              className="text-xs text-white/70 hover:text-white disabled:opacity-40"
+              className="text-xs disabled:opacity-40"
+              style={{ color: 'var(--text-secondary)' }}
             >
               Mark all read
             </button>
@@ -108,16 +122,17 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
 
           <div className="max-h-[60vh] overflow-y-auto">
             {loading ? (
-              <p className="px-3 py-4 text-sm text-white/60">Loading...</p>
+              <p className="px-3 py-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading...</p>
             ) : items.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-white/60">No notifications yet.</p>
+              <p className="px-3 py-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>No notifications yet.</p>
             ) : (
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>
                 {items.map((item) => (
                   <li key={item.id} className="px-3 py-3">
                     <button
                       type="button"
-                      className={clsx('w-full text-left', item.status === 'unread' ? 'text-white' : 'text-white/70')}
+                      className="w-full text-left"
+                      style={{ color: item.status === 'unread' ? 'var(--text-primary)' : 'var(--text-secondary)' }}
                       onClick={() => {
                         if (item.status === 'unread') {
                           void markRead(item.id);
@@ -125,8 +140,8 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
                       }}
                     >
                       <p className="text-sm font-medium">{item.title}</p>
-                      <p className="mt-1 text-xs text-white/70">{item.body}</p>
-                      <p className="mt-1 text-[11px] text-white/40">{formatTime(item.created_at)}</p>
+                      <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{item.body}</p>
+                      <p className="mt-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{formatTime(item.created_at)}</p>
                     </button>
                   </li>
                 ))}

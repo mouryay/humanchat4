@@ -365,12 +365,26 @@ const ChatShell = () => {
   );
 
   return (
-    <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden')}>
+    <main
+      className={clsx(
+        'flex flex-col text-text-primary',
+        isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden'
+      )}
+      style={{ backgroundColor: 'var(--background-primary)' }}
+    >
       {isTablet && (
-        <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
+        <header
+          className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b px-4 py-3 text-xs uppercase tracking-[0.3em]"
+          style={{
+            borderColor: 'var(--border-subtle)',
+            backgroundColor: 'var(--background-primary)',
+            color: 'var(--text-tertiary)'
+          }}
+        >
           <button
             type="button"
-            className="rounded-full border border-white/20 px-3 py-1 text-[11px] normal-case tracking-normal text-white"
+            className="rounded-full border px-3 py-1 text-[11px] normal-case tracking-normal"
+            style={{ borderColor: 'var(--border-medium)', color: 'var(--text-primary)' }}
             onClick={() => setSidebarCollapsed((prev) => !prev)}
           >
             {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -395,7 +409,8 @@ const ChatShell = () => {
 
         {isMobile ? (
           <section
-            className="relative flex min-h-0 flex-1 flex-col bg-midnight overflow-hidden max-h-full"
+            className="relative flex min-h-0 flex-1 flex-col overflow-hidden max-h-full"
+            style={{ backgroundColor: 'var(--background-primary)' }}
             onTouchStart={handleRightEdgeTouchStart}
             onTouchMove={handleRightEdgeTouchMove}
             onTouchEnd={handleRightEdgeTouchEnd}
@@ -448,12 +463,16 @@ const ChatShell = () => {
               />
               <div
                 className={clsx(
-                  'relative h-full w-full max-w-[85%] border-r border-white/10 bg-midnight shadow-2xl transition-transform duration-200 ease-out z-50',
+                  'relative h-full w-full max-w-[85%] border-r shadow-2xl transition-transform duration-200 ease-out z-50',
                   {
                     '-translate-x-full': mobileDrawer !== 'conversations',
                     'translate-x-0': mobileDrawer === 'conversations'
                   }
                 )}
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  backgroundColor: 'var(--background-primary)'
+                }}
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
               >
@@ -489,20 +508,24 @@ const ChatShell = () => {
               />
               <div
                 className={clsx(
-                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 shadow-2xl transition-transform duration-200 ease-out',
+                  'relative h-full w-full max-w-[min(90%,360px)] border-l shadow-2xl transition-transform duration-200 ease-out',
                   {
                     'translate-x-full': mobileDrawer !== 'profile',
                     'translate-x-0': mobileDrawer === 'profile'
                   }
                 )}
-                style={{ backgroundColor: '#05060a' }}
+                style={{ backgroundColor: 'var(--background-primary)', borderColor: 'var(--border-subtle)' }}
               >
                 <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm text-white/70">
+                  <div
+                    className="flex items-center justify-between border-b px-4 py-3 text-sm"
+                    style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
+                  >
                     <span>Account</span>
                     <button
                       type="button"
-                      className="rounded-full border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/70"
+                      className="rounded-full border px-3 py-1 text-xs uppercase tracking-wide"
+                      style={{ borderColor: 'var(--border-medium)', color: 'var(--text-secondary)' }}
                       onClick={handleCloseDrawers}
                     >
                       Close
@@ -533,20 +556,22 @@ const ChatShell = () => {
               />
               <div
                 className={clsx(
-                  'relative h-full w-full max-w-[min(90%,360px)] border-l border-white/10 shadow-2xl transition-transform duration-200 ease-out',
+                  'relative h-full w-full max-w-[min(90%,360px)] border-l shadow-2xl transition-transform duration-200 ease-out',
                   {
                     'translate-x-full': mobileDrawer !== 'profiles',
                     'translate-x-0': mobileDrawer === 'profiles'
                   }
                 )}
-                style={{ backgroundColor: '#05060a' }}
+                style={{ backgroundColor: 'var(--background-primary)', borderColor: 'var(--border-subtle)' }}
                 onTouchStart={handleDrawerTouchStart}
                 onTouchMove={handleDrawerTouchMove}
                 onTouchEnd={handleDrawerTouchEnd}
               >
                 <div className="flex h-full flex-col">
                   <div className="px-4 py-3">
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'Recommended people' : 'People'}</span>
+                    <span className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--text-tertiary)' }}>
+                      {sidebarSource === 'seeded' ? 'Recommended people' : 'People'}
+                    </span>
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <ProfileSidebar
@@ -585,12 +610,13 @@ const ChatShell = () => {
               )}
             </section>
             <aside
-              className="flex h-full shrink-0 flex-col border-l border-white/5"
+              className="flex h-full shrink-0 flex-col border-l"
               style={{ 
                 width: 'var(--sidebar-width)', 
                 minWidth: 'var(--sidebar-width)', 
-                backgroundColor: '#05060a',
-                boxShadow: '-2px 0 16px rgba(0, 0, 0, 0.2)'
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--background-secondary)',
+                boxShadow: '-2px 0 16px rgba(0, 0, 0, 0.3)'
               }}
             >
               <ProfileSidebar
@@ -612,7 +638,16 @@ const ChatShell = () => {
 
 const ChatExperience = () => {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-midnight text-white/70">Loading chat...</div>}>
+    <Suspense
+      fallback={
+        <div
+          className="flex h-screen items-center justify-center"
+          style={{ backgroundColor: 'var(--background-primary)', color: 'var(--text-secondary)' }}
+        >
+          Loading chat...
+        </div>
+      }
+    >
       <ChatShell />
     </Suspense>
   );

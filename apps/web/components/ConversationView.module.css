@@ -4,8 +4,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #05060a;
-  color: #e2e8f0;
+  background: var(--background-secondary);
+  color: var(--text-secondary);
   overflow: hidden;
   padding: 24px;
   position: relative;
@@ -22,7 +22,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 15, 0.98);
+  background: color-mix(in srgb, var(--background-primary) 94%, black);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   border-radius: 20px;
@@ -75,7 +75,7 @@
 
 .header {
   padding: 20px 28px 16px;
-  background: #2a2a2a;
+  background: var(--background-elevated);
   border-radius: 14px;
   margin-bottom: 10px;
   display: flex;
@@ -124,7 +124,7 @@
 .backButton {
   border: none;
   background: transparent;
-  color: #38bdf8;
+  color: var(--accent-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -146,8 +146,8 @@
 
 .scheduleButton {
   border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-hover), color-mix(in srgb, var(--accent-hover) 60%, #5f3a24));
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -158,16 +158,16 @@
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-hover) 35%, transparent);
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .scheduleButton:hover {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-hover) 82%, black), var(--accent-hover));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-hover) 45%, transparent);
 }
 
 .scheduleButton:active {
@@ -181,18 +181,18 @@
 .title {
   font-size: 20px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--text-primary);
 }
 
 .subtitle {
   font-size: 13px;
-  color: rgba(226, 232, 240, 0.9);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .metadata {
   font-size: 13px;
-  color: rgba(226, 232, 240, 0.85);
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
@@ -242,10 +242,10 @@
   padding: 8px 12px;
   height: 40px;
   min-height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--background-tertiary) 78%, transparent);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -263,10 +263,10 @@
   height: 40px;
   min-width: 40px;
   min-height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--background-tertiary) 78%, transparent);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -275,8 +275,8 @@
 
 .mobileMenuButton:hover,
 .mobileAccountButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: var(--background-hover);
+  border-color: var(--border-strong);
 }
 
 .mobileMenuButton:active,
@@ -298,7 +298,7 @@
 .mobileTitle {
   font-size: 16px;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--text-primary);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -308,7 +308,7 @@
 
 .mobileSubtitle {
   font-size: 11px;
-  color: rgba(148, 163, 184, 0.7);
+  color: var(--text-tertiary);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -343,7 +343,7 @@
 }
 
 .error {
-  color: #fecaca;
+  color: var(--status-error);
 }
 
 .samView,
@@ -371,22 +371,22 @@
   justify-content: space-between;
   gap: 16px;
   padding: 20px 24px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: rgba(15, 23, 42, 0.75);
+  background: color-mix(in srgb, var(--background-tertiary) 84%, black);
 }
 
 .callLauncherTitle {
   font-size: 16px;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .callLauncherSub {
   margin-top: 6px;
   font-size: 13px;
-  color: rgba(148, 163, 184, 0.85);
+  color: var(--text-tertiary);
   max-width: 420px;
 }
 
@@ -432,9 +432,9 @@
 }
 
 .callButtonPrimary {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--pitch-blue) 72%, #2a4f6a), var(--pitch-blue));
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--pitch-blue) 34%, transparent);
 }
 
 .callButtonPrimary:hover:not(:disabled) {
@@ -444,9 +444,9 @@
 }
 
 .callButtonSecondary {
-  background: linear-gradient(135deg, #06b6d4, #0891b2);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--pitch-blue) 82%, #7cd2de), #6bbfd0);
+  color: #1c2b35;
+  box-shadow: 0 2px 8px color-mix(in srgb, #6bbfd0 30%, transparent);
 }
 
 .callButtonSecondary:hover:not(:disabled) {
@@ -474,8 +474,8 @@
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
-  background: linear-gradient(135deg, #a855f7, #9333ea);
-  color: #ffffff;
+  background: linear-gradient(135deg, #8f5d94, #74437d);
+  color: var(--text-primary);
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -738,8 +738,8 @@
 .bubble {
   padding: 14px 18px;
   border-radius: 22px;
-  background: rgba(148, 163, 184, 0.08);
-  color: #f8fafc;
+  background: color-mix(in srgb, var(--background-tertiary) 78%, transparent);
+  color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
   white-space: pre-line;
@@ -748,27 +748,27 @@
 }
 
 .systemBubble {
-  background: rgba(30, 30, 30, 0.8);
+  background: color-mix(in srgb, var(--background-tertiary) 90%, black);
   border: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  color: rgba(248, 250, 252, 0.9);
+  color: var(--text-secondary);
   text-align: center;
   border-radius: 18px;
 }
 
 .userRow .bubble {
-  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
-  color: #020617;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  color: var(--pitch-ink);
   border-bottom-right-radius: 6px;
   border-bottom-left-radius: 22px;
   border: none;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25), 0 1px 3px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 32%, transparent), 0 1px 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   position: relative;
 }
 
 .samRow .bubble {
-  background: #3a3a3a;
-  color: #f8fafc;
+  background: var(--background-elevated);
+  color: var(--text-primary);
   border: none;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 22px;
@@ -797,7 +797,7 @@
 
 .actionButton {
   background: transparent;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid var(--border-medium);
   color: inherit;
   padding: 6px 12px;
   border-radius: 999px;
@@ -807,8 +807,8 @@
 }
 
 .actionButton:hover {
-  border-color: #38bdf8;
-  color: #38bdf8;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .messageBubble {
@@ -834,7 +834,7 @@
 
 .messageMeta {
   font-size: 11px;
-  color: rgba(226, 232, 240, 0.6);
+  color: var(--text-tertiary);
   letter-spacing: 0.05em;
   margin-top: 4px;
   padding: 0 4px;
@@ -1059,7 +1059,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #38bdf8;
+  background: var(--accent-primary);
   animation: pulse 1s infinite ease-in-out;
 }
 
@@ -1103,7 +1103,7 @@
   padding: 20px 28px;
   display: flex;
   gap: 12px;
-  background: #2a2a2a;
+  background: var(--background-elevated);
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
@@ -1113,9 +1113,9 @@
 
 .inputBar textarea {
   flex: 1;
-  background: rgba(35, 35, 40, 0.7);
+  background: color-mix(in srgb, var(--background-tertiary) 86%, black);
   border: none;
-  color: #f8fafc;
+  color: var(--text-primary);
   padding: 14px 18px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.05);
   border-radius: 18px;
@@ -1128,8 +1128,8 @@
 
 .inputBar textarea:focus {
   outline: none;
-  background: rgba(40, 40, 45, 0.8);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: var(--background-hover);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent-primary) 26%, transparent), 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
 .inputBar textarea::placeholder {
@@ -1143,20 +1143,20 @@
 }
 
 .inputBar button {
-  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
   border: none;
-  color: #020617;
+  color: var(--pitch-ink);
   padding: 0 20px;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 34%, transparent);
 }
 
 .inputBar button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 44%, transparent);
 }
 
 .inputBar button:active {
@@ -1326,7 +1326,7 @@
   display: flex;
   flex-direction: column;
   padding: 20px 28px;
-  background: #1f1f1f;
+  background: var(--background-tertiary);
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -1340,7 +1340,7 @@
   padding: 20px 28px;
   display: flex;
   gap: 12px;
-  background: #2a2a2a;
+  background: var(--background-elevated);
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
@@ -1350,10 +1350,10 @@
 
 .chatInputBar textarea {
   flex: 1;
-  background: rgba(26, 26, 26, 0.6);
+  background: color-mix(in srgb, var(--background-tertiary) 86%, black);
   border: none;
   border-radius: 16px;
-  color: #f8fafc;
+  color: var(--text-primary);
   padding: 14px 18px;
   resize: none;
   min-height: 60px;
@@ -1365,8 +1365,8 @@
 
 .chatInputBar textarea:focus {
   outline: none;
-  background: rgba(31, 31, 31, 0.7);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), 0 0 0 0 rgba(59, 130, 246, 0), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  background: var(--background-hover);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 24%, transparent), inset 0 1px 2px rgba(255, 255, 255, 0.05);
 }
 
 .chatInputBar textarea::placeholder {
@@ -1380,9 +1380,9 @@
 }
 
 .chatInputBar button {
-  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
   border: none;
-  color: #020617;
+  color: var(--pitch-ink);
   padding: 0 20px;
   border-radius: 12px;
   font-weight: 600;
@@ -1391,14 +1391,14 @@
 
 .typingIndicator {
   font-size: 12px;
-  color: rgba(148, 163, 184, 0.8);
+  color: var(--text-tertiary);
   padding: 8px 16px;
 }
 
 .countdown {
   margin: auto;
   text-align: center;
-  color: rgba(148, 163, 184, 0.95);
+  color: var(--text-secondary);
 }
 
 .countdown strong {
