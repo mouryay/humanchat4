@@ -134,8 +134,8 @@ export default function ProfileCard({
           <button
             className={`w-full font-semibold rounded-xl transition-all duration-base ease-out hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
             style={{
-              background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))',
-              color: 'var(--pitch-cream)',
+              background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-hover))',
+              color: 'var(--pitch-ink)',
               boxShadow: '0 8px 20px color-mix(in srgb, var(--accent-primary) 35%, transparent)'
             }}
             type="button"
@@ -185,7 +185,7 @@ export default function ProfileCard({
             loading="lazy" 
           />
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-text-primary truncate font-display">{profile.name}</h3>
+            <h3 className="text-base font-semibold text-text-primary truncate">{profile.name}</h3>
             <p className="text-xs text-text-secondary truncate">{headlineCopy}</p>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function ProfileCard({
                 className="h-16 w-16 sm:h-20 sm:w-20 avatar-chamfered object-cover ring-2 ring-border-medium flex-shrink-0" 
               />
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-1 truncate font-display">{profile.name}</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-text-primary mb-1 truncate">{profile.name}</h2>
                 <p className="text-sm text-text-secondary">{headlineCopy}</p>
                 <div className="mt-2">
                   <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />

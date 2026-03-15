@@ -44,17 +44,18 @@ const config: Config = {
         peach: 'var(--accent-muted)'
       },
       fontFamily: {
+        // Geist/Inter system stack
         sans: [
-          'var(--font-body)',
           '-apple-system',
           'BlinkMacSystemFont',
           '"Segoe UI"',
           'Roboto',
+          '"Inter"',
           'system-ui',
-          'sans-serif'
+          'sans-serif',
         ],
-        display: ['var(--font-display)', '"Lora"', 'Georgia', 'serif'],
-        body: ['var(--font-body)', '"DM Sans"', 'system-ui', 'sans-serif']
+        display: ['"Inter"', 'system-ui', 'sans-serif'],
+        body: ['"Inter"', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         xs: ['11px', { lineHeight: '16px', letterSpacing: '0.01em' }],
