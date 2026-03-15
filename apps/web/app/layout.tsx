@@ -1,6 +1,6 @@
 import './globals.css';
 import type { ReactNode } from 'react';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { DM_Sans, Lora } from 'next/font/google';
 import PWAInitializer from '../components/PWAInitializer';
 import FirebaseSessionBridge from '../components/FirebaseSessionBridge';
 import IdentityInitializer from '../components/IdentityInitializer';
@@ -25,12 +25,12 @@ export const viewport = {
   viewportFit: 'cover'
 };
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display' });
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
+const lora = Lora({ subsets: ['latin'], variable: '--font-display' });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${lora.variable}`}>
       <body className="bg-background-primary text-text-primary font-body antialiased min-h-screen overflow-x-hidden">
         <CallProvider>
           <PWAInitializer />
