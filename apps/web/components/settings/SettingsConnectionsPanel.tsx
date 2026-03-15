@@ -196,7 +196,14 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
   };
 
   if (loading) {
-    return <div className="rounded-2xl border border-white/12 bg-black/20 p-4 text-sm text-white/60">Loading settings…</div>;
+    return (
+      <div
+        className="rounded-2xl border p-4 text-sm text-text-secondary"
+        style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}
+      >
+        Loading settings…
+      </div>
+    );
   }
 
   if (error) {
@@ -214,7 +221,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
     );
   }
 
-  const sectionCardClass = embedded ? 'rounded-3xl border border-white/10 bg-white/[0.03]' : 'rounded-3xl border border-white/10 bg-white/[0.03]';
+  const sectionCardClass = 'rounded-3xl border';
 
   const sections: Array<{
     id: PreferenceSection;
@@ -231,7 +238,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold">Instant availability</h3>
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-text-secondary">
                 {settings?.isOnline
                   ? 'You appear in search and Sam routes instant connects.'
                   : 'You are hidden until you toggle availability back on.'}
@@ -242,19 +249,21 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
               disabled={savingAvailability}
               onClick={handleAvailabilityToggle}
               className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-[0.3em] ${
-                settings?.isOnline ? 'border-aqua/60 text-aqua' : 'border-white/20 text-white/60'
+                settings?.isOnline ? 'text-accent-hover' : 'text-text-tertiary'
               }`}
+              style={{ borderColor: settings?.isOnline ? 'var(--accent-primary)' : 'var(--border-medium)' }}
             >
               {savingAvailability ? 'Saving…' : settings?.isOnline ? 'On' : 'Off'}
             </button>
           </div>
           {availabilityNotice && <p className="text-xs text-amber-300">{availabilityNotice}</p>}
           {promptToReenable && (
-            <div className="rounded-2xl border border-white/15 bg-black/40 p-4 text-sm text-white/80">
+            <div className="rounded-2xl border p-4 text-sm text-text-secondary" style={{ borderColor: 'var(--border-medium)', background: 'var(--background-elevated)' }}>
               <p>You were set to offline after inactivity. Turn availability back on?</p>
               <button
                 type="button"
-                className="mt-3 rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-5 py-2 text-xs font-semibold text-midnight"
+                className="mt-3 rounded-full px-5 py-2 text-xs font-semibold"
+                style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', color: 'var(--pitch-cream)' }}
                 onClick={() => {
                   setPromptToReenable(false);
                   window.localStorage.removeItem(AVAILABILITY_PROMPT_KEY);
@@ -287,13 +296,14 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
                 type="button"
                 className={`rounded-2xl border p-4 text-left text-sm ${
                   connectionType === type
-                    ? 'border-aqua/60 bg-aqua/10 text-white'
-                    : 'border-white/10 text-white/70 hover:border-white/30'
+                    ? 'bg-background-hover text-text-primary'
+                    : 'text-text-secondary'
                 }`}
+                style={{ borderColor: connectionType === type ? 'var(--accent-primary)' : 'var(--border-subtle)' }}
                 onClick={() => setConnectionType(type)}
               >
-                <p className="text-base font-semibold capitalize text-white">{type}</p>
-                <p className="mt-2 text-xs text-white/60">
+                <p className="text-base font-semibold capitalize text-text-primary">{type}</p>
+                <p className="mt-2 text-xs text-text-secondary">
                   {type === 'free' && 'Members can join instantly with no payment.'}
                   {type === 'paid' && 'Set a live rate for instant connects.'}
                   {type === 'charity' && 'Donate the proceeds to a partner organization.'}
@@ -303,7 +313,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
           </div>
 
           {connectionType === 'paid' && (
-            <label className="mt-6 block text-sm text-white/80">
+            <label className="mt-6 block text-sm text-text-secondary">
               Rate per minute (USD)
               <input
                 type="number"
@@ -311,19 +321,21 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
                 step="0.5"
                 value={instantRate}
                 onChange={(event) => setInstantRate(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
+                className="mt-2 w-full rounded-2xl border bg-background-tertiary px-4 py-3 text-text-primary"
+                style={{ borderColor: 'var(--border-medium)' }}
                 placeholder="3.00"
               />
             </label>
           )}
 
           {connectionType === 'charity' && (
-            <label className="mt-6 block text-sm text-white/80">
+            <label className="mt-6 block text-sm text-text-secondary">
               Charity partner
               <select
                 value={selectedCharity ?? ''}
                 onChange={(event) => setSelectedCharity(event.target.value || null)}
-                className="mt-2 w-full rounded-2xl border border-white/15 bg-black/50 px-4 py-3 text-white focus:border-aqua/60"
+                className="mt-2 w-full rounded-2xl border bg-background-tertiary px-4 py-3 text-text-primary"
+                style={{ borderColor: 'var(--border-medium)' }}
               >
                 <option value="" disabled>
                   Choose a charity
@@ -357,19 +369,20 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
             </ul>
           )}
 
-          {connectionMessage && <p className="mt-4 text-xs text-white/70">{connectionMessage}</p>}
+          {connectionMessage && <p className="mt-4 text-xs text-text-secondary">{connectionMessage}</p>}
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <button
               type="button"
               disabled={!hasChanges || savingConnection}
               onClick={() => void handleSaveConnection()}
-              className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-6 py-3 text-sm font-semibold text-midnight disabled:opacity-40"
+              className="rounded-full px-6 py-3 text-sm font-semibold disabled:opacity-40"
+              style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', color: 'var(--pitch-cream)' }}
             >
               {savingConnection ? 'Saving…' : 'Save changes'}
             </button>
-            <p className="text-xs text-white/60">
-              Current mode: <span className="font-semibold text-white">{connectionType}</span>{' '}
+            <p className="text-xs text-text-secondary">
+              Current mode: <span className="font-semibold text-text-primary capitalize">{connectionType}</span>{' '}
               {connectionType === 'paid' && numericRate ? `· ${formatCurrency(trimmedRate)}/min` : null}
             </p>
           </div>
@@ -382,16 +395,17 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
       tagline: 'Align Google Calendar and payouts.',
       content: (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}>
             <p className="text-sm font-semibold">Google Calendar</p>
-            <p className="text-xs text-white/60">{settings?.calendarConnected ? 'Connected ✓' : 'Not connected'}</p>
+            <p className="text-xs text-text-secondary">{settings?.calendarConnected ? 'Connected ✓' : 'Not connected'}</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {settings?.calendarConnected ? (
                 <button
                   type="button"
                   disabled={savingCalendar}
                   onClick={() => void handleCalendarDisconnect()}
-                  className="rounded-full border border-white/20 px-5 py-2 text-xs"
+                  className="rounded-full border px-5 py-2 text-xs text-text-secondary"
+                  style={{ borderColor: 'var(--border-medium)' }}
                 >
                   {savingCalendar ? 'Disconnecting…' : 'Disconnect'}
                 </button>
@@ -400,7 +414,8 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
                   type="button"
                   disabled={savingCalendar}
                   onClick={() => void startCalendarConnect()}
-                  className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-5 py-2 text-xs font-semibold text-midnight"
+                  className="rounded-full px-5 py-2 text-xs font-semibold"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', color: 'var(--pitch-cream)' }}
                 >
                   {savingCalendar ? 'Connecting…' : 'Connect Google Calendar'}
                 </button>
@@ -408,15 +423,16 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}>
             <p className="text-sm font-semibold">Stripe</p>
-            <p className="text-xs text-white/60">{settings?.stripeConnected ? 'Connected ✓' : 'Not connected'}</p>
+            <p className="text-xs text-text-secondary">{settings?.stripeConnected ? 'Connected ✓' : 'Not connected'}</p>
             <div className="mt-4 flex flex-wrap gap-3">
               {settings?.stripeConnected ? (
                 <>
                   <button
                     type="button"
-                    className="rounded-full border border-white/20 px-5 py-2 text-xs"
+                    className="rounded-full border px-5 py-2 text-xs text-text-secondary"
+                    style={{ borderColor: 'var(--border-medium)' }}
                     onClick={() => router.push('/settings/payments')}
                   >
                     Manage account
@@ -425,7 +441,8 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
                     type="button"
                     disabled={savingStripe}
                     onClick={() => void handleStripeDisconnect()}
-                    className="rounded-full border border-white/20 px-5 py-2 text-xs"
+                    className="rounded-full border px-5 py-2 text-xs text-text-secondary"
+                    style={{ borderColor: 'var(--border-medium)' }}
                   >
                     {savingStripe ? 'Disconnecting…' : 'Disconnect'}
                   </button>
@@ -435,7 +452,8 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
                   type="button"
                   disabled={savingStripe}
                   onClick={() => void startStripeConnect()}
-                  className="rounded-full bg-gradient-to-r from-indigoGlow to-aqua px-5 py-2 text-xs font-semibold text-midnight"
+                  className="rounded-full px-5 py-2 text-xs font-semibold"
+                  style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))', color: 'var(--pitch-cream)' }}
                 >
                   {savingStripe ? 'Connecting…' : 'Connect Stripe'}
                 </button>
@@ -443,7 +461,7 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
             </div>
           </div>
 
-          {integrationsMessage && <p className="text-xs text-white/70">{integrationsMessage}</p>}
+          {integrationsMessage && <p className="text-xs text-text-secondary">{integrationsMessage}</p>}
         </div>
       )
     },
@@ -485,23 +503,27 @@ export default function SettingsConnectionsPanel({ embedded = false, settingsSta
   ];
 
   return (
-    <div className={embedded ? 'space-y-6 text-white' : 'flex flex-col gap-8'}>
+    <div className={embedded ? 'space-y-6 text-text-primary' : 'flex flex-col gap-8 text-text-primary'}>
       {sections.map((section) => {
         const isOpen = openSection === section.id;
         return (
-          <section key={section.id} className={`${sectionCardClass} transition-colors`}>
+          <section
+            key={section.id}
+            className={`${sectionCardClass} transition-colors`}
+            style={{ borderColor: 'var(--border-subtle)', background: 'color-mix(in srgb, var(--background-tertiary) 90%, transparent)' }}
+          >
             <button
               type="button"
               className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
               onClick={() => setOpenSection((prev) => (prev === section.id ? null : section.id))}
             >
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-white/50">{section.label}</p>
-                <p className="text-sm text-white/70">{section.tagline}</p>
+                <p className="text-xs uppercase tracking-[0.3em] text-text-tertiary">{section.label}</p>
+                <p className="text-sm text-text-secondary">{section.tagline}</p>
               </div>
-              <span className="text-xl text-white/60">{isOpen ? '−' : '+'}</span>
+              <span className="text-xl text-text-tertiary">{isOpen ? '−' : '+'}</span>
             </button>
-            {isOpen && <div className="border-t border-white/10 px-5 py-4">{section.content}</div>}
+            {isOpen && <div className="border-t px-5 py-4" style={{ borderColor: 'var(--border-subtle)' }}>{section.content}</div>}
           </section>
         );
       })}

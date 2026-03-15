@@ -94,19 +94,27 @@ export default function DevicePreferencesPanel() {
   return (
     <div className="space-y-4">
       {!isSignedIn && (
-        <p className="rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/70">
+        <p
+          className="rounded-2xl border p-4 text-sm text-text-secondary"
+          style={{ borderColor: 'var(--border-subtle)', background: 'var(--background-elevated)' }}
+        >
           Sign in to manage device notifications and display preferences.
         </p>
       )}
 
       <button
         type="button"
-        className="rounded-2xl border border-white/15 bg-gradient-to-r from-indigoGlow/60 to-aqua/40 px-4 py-3 text-left text-sm font-semibold text-white disabled:opacity-50"
+        className="rounded-2xl border px-4 py-3 text-left text-sm font-semibold disabled:opacity-50"
+        style={{
+          borderColor: 'var(--border-medium)',
+          background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-strong))',
+          color: 'var(--pitch-cream)'
+        }}
         onClick={handleNotificationEnable}
         disabled={!isSignedIn}
       >
         Enable push notifications
-        <div className="text-xs font-normal text-white/70">
+        <div className="text-xs font-normal" style={{ color: 'color-mix(in srgb, var(--pitch-cream) 82%, transparent)' }}>
           Status: {notificationStatus === 'enabled' ? 'Enabled' : notificationStatus === 'blocked' ? 'Blocked' : 'Not requested'}
         </div>
       </button>
@@ -115,30 +123,32 @@ export default function DevicePreferencesPanel() {
         type="button"
         disabled={!isSignedIn || !canInstall || hasInstalled}
         onClick={() => promptInstall()}
-        className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white/90 disabled:opacity-50"
+        className="rounded-2xl border bg-background-tertiary px-4 py-3 text-left text-sm font-semibold text-text-primary disabled:opacity-50"
+        style={{ borderColor: 'var(--border-medium)' }}
       >
         {hasInstalled ? 'App installed' : canInstall ? 'Add to Home Screen' : 'Install prompt unavailable yet'}
       </button>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
+      <div className="rounded-2xl border bg-background-elevated p-4 text-sm" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between">
           <span>High contrast mode</span>
           <button
             type="button"
             onClick={handleContrastToggle}
-            className="min-h-[44px] rounded-full border border-white/20 px-4 text-sm font-semibold disabled:opacity-50"
+            className="min-h-[44px] rounded-full border px-4 text-sm font-semibold text-text-primary disabled:opacity-50"
+            style={{ borderColor: 'var(--border-medium)' }}
             disabled={!isSignedIn}
           >
             {contrast === 'high' ? 'Disable' : 'Enable'}
           </button>
         </div>
-        <p className="mt-2 text-xs text-white/60">Respects system preference and improves readability.</p>
+        <p className="mt-2 text-xs text-text-secondary">Respects system preference and improves readability.</p>
       </div>
 
-      <label className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
+      <label className="rounded-2xl border bg-background-elevated p-4 text-sm" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="mb-2 flex items-center justify-between">
           <span>Font scale</span>
-          <span className="text-xs text-white/60">{fontScale.toFixed(2)}x</span>
+          <span className="text-xs text-text-secondary">{fontScale.toFixed(2)}x</span>
         </div>
         <input
           type="range"
