@@ -11,6 +11,8 @@ import styles from './ConversationSidebar.module.css';
 interface ConversationSidebarProps {
   activeConversationId?: string;
   onSelectConversation?: (conversationId: string) => void;
+  onSelectSearch?: () => void;
+  isSearchActive?: boolean;
   collapsed?: boolean;
   pendingInvites?: Map<string, InstantInvite>;
   onInviteAccept?: (inviteId: string) => void;
@@ -29,6 +31,8 @@ const formatRelativeTime = (timestamp: number): string => {
 export default function ConversationSidebar({
   activeConversationId,
   onSelectConversation,
+  onSelectSearch,
+  isSearchActive,
   collapsed,
   pendingInvites,
   onInviteAccept,
@@ -68,6 +72,10 @@ export default function ConversationSidebar({
 
   const handleSelect = (conversationId: string) => {
     onSelectConversation?.(conversationId);
+  };
+
+  const handleSearchSelect = () => {
+    onSelectSearch?.();
   };
 
   const samEntry = conversations[0];
@@ -124,6 +132,31 @@ export default function ConversationSidebar({
 
       <div className={clsx(styles.scroller, "flex-1 overflow-y-auto")} ref={scrollerRef}>
         <section className="px-4 py-2">
+          <li
+            className={clsx(styles.listItem, isSearchActive && styles.active)}
+            role="button"
+            tabIndex={0}
+            onClick={handleSearchSelect}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleSearchSelect();
+              }
+            }}
+            style={{ touchAction: 'pan-y' }}
+          >
+            <div className={styles.avatar} aria-hidden>
+              🔎
+            </div>
+            {!collapsed && (
+              <div className={styles.content}>
+                <div className={styles.nameRow}>
+                  <span className={styles.name}>Search</span>
+                </div>
+                <div className={styles.preview}>Find people by name, topic, and filters.</div>
+              </div>
+            )}
+          </li>
           {samEntry && (
             <ConversationListItem
               entry={samEntry}

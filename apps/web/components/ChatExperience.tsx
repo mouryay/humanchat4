@@ -189,6 +189,14 @@ const ChatShell = () => {
     }
   };
 
+  const handleSelectSearch = useCallback(() => {
+    setActiveConversationId(undefined);
+    setMainView('search');
+    if (isMobile) {
+      setMobileDrawer('none');
+    }
+  }, [isMobile]);
+
   const handleShowConversationDrawer = () => {
     setMobileDrawer('conversations');
   };
@@ -384,6 +392,8 @@ const ChatShell = () => {
             <ConversationSidebar
               activeConversationId={activeConversationId}
               onSelectConversation={handleSelectConversation}
+              onSelectSearch={handleSelectSearch}
+              isSearchActive={mainView === 'search'}
               collapsed={isTablet && sidebarCollapsed}
               pendingInvites={invitesByConversation}
               onInviteAccept={handleInviteAccept}
@@ -462,6 +472,8 @@ const ChatShell = () => {
                     <ConversationSidebar
                       activeConversationId={activeConversationId}
                       onSelectConversation={handleSelectConversation}
+                      onSelectSearch={handleSelectSearch}
+                      isSearchActive={mainView === 'search'}
                       pendingInvites={invitesByConversation}
                       onInviteAccept={handleInviteAccept}
                       onInviteDecline={handleInviteDecline}
