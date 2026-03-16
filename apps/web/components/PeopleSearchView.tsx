@@ -2,21 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProfileSummary } from '../../../src/lib/db';
-import ProfileCard from './ProfileCard';
+import ProfileListRow from './ProfileListRow';
 import { fetchWithAuthRefresh } from '../utils/fetchWithAuthRefresh';
 import { sessionStatusManager } from '../services/sessionStatusManager';
+import type { PeopleSearchFilters } from './peopleSearchTypes';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
-type SortMode = 'default' | 'active' | 'recent';
-type ConversationTypeFilter = 'all' | 'free' | 'paid' | 'charity';
 
 interface PeopleSearchViewProps {
   isMobile?: boolean;
   onOpenConversations?: () => void;
+  onOpenFilters?: () => void;
   onConnectNow?: (profile: ProfileSummary) => void;
   onBookTime?: (profile: ProfileSummary) => void;
   connectingProfileId?: string | null;
+  filters: PeopleSearchFilters;
 }
 
 type DirectoryUserRecord = {
@@ -78,15 +78,14 @@ const mapDirectoryUsers = (users: DirectoryUserRecord[], currentUserId: string |
 export default function PeopleSearchView({
   isMobile,
   onOpenConversations,
+  onOpenFilters,
   onConnectNow,
   onBookTime,
-  connectingProfileId
+  connectingProfileId,
+  filters
 }: PeopleSearchViewProps) {
   const [keyword, setKeyword] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
-  const [onlineOnly, setOnlineOnly] = useState(true);
-  const [conversationType, setConversationType] = useState<ConversationTypeFilter>('all');
-  const [sort, setSort] = useState<SortMode>('active');
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,8 +111,8 @@ export default function PeopleSearchView({
           const params = new URLSearchParams();
           if (debouncedKeyword) params.set('q', debouncedKeyword);
           if (typeof onlineFlag === 'boolean') params.set('online', String(onlineFlag));
-          if (conversationType !== 'all') params.set('conversation_type', conversationType);
-          params.set('sort', sort);
+          if (filters.conversationType !== 'all') params.set('conversation_type', filters.conversationType);
+          params.set('sort', filters.sort);
           params.set('limit', '50');
           return params.toString();
         };
@@ -131,7 +130,7 @@ export default function PeopleSearchView({
         };
 
         let nextProfiles: ProfileSummary[] = [];
-        if (onlineOnly) {
+        if (filters.onlineOnly) {
           nextProfiles = await runQuery(buildParams(true));
           const shouldFallbackToAll = nextProfiles.length === 0 && initialLoadRef.current && !debouncedKeyword;
           if (shouldFallbackToAll) {
@@ -159,7 +158,17 @@ export default function PeopleSearchView({
     return () => {
       mounted = false;
     };
-  }, [debouncedKeyword, onlineOnly, conversationType, sort, currentUserId]);
+  }, [debouncedKeyword, filters.onlineOnly, filters.conversationType, filters.sort, currentUserId]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips: string[] = [];
+    if (filters.onlineOnly) chips.push('Online only');
+    if (filters.conversationType !== 'all') chips.push(`Type: ${filters.conversationType}`);
+    if (filters.sort === 'default') chips.push('Sort: Online first');
+    if (filters.sort === 'active') chips.push('Sort: Most active');
+    if (filters.sort === 'recent') chips.push('Sort: Recently joined');
+    return chips;
+  }, [filters.onlineOnly, filters.conversationType, filters.sort]);
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden px-3 pb-3 pt-2 md:px-6 md:pt-5">
@@ -170,51 +179,42 @@ export default function PeopleSearchView({
             <p className="text-xs text-white/55 md:text-sm">Find the right human by topic, availability, and conversation mode.</p>
           </div>
           {isMobile && (
-            <button
-              type="button"
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white/80"
-              onClick={onOpenConversations}
-            >
-              Chats
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white/80"
+                onClick={onOpenConversations}
+              >
+                Chats
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-white/80"
+                onClick={onOpenFilters}
+              >
+                Filters
+              </button>
+            </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2">
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="Search by name or keyword"
             className="h-10 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white placeholder:text-white/35 focus:border-blue-400 focus:outline-none"
           />
-          <select
-            value={conversationType}
-            onChange={(event) => setConversationType(event.target.value as ConversationTypeFilter)}
-            className="h-10 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white focus:border-blue-400 focus:outline-none"
-          >
-            <option value="all">All types</option>
-            <option value="free">Free</option>
-            <option value="paid">Paid</option>
-            <option value="charity">Charity</option>
-          </select>
-          <select
-            value={sort}
-            onChange={(event) => setSort(event.target.value as SortMode)}
-            className="h-10 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white focus:border-blue-400 focus:outline-none"
-          >
-            <option value="active">Most active</option>
-            <option value="default">Online first</option>
-            <option value="recent">Recently joined</option>
-          </select>
-          <label className="flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 text-sm text-white/90">
-            <input
-              type="checkbox"
-              checked={onlineOnly}
-              onChange={(event) => setOnlineOnly(event.target.checked)}
-              className="h-4 w-4 rounded border-white/30 bg-transparent"
-            />
-            Online only
-          </label>
+          <div className="flex flex-wrap gap-2">
+            {activeFilterChips.map((chip) => (
+              <span
+                key={chip}
+                className="inline-flex rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/75"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -232,9 +232,9 @@ export default function PeopleSearchView({
             No matching people found.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 pb-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-2 pb-3">
             {profiles.map((profile) => (
-              <ProfileCard
+              <ProfileListRow
                 key={profile.userId}
                 profile={profile}
                 onConnectNow={onConnectNow}

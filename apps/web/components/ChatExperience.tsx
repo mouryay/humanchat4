@@ -8,6 +8,8 @@ import ConversationView from './ConversationView';
 import PeopleSearchView from './PeopleSearchView';
 import ProfilePanel from './ProfilePanel';
 import ProfileSidebar from './ProfileSidebar';
+import SearchFiltersPanel from './SearchFiltersPanel';
+import ConversationContextSidebar from './ConversationContextSidebar';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { useConversationData } from '../hooks/useConversationData';
 import { usePendingInvites } from '../hooks/usePendingInvites';
@@ -18,6 +20,7 @@ import type { ProfileSummary } from '../../../src/lib/db';
 import { connectNow as connectNowWithProfile } from '../services/conversationClient';
 import { sessionStatusManager } from '../services/sessionStatusManager';
 import { fetchWithAuthRefresh } from '../utils/fetchWithAuthRefresh';
+import { DEFAULT_PEOPLE_SEARCH_FILTERS, type PeopleSearchFilters } from './peopleSearchTypes';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 import BookingModal from './BookingModal';
@@ -37,6 +40,7 @@ const ChatShell = () => {
   const [inviteActionPendingId, setInviteActionPendingId] = useState<string | null>(null);
   const [sidebarProfiles, setSidebarProfiles] = useState<ProfileSummary[]>([]);
   const [sidebarSource, setSidebarSource] = useState<'seeded' | 'sam'>('seeded');
+  const [searchFilters, setSearchFilters] = useState<PeopleSearchFilters>(DEFAULT_PEOPLE_SEARCH_FILTERS);
   const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null);
   const [bookingProfile, setBookingProfile] = useState<ProfileSummary | null>(null);
   const [requestProfile, setRequestProfile] = useState<ProfileSummary | null>(null);
@@ -45,6 +49,17 @@ const ChatShell = () => {
   const samConversationId = useMemo(() => {
     return conversations.find((entry) => entry.conversation.type === 'sam')?.conversation.conversationId ?? 'sam-concierge';
   }, [conversations]);
+
+  const activeConversationEntry = useMemo(() => {
+    if (!activeConversationId) return null;
+    return conversations.find((entry) => entry.conversation.conversationId === activeConversationId) ?? null;
+  }, [activeConversationId, conversations]);
+
+  const rightPanelMode = useMemo<'filters' | 'recommendations' | 'context'>(() => {
+    if (mainView === 'search') return 'filters';
+    if (activeConversationEntry?.conversation.type === 'sam') return 'recommendations';
+    return 'context';
+  }, [mainView, activeConversationEntry]);
 
   // Seed sidebar with 3 recently joined profiles on mount
   const seededRef = useRef(false);
@@ -217,13 +232,16 @@ const ChatShell = () => {
   const sidebarProfilesRef = useRef(sidebarProfiles);
   sidebarProfilesRef.current = sidebarProfiles;
 
+  const canOpenAuxDrawerRef = useRef(false);
+  canOpenAuxDrawerRef.current = rightPanelMode === 'filters' || sidebarProfilesRef.current.length > 0;
+
   // Right-edge swipe to open profiles drawer
   const rightSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const handleRightEdgeTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     const screenWidth = window.innerWidth;
     // Only trigger from the right 20px edge
-    if (touch.clientX >= screenWidth - 20 && sidebarProfilesRef.current.length > 0) {
+    if (touch.clientX >= screenWidth - 20 && canOpenAuxDrawerRef.current) {
       rightSwipeStart.current = { x: touch.clientX, y: touch.clientY };
     }
   }, []);
@@ -414,9 +432,11 @@ const ChatShell = () => {
               <PeopleSearchView
                 isMobile
                 onOpenConversations={handleShowConversationDrawer}
+                onOpenFilters={() => setMobileDrawer('profiles')}
                 onConnectNow={handleSidebarConnectNow}
                 onBookTime={handleSidebarBookTime}
                 connectingProfileId={connectingProfileId}
+                filters={searchFilters}
               />
             ) : (
               <ConversationView
@@ -557,18 +577,43 @@ const ChatShell = () => {
                 onTouchEnd={handleDrawerTouchEnd}
               >
                 <div className="flex h-full flex-col">
-                  <div className="px-4 py-3">
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">{sidebarSource === 'seeded' ? 'Recommended people' : 'People'}</span>
-                  </div>
-                  <div className="flex-1 overflow-y-auto">
-                    <ProfileSidebar
-                      profiles={sidebarProfiles}
-                      onConnectNow={handleSidebarConnectNow}
-                      onBookTime={handleSidebarBookTime}
-                      connectingProfileId={connectingProfileId}
-                      hideHeader
+                  {rightPanelMode === 'filters' ? (
+                    <SearchFiltersPanel filters={searchFilters} onChange={setSearchFilters} />
+                  ) : rightPanelMode === 'recommendations' ? (
+                    <>
+                      <div className="px-4 py-3">
+                        <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                          {sidebarSource === 'seeded' ? 'Recommended people' : 'People'}
+                        </span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        <ProfileSidebar
+                          profiles={sidebarProfiles}
+                          onConnectNow={handleSidebarConnectNow}
+                          onBookTime={handleSidebarBookTime}
+                          connectingProfileId={connectingProfileId}
+                          hideHeader
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <ConversationContextSidebar
+                      title={activeConversationEntry?.meta.displayName ?? 'Conversation'}
+                      subtitle="Direct chat"
+                      participantNames={
+                        activeConversationEntry
+                          ? activeConversationEntry.conversation.participants.map(
+                              (id) => activeConversationEntry.conversation.participantLabels?.[id] ?? id
+                            )
+                          : []
+                      }
+                      lastActivityLabel={
+                        activeConversationEntry
+                          ? new Date(activeConversationEntry.conversation.lastActivity).toLocaleTimeString()
+                          : undefined
+                      }
                     />
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -581,6 +626,7 @@ const ChatShell = () => {
                   onConnectNow={handleSidebarConnectNow}
                   onBookTime={handleSidebarBookTime}
                   connectingProfileId={connectingProfileId}
+                  filters={searchFilters}
                 />
               ) : (
                 <ConversationView
@@ -605,13 +651,34 @@ const ChatShell = () => {
                 boxShadow: '-2px 0 16px rgba(0, 0, 0, 0.2)'
               }}
             >
-              <ProfileSidebar
-                profiles={sidebarProfiles}
-                onConnectNow={handleSidebarConnectNow}
-                onBookTime={handleSidebarBookTime}
-                connectingProfileId={connectingProfileId}
-                label={sidebarSource === 'seeded' ? 'Recommended people' : undefined}
-              />
+              {rightPanelMode === 'filters' ? (
+                <SearchFiltersPanel filters={searchFilters} onChange={setSearchFilters} />
+              ) : rightPanelMode === 'recommendations' ? (
+                <ProfileSidebar
+                  profiles={sidebarProfiles}
+                  onConnectNow={handleSidebarConnectNow}
+                  onBookTime={handleSidebarBookTime}
+                  connectingProfileId={connectingProfileId}
+                  label={sidebarSource === 'seeded' ? 'Recommended people' : undefined}
+                />
+              ) : (
+                <ConversationContextSidebar
+                  title={activeConversationEntry?.meta.displayName ?? 'Conversation'}
+                  subtitle="Direct chat"
+                  participantNames={
+                    activeConversationEntry
+                      ? activeConversationEntry.conversation.participants.map(
+                          (id) => activeConversationEntry.conversation.participantLabels?.[id] ?? id
+                        )
+                      : []
+                  }
+                  lastActivityLabel={
+                    activeConversationEntry
+                      ? new Date(activeConversationEntry.conversation.lastActivity).toLocaleTimeString()
+                      : undefined
+                  }
+                />
+              )}
             </aside>
           </>
         )}
