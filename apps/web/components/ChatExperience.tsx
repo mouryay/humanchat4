@@ -578,7 +578,11 @@ const ChatShell = () => {
               >
                 <div className="flex h-full flex-col">
                   {rightPanelMode === 'filters' ? (
-                    <SearchFiltersPanel filters={searchFilters} onChange={setSearchFilters} />
+                    <SearchFiltersPanel
+                      filters={searchFilters}
+                      onChange={setSearchFilters}
+                      onReset={() => setSearchFilters({ ...DEFAULT_PEOPLE_SEARCH_FILTERS })}
+                    />
                   ) : rightPanelMode === 'recommendations' ? (
                     <>
                       <div className="px-4 py-3">
@@ -652,7 +656,11 @@ const ChatShell = () => {
               }}
             >
               {rightPanelMode === 'filters' ? (
-                <SearchFiltersPanel filters={searchFilters} onChange={setSearchFilters} />
+                <SearchFiltersPanel
+                  filters={searchFilters}
+                  onChange={setSearchFilters}
+                  onReset={() => setSearchFilters({ ...DEFAULT_PEOPLE_SEARCH_FILTERS })}
+                />
               ) : rightPanelMode === 'recommendations' ? (
                 <ProfileSidebar
                   profiles={sidebarProfiles}

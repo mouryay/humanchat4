@@ -101,67 +101,72 @@ export default function ProfileListRow({
 
   return (
     <>
-      <article className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:bg-white/[0.05]">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-3">
+      <article className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-all hover:border-white/20 hover:bg-white/[0.06]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1fr)] xl:items-center">
+          <div className="min-w-0 xl:pr-2">
+            <div className="flex min-w-0 items-center gap-3.5">
               <img
                 src={avatarSrc}
                 alt={profile.name ?? 'Human'}
-                className="h-11 w-11 flex-shrink-0 rounded-xl object-cover ring-1 ring-white/20"
+                className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-white/20"
                 loading="lazy"
               />
               <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold text-white">{profile.name ?? 'Human'}</h3>
-                <p className="truncate text-xs text-white/65">{headlineCopy}</p>
+                <h3 className="truncate text-base font-semibold text-white">{profile.name ?? 'Human'}</h3>
+                <p className="truncate text-[13px] text-white/65">{headlineCopy}</p>
               </div>
               <div className="ml-auto flex-shrink-0">
                 <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
               </div>
             </div>
-            <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-white/70">
+            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-white/72">
               {bioPreview}
             </p>
+          </div>
+
+          <div className="min-w-0 rounded-xl border border-white/10 bg-black/20 p-2.5 xl:min-h-[78px]">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-white/45">Session</div>
+            <div className="mt-1.5">
+              <RateDisplay
+                conversationType={profile.conversationType}
+                confidentialRate={profile.confidentialRate}
+                displayMode={profile.displayMode}
+                instantRatePerMinute={profile.instantRatePerMinute}
+                scheduledRates={profile.scheduledRates}
+                isOnline={isOnline}
+                charityName={profile.charityName}
+                donationPreference={profile.donationPreference}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 xl:border-l xl:border-white/10 xl:pl-3">
             <button
               type="button"
-              className="mt-2 text-xs font-medium text-blue-300 transition hover:text-blue-200"
+              className="w-full rounded-xl border border-white/20 bg-white/[0.05] px-3 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.1]"
               onClick={() => setShowDetails(true)}
             >
-              View full profile
+              Profile
             </button>
-          </div>
-
-          <div className="xl:w-[280px] xl:flex-shrink-0">
-            <RateDisplay
-              conversationType={profile.conversationType}
-              confidentialRate={profile.confidentialRate}
-              displayMode={profile.displayMode}
-              instantRatePerMinute={profile.instantRatePerMinute}
-              scheduledRates={profile.scheduledRates}
-              isOnline={isOnline}
-              charityName={profile.charityName}
-              donationPreference={profile.donationPreference}
-            />
-          </div>
-
-          <div className="flex w-full gap-2 xl:w-[230px] xl:flex-shrink-0">
-            {canInstantConnect && (
+            <div className="flex w-full gap-2">
+              {canInstantConnect && (
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-[13px] font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={Boolean(isConnecting)}
+                  onClick={() => !isConnecting && onConnectNow?.(profile)}
+                >
+                  {isConnecting ? 'Connecting...' : 'Connect'}
+                </button>
+              )}
               <button
                 type="button"
-                className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={Boolean(isConnecting)}
-                onClick={() => !isConnecting && onConnectNow?.(profile)}
+                className="flex-1 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-2 text-[13px] font-semibold text-white/90 transition hover:bg-white/[0.08]"
+                onClick={() => onBookTime?.(profile)}
               >
-                {isConnecting ? 'Connecting...' : 'Connect'}
+                {managedConfidential ? 'Request' : 'Schedule'}
               </button>
-            )}
-            <button
-              type="button"
-              className="flex-1 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/[0.08]"
-              onClick={() => onBookTime?.(profile)}
-            >
-              {managedConfidential ? 'Request' : 'Schedule'}
-            </button>
+            </div>
           </div>
         </div>
       </article>
