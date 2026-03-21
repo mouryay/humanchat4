@@ -1102,6 +1102,7 @@
 .inputBar {
   padding: 20px 28px;
   display: flex;
+  align-items: center;
   gap: 12px;
   background: #2a2a2a;
   border-radius: 14px;
@@ -1110,6 +1111,20 @@
   border: none;
 }
 
+.inputBarActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  align-self: center;
+  min-width: min(120px, 28vw);
+}
+
+.inputBarActions > button[type='submit'] {
+  align-self: stretch;
+}
 
 .inputBar textarea {
   flex: 1;
@@ -1118,12 +1133,13 @@
   color: #f8fafc;
   padding: 14px 18px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.05);
-  border-radius: 18px;
+  border-radius: 14px;
   resize: none;
-  min-height: 56px;
+  min-height: 52px;
   font-size: 15px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+  align-self: center;
 }
 
 .inputBar textarea:focus {
@@ -1142,25 +1158,21 @@
   }
 }
 
-.inputBar button {
+.inputBar button[type='submit'] {
   background: linear-gradient(135deg, #0ea5e9, #38bdf8);
   border: none;
   color: #020617;
-  padding: 0 20px;
-  border-radius: 12px;
+  padding: 0 22px;
+  min-height: 44px;
+  border-radius: 14px;
   font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
-}
-
-.inputBar button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-}
-
-.inputBar button:active {
-  transform: translateY(0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sessionLayout {
@@ -1639,10 +1651,22 @@
   .inputBar,
   .chatInputBar {
     flex-direction: column;
+    align-items: stretch;
     padding: 12px !important;
     padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
     margin-top: 8px;
     flex-shrink: 0;
+  }
+
+  .inputBarActions {
+    min-width: 0;
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .inputBar textarea {
+    align-self: stretch;
+    width: 100%;
   }
 
   .inputBar button,

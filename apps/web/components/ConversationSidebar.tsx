@@ -122,7 +122,7 @@ export default function ConversationSidebar({
       "flex flex-col h-full bg-background-secondary transition-all duration-base",
       collapsed ? "w-24" : "w-[300px]"
     )}>
-      <div className="hidden sm:block p-6 bg-gradient-to-b from-background-secondary to-background-secondary/80">
+      <div className="hidden sm:block bg-gradient-to-b from-background-secondary to-background-secondary/80 px-6 pb-6 pt-8">
         {!collapsed && isMounted && (
           <h1 className="text-2xl font-semibold text-text-primary" suppressHydrationWarning>
             {formattedDate}

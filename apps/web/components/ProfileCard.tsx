@@ -148,7 +148,7 @@ export default function ProfileCard({
       )}
       <div className="flex-1 min-w-0">
         <button 
-          className={`w-full font-semibold rounded-xl transition-all duration-base ease-out disabled:opacity-50 disabled:cursor-not-allowed ${managedConfidential ? 'bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30' : 'bg-background-tertiary text-text-primary border border-border-medium hover:bg-background-hover hover:border-border-strong'} ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
+          className={`w-full font-semibold rounded-xl transition-all duration-base ease-out disabled:opacity-50 disabled:cursor-not-allowed ${managedConfidential ? 'bg-purple-500/20 border border-purple-500/30 text-purple-200 hover:bg-purple-500/30' : 'border border-white/20 bg-white/10 text-white shadow-sm hover:bg-white/[0.16] hover:border-white/35'} ${compact ? 'px-3 py-2.5 text-sm' : 'px-5 py-3'}`}
           type="button" 
           onClick={() => onBookTime?.(profile)}
         >
@@ -176,13 +176,10 @@ export default function ProfileCard({
           </div>
         </div>
 
-        {/* Status Badge */}
-        <div className="mb-3">
+        {/* Status + rate — spaced for scanability */}
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-2">
           <StatusBadge isOnline={isOnline} hasActiveSession={hasActiveSession} presenceState={presenceState} />
-        </div>
-
-        {/* Rate display (compact) */}
-        <div className="mb-3">
+        <div className="min-w-0 flex-1 sm:flex-none">
           <RateDisplay
             conversationType={profile.conversationType}
             confidentialRate={profile.confidentialRate}
@@ -194,13 +191,14 @@ export default function ProfileCard({
             donationPreference={profile.donationPreference}
           />
         </div>
+        </div>
 
         {/* Actions */}
         {renderActions(true)}
 
         {/* See Full Profile Button */}
         <button 
-          className="mt-3 w-full text-xs font-medium text-accent-primary hover:text-accent-hover transition-colors duration-base"
+          className="mt-3 w-full text-left text-sm font-medium text-sky-300/95 underline decoration-sky-400/40 underline-offset-4 transition-colors hover:text-sky-200 hover:decoration-sky-300/80"
           type="button" 
           onClick={() => setShowDetails(true)}
         >

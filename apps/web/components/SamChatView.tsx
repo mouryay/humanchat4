@@ -706,21 +706,22 @@ export default function SamChatView({
               onClick={() => setPreviousMessagesExpanded(true)}
               style={{
                 background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '20px',
-                padding: '8px 20px',
-                color: 'rgba(255,255,255,0.6)',
-                fontSize: '13px',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: '14px',
+                padding: '10px 22px',
+                color: 'rgba(255,255,255,0.82)',
+                fontSize: '14px',
+                fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.95)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.82)';
               }}
             >
               Show previous messages ({preSessionMessages.length})
@@ -777,7 +778,7 @@ export default function SamChatView({
             }
           }}
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+        <div className={styles.inputBarActions}>
           {isThinking && (
             <div className={styles.inputStatus}>
               <span className={styles.typingDot} />

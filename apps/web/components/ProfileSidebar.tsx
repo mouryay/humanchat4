@@ -42,8 +42,8 @@ export default function ProfileSidebar({
   return (
     <div className="flex h-full flex-col">
       {!hideHeader && (
-        <div className="px-5 pt-4 pb-3 border-b border-white/5">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/50">
+        <div className="border-b border-white/5 px-5 pb-3 pt-5">
+          <p className="text-sm font-semibold tracking-wide text-white/90">
             {label ?? 'Recommended people'}
           </p>
         </div>
