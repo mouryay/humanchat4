@@ -76,7 +76,7 @@ export default function NotificationBell({ compact = false }: NotificationBellPr
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={clsx(
-          'relative border border-white/20 bg-white/10 text-white/80 hover:bg-white/15',
+          'relative flex items-center justify-center border border-white/20 bg-white/10 text-white/80 hover:bg-white/15',
           compact ? 'h-9 w-9 rounded-[10px] p-0' : 'h-10 w-10 rounded-[12px] p-0 backdrop-blur'
         )}
         aria-label="Open notifications"

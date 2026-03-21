@@ -391,7 +391,14 @@ const ChatShell = () => {
   );
 
   return (
-    <main className={clsx('flex flex-col bg-midnight text-white', isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden')}>
+    <main
+      className={clsx(
+        'flex flex-col bg-midnight text-white',
+        /* Reserve space for GlobalAppChrome (fixed top-right rail) */
+        'pt-[calc(env(safe-area-inset-top,0px)+3.5rem)]',
+        isMobile ? 'h-[100dvh] max-h-[100dvh] overflow-hidden fixed inset-0' : 'h-screen overflow-hidden'
+      )}
+    >
       {isTablet && (
         <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-midnight px-4 py-3 text-xs uppercase tracking-[0.3em] text-white/60">
           <button

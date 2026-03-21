@@ -39,6 +39,8 @@
   background-color: #0A0A0A;
   color: #FFFFFF;
   --font-scale: 1;
+  /* Used by global header offset so actions clear the right profile rail */
+  --sidebar-width: 300px;
 }
 
 html[data-contrast='high'] {

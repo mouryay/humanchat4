@@ -6,8 +6,7 @@ import FirebaseSessionBridge from '../components/FirebaseSessionBridge';
 import IdentityInitializer from '../components/IdentityInitializer';
 import InstantInviteListener from '../components/InstantInviteListener';
 import InstantInviteNavigator from '../components/InstantInviteNavigator';
-import UserSettingsMenu from '../components/UserSettingsMenu';
-import NotificationBell from '../components/NotificationBell';
+import GlobalAppChrome from '../components/GlobalAppChrome';
 import CallNotificationListener from '../components/CallNotificationListener';
 import { CallProvider } from '../context/CallContext';
 import MinimizedCallBar from '../components/MinimizedCallBar';
@@ -41,12 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <CallNotificationListener />
           <GlobalCallRoom />
           <MinimizedCallBar />
-          <div className="pointer-events-none fixed inset-x-0 top-0 z-[9998] flex justify-end px-3 py-3 md:px-4 md:py-4 md:pr-[calc(var(--sidebar-width)+16px)] chat-layout-settings">
-            <div className="pointer-events-auto flex items-center gap-2">
-              <NotificationBell />
-              <UserSettingsMenu />
-            </div>
-          </div>
+          <GlobalAppChrome />
           {children}
         </CallProvider>
       </body>

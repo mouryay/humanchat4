@@ -25,7 +25,8 @@ const getInitials = (name?: string | null, email?: string | null) => {
 };
 
 interface UserSettingsMenuProps {
-  variant?: 'default' | 'header';
+  /** default: legacy layout behavior. header: 3-dot compact. global: always available app chrome (Option A). */
+  variant?: 'default' | 'header' | 'global';
 }
 
 export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMenuProps) {
@@ -36,13 +37,13 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
   const pathname = usePathname();
   const { isMobile } = useBreakpoint();
   
-  // Hide in layout when on mobile on home page (where chat shows when logged in)
-  // Chat interface is on '/' not '/chat' (which redirects to '/')
-  // Also hide when logged out (no identity) - the login overlay handles that state
-  const shouldHide = variant === 'default' && (
-    (isMobile && identity && (pathname === '/' || pathname?.startsWith('/chat'))) ||
-    (!identity && !loading)
-  );
+  // global: single top-right rail — always show when signed in (including mobile /).
+  // default: hide on mobile home/chat because conversation header used to duplicate controls (removed for Option A).
+  const shouldHide =
+    variant === 'global'
+      ? !identity && !loading
+      : variant === 'default' &&
+        ((isMobile && identity && (pathname === '/' || pathname?.startsWith('/chat'))) || (!identity && !loading));
 
   const clearHoverTimeout = () => {
     if (hoverTimeout.current) {
@@ -100,9 +101,13 @@ export default function UserSettingsMenu({ variant = 'default' }: UserSettingsMe
   }
 
   const isHeaderVariant = variant === 'header';
+  const isGlobalVariant = variant === 'global';
+  const globalCompact = isGlobalVariant && isMobile;
   const buttonClassName = isHeaderVariant
     ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border border-white/15 bg-white/5 text-white/70 transition hover:border-white/25 hover:bg-white/10 touch-action: manipulation'
-    : 'relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/15 backdrop-blur';
+    : globalCompact
+      ? 'relative flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-[10px] border border-white/20 bg-white/10 text-xs font-semibold text-white transition hover:border-white/35 hover:bg-white/15 backdrop-blur'
+      : 'relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/20 bg-white/10 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/15 backdrop-blur';
 
   return (
     <div
